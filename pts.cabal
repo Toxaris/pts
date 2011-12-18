@@ -10,7 +10,7 @@ Maintainer:          rendel@informatik.uni-marburg.de
 Category:            Language
 Build-type:          Simple
 -- Extra-source-files:  
-Cabal-version:       >= 1.6
+Cabal-version:       >= 1.8
 
 Executable pts
   Hs-source-dirs:      src
@@ -65,3 +65,18 @@ Executable pts-quote
                        PTS.Core,
                        PTS.Parser,
                        PTS.Quote
+
+
+Test-suite tests
+  Type: exitcode-stdio-1.0
+  Hs-source-dirs: src
+  Main-is: tests.hs
+  -- Build-depends: base >= 4.0 && < 5,
+  -- hashable,
+  --                   test-framework >= 0.3.3 && < 0.5,
+  --                 test-framework-quickcheck2 >= 0.2.9 && < 0.3,
+  --                 QuickCheck >= 2.4.0.1,
+  --                 random == 1.0.*,
+  --                 text >= 0.11.0.5
+
+  -- Ghc-options: -Wall -fno-warn-orphans
