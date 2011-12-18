@@ -1,0 +1,67 @@
+Name:                pts
+Version:             0.1
+Synopsis:            Interpreter for functional pure type systems.
+-- Description:         
+License:             AllRightsReserved
+-- License-file:        LICENSE
+Author:              Tillmann Rendel, Klaus Ostermann
+Maintainer:          rendel@informatik.uni-marburg.de
+-- Copyright:           
+Category:            Language
+Build-type:          Simple
+-- Extra-source-files:  
+Cabal-version:       >= 1.6
+
+Executable pts
+  Hs-source-dirs:      src
+  Main-is:             PTS/Main.hs
+  Build-depends:       base < 5,
+                       containers == 0.4.*,
+                       pretty == 1.0.*,
+                       mtl == 2.0.*,
+                       transformers ==0.2.*,
+                       parsec == 3.1.*
+  Other-modules:       Tools.Instances,
+                       Tools.Errors.Class,
+                       Parametric.Pretty,
+                       PTS.Instances,
+                       PTS.Options,
+                       Parametric.Error,
+                       Parametric.AST,
+                       PTS.AST,
+                       PTS.Normalisation,
+                       PTS.Pretty,
+                       PTS.Diff,
+                       PTS.Core,
+                       Parametric.Parser.Error,
+                       Parametric.Parser,
+                       PTS.Parser,
+                       Tools.Errors
+  -- Build-tools:         
+
+Executable pts-quote
+  Hs-source-dirs:      src
+  Main-is:             PTS/Quote/Main.hs
+  Build-depends:       base < 5,
+                       mtl == 2.0.*,
+                       transformers == 0.2.*,
+                       parsec == 3.1.*,
+                       containers == 0.4.*,
+                       pretty == 1.0.*
+  Other-modules:       Parametric.Pretty,
+                       Tools.Instances,
+                       Tools.Errors.Class,
+                       Parametric.Error,
+                       Parametric.AST,
+                       Parametric.Parser.Error,
+                       Parametric.Parser,
+                       Tools.Errors,
+                       PTS.Instances,
+                       PTS.Options,
+                       PTS.AST,
+                       PTS.Normalisation,
+                       PTS.Pretty,
+                       PTS.Diff,
+                       PTS.Core,
+                       PTS.Parser,
+                       PTS.Quote
