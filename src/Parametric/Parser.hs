@@ -19,7 +19,6 @@ import Tools.Errors.Class
 
 import Tools.Instances
 import Parametric.Parser.Error
-import Parametric.AST
 import Parametric.Error
 
      ---------------------
