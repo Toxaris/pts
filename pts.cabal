@@ -71,12 +71,10 @@ Test-suite tests
   Type: exitcode-stdio-1.0
   Hs-source-dirs: src
   Main-is: tests.hs
-  -- Build-depends: base >= 4.0 && < 5,
-  -- hashable,
-  --                   test-framework >= 0.3.3 && < 0.5,
-  --                 test-framework-quickcheck2 >= 0.2.9 && < 0.3,
-  --                 QuickCheck >= 2.4.0.1,
-  --                 random == 1.0.*,
-  --                 text >= 0.11.0.5
-
+  Build-depends:       base >= 4.0 && < 5,
+                       test-framework,
+                       test-framework-quickcheck2,
+                       test-framework-hunit,
+                       QuickCheck,
+                       HUnit
   -- Ghc-options: -Wall -fno-warn-orphans
