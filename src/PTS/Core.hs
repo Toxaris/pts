@@ -18,6 +18,7 @@ import Parametric.Error
 import Parametric.Pretty
 
 import PTS.AST
+import PTS.Substitution
 import PTS.Pretty
 import PTS.Diff
 import Parametric.Pretty

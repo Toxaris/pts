@@ -15,6 +15,7 @@ import Parametric.Error
 import Parametric.Pretty hiding (when)
 
 import PTS.AST
+import PTS.Substitution
 import PTS.Parser
 import PTS.Core
 import PTS.Diff

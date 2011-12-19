@@ -2,6 +2,7 @@
 module PTS.Normalisation  where
 
 import PTS.AST
+import PTS.Substitution (subst)
 
 import Data.List (nub)
 import Data.Map (Map)
