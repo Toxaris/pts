@@ -31,10 +31,8 @@ import Data.List (nub, (\\), intersperse)
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Tools.Errors.Class
-
 import Parametric.Error
-import Parametric.AST (Name)
+import Parametric.AST (Name, freshvarl)
 
 import System.IO.Unsafe (unsafePerformIO)
 import Data.IORef
@@ -118,17 +116,7 @@ mkFreevars t = case structure t of
 freshvar :: Term -> Name -> Name
 freshvar t x = freshvarl (freevars t) x
 
-freshvarl :: Set Name -> Name -> Name
-freshvarl xs x = freshvarhelper 0
-  where
-  freshvarhelper i 
-    =  if  x' `Set.member` xs 
-         then  freshvarhelper (succ i) 
-         else  x'
-    where x' = x ++ show i
-
-
-allvars :: Term -> [String]
+allvars :: Term -> [Name]
 allvars t = case structure t of
   Var x            ->  [x]
   App t1 t2        ->  nub $ allvars t1 ++ allvars t2

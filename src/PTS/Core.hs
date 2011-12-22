@@ -90,12 +90,12 @@ ndots n = replicate n '.'
 --   trace ((show d) ++ (ndots d) ++ (show ctx) ++ " |- "++(show t) ++ " : ???") False
 
 -- safe bind
-bind :: [(String, Term)] -> String -> Term -> Term -> (String, Term, [(String, Term)])
+bind :: [(Name, Term)] -> Name -> Term -> Term -> (Name, Term, [(Name, Term)])
 bind ctx x t b = case lookup x ctx of 
   Nothing -> (x, b, (x, t) : ctx)
   Just _ -> let nx = freshvarl (freevars b `Set.union` Set.fromList (map fst ctx)) x in (nx, subst b x (mkVar nx), (nx, t) : ctx)
 
-debug :: (MonadIO m, MonadReader Options m) => Int -> String -> [(String, Term)] -> Term -> m Term -> m Term 
+debug :: (MonadIO m, MonadReader Options m) => Int -> String -> [(Name, Term)] -> Term -> m Term -> m Term 
 debug d n ctx t result = result
   -- do
   -- flag <- asks optDebugType
@@ -172,7 +172,7 @@ msgNotPi context info t t'
     sep [info <> text ":", nest 2 (pretty 0 t)] $$
     sep [text "Type of" <+> info <> text ":", nest 2 (pretty 0 t')])
 
-typecheck :: (MonadReader Options m, MonadErrors Errors m, Functor m, MonadIO m) => Int -> [(String, Term)] -> Term -> m Term
+typecheck :: (MonadReader Options m, MonadErrors Errors m, Functor m, MonadIO m) => Int -> [(Name, Term)] -> Term -> m Term
 --typecheck p d ctx t | mytrace d ctx t = undefined
 
 typecheck d ctx t = case structure t of 
@@ -186,12 +186,12 @@ typecheck d ctx t = case structure t of
   -- start
   Var x' | (x, a) : ctx <- ctx, x == x' -> debug d "TypeVar" ((x,a):ctx) t $ do
     s <- typecheck (succ d) ctx a
-    normalizeToSort s a (text "in variable") (text "as type of" <+> text x)
+    normalizeToSort s a (text "in variable") (text "as type of" <+> pretty 0 x)
     return a
 
   -- var-not-found
   Var a | null ctx -> debug d "TypeVar" [] t $ do 
-    fail $ "Unbound identifier: " ++ a
+    fail $ "Unbound identifier: " ++ show a
 
   -- product
   Pi x a b -> debug d "TypeFun" ctx t $ do
@@ -213,14 +213,14 @@ typecheck d ctx t = case structure t of
     Pi x a b <- normalizeToPi tt1 t1 (text "in application") (text "operator")
     
     tt2 <- typecheck (succ d) ctx t2
-    normalizeToSame a tt2 (text x) t2 (text "in application") (text "formal parameter") (text "actual parameter")
+    normalizeToSame a tt2 (pretty 0 x) t2 (text "in application") (text "formal parameter") (text "actual parameter")
     
     return (subst b x t2)
 
   -- abstraction
   Lam x a b -> debug d "TypeAbs" ctx t $ do
     s1  <- typecheck (succ d) ctx a
-    s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> text x)
+    s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
     
     let (newx, newb, newctx) = bind ctx x a b
     tb  <- typecheck (succ d) newctx newb
@@ -240,9 +240,9 @@ typecheck d ctx t = case structure t of
   -- NatOp
   NatOp i f t1 t2 -> debug d "TypeNatOp" ctx t $ do
     tt1 <- typecheck (succ d) ctx t1
-    normalizeToNat tt1 t1 (text "in" <+> text i) (text "first argument of" <+> text i)
+    normalizeToNat tt1 t1 (text "in" <+> pretty 0 i) (text "first argument of" <+> pretty 0 i)
     tt2 <- typecheck (succ d) ctx t2
-    normalizeToNat tt2 t2 (text "in" <+> text i) (text "second argument of" <+> text i)
+    normalizeToNat tt2 t2 (text "in" <+> pretty 0 i) (text "second argument of" <+> pretty 0 i)
 
   -- IfZero
   IfZero t1 t2 t3 -> debug d "TypeIfZero" ctx t $ do
@@ -265,5 +265,5 @@ typecheck d ctx t = case structure t of
   -- check is not necessary, since everything that is added to the context
   -- has already been checked earlier.
   _ | (x, c) : ctx <- ctx -> debug d "TypeWeakening" ((x,c):ctx) t $ do
-    check (lookup x ctx == Nothing) $ "Please rename variable "++x++"  - weakening error: Capture of variable "++ (show x) ++ " in context "++(show ctx)
+    check (lookup x ctx == Nothing) $ "Please rename variable " ++ show x ++ "  - weakening error: Capture of variable "++ (show x) ++ " in context "++(show ctx)
     typecheck (succ d) ctx t

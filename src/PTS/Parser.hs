@@ -32,7 +32,7 @@ import PTS.Instances
     -- PTS PARSER --
      ----------------- 
 
-natop n f x = mkNatOp n f <$> (keyword n *> x) <*> (x <?> "second argument of '" ++ n ++ "'")
+natop n f x = mkNatOp n f <$> (keyword (show n) *> x) <*> (x <?> "second argument of '" ++ show n ++ "'")
 
 expr = term simple rec mkPos "expression" where
   simple = withPos mkPos $ asum 
@@ -43,17 +43,17 @@ expr = term simple rec mkPos "expression" where
     , mkIfZero <$> (keyword "if0" *> expr) 
              <*> (keyword "then" *> expr) 
              <*> (keyword "else" *> expr)
-    , natop "add" (+) simple
-    , natop "sub" (-) simple
-    , natop "mul" (*) simple
-    , natop "div" div simple
+    , natop (read "add") (+) simple
+    , natop (read "sub") (-) simple
+    , natop (read "mul") (*) simple
+    , natop (read "div") div simple
     , mkConst <$> const
     , var mkVar ident
     , mkNat <$> number ]
     
   rec = asum
     [ app mkApp simple
-    , arr (\a b -> mkPi (freshvar b "_") a b) arrow (expr )]
+    , arr (\a b -> mkPi (freshvar b (read "unused")) a b) arrow (expr )]
 
 stmt = withPos StmtPos $ asum
   [ Bind <$> try (ident <* colon1) <*> (Just <$> expr) <* assign <*> expr
@@ -77,13 +77,16 @@ ident = lexem (do name <- many1 (satisfy identChar)
                   when (Prelude.all (`elem` ['0'..'9']) name) $
                     unexpected ("numeric literal " ++ name)
                   
+                  when (isDigit (head name)) $
+                    pzero
+                  
                   when (Prelude.all (== '*') name) $
                     unexpected ("constant")
                   
                   when (name == "Nat") $
                     unexpected ("constant")
                   
-                  return name)
+                  return (read name))
           <?> "variable name"
 
 number = read <$> lexem (many1 (satisfy isDigit) <* notFollowedBy (satisfy identChar))

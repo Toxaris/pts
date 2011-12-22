@@ -48,6 +48,9 @@ arrChain t = case structure t of
   _                                        ->  ([], t)
 
 -- pretty printing
+instance Pretty Name where
+  pretty _ name = text (show name)
+
 instance Pretty C where
   pretty _ (C 0) = text "Nat"
   pretty _ (C n) = text (replicate n '*')
@@ -58,7 +61,7 @@ instance Pretty Term where
       int n
     
     NatOp n _ a b -> parens `when` (pApp < p) $ 
-      text n <+> pretty pAppR a <+> pretty pAppR b
+      pretty 0 n <+> pretty pAppR a <+> pretty pAppR b
       
     IfZero c t e -> parens `when` (pIf0 < p) $ 
       sep [ text "if" <+> pretty pIf0 c
@@ -66,7 +69,7 @@ instance Pretty Term where
           , nest p $ text "else" <+> pretty pIf0 e ]
           
     Var n ->
-      text n
+      pretty p n
       
     Const c -> 
       pretty p c
@@ -82,12 +85,12 @@ instance Pretty Term where
       
     Lam _ _ _ -> parens `when` (pLam < p) $ 
       let (lams, body) = lamChain t in
-        sep [ sep . map (\(n, q) -> text "lambda" <+> text n <+> text ":" <+> pretty pLam q <+> text ".") $ lams
+        sep [ sep . map (\(n, q) -> text "lambda" <+> pretty 0 n <+> text ":" <+> pretty pLam q <+> text ".") $ lams
             , nest 2 $ pretty pLam body ]
     
     Pi n _ t' | n `Set.member` freevars t' -> parens `when` (pPi < p) $
       let (pis, body) = piChain t in
-       sep [ sep . map (\(n, q) -> text "Pi" <+> text n <+> text ":" <+> pretty pPi q <+> pretty p ".") $ pis
+       sep [ sep . map (\(n, q) -> text "Pi" <+> pretty 0 n <+> text ":" <+> pretty pPi q <+> pretty p ".") $ pis
            , nest 2 $ pretty pPi body ]
     
     Pi _ _ _ -> parens `when` (pArr < p) $
@@ -97,12 +100,12 @@ instance Pretty Term where
     Pos _ t -> pretty p t
 
 instance Pretty Stmt where
-  pretty p (Bind n Nothing t)   = text n <+> text "=" <+> pretty 0 t
-  pretty p (Bind n (Just t') t) = text n <+> text ":" <+> pretty 0 t' <+> text "=" <+> pretty 0 t
+  pretty p (Bind n Nothing t)   = pretty 0 n <+> text "=" <+> pretty 0 t
+  pretty p (Bind n (Just t') t) = pretty 0 n <+> text ":" <+> pretty 0 t' <+> text "=" <+> pretty 0 t
   pretty p (Term t) = pretty 0 t
 
 instance Show Term where
   show t = singleLine t
   
-showCtx :: [(String, Term)] -> String
-showCtx = concat . intersperse ", " . map (\(n, t) -> n ++ " : " ++ show t) 
+showCtx :: [(Name, Term)] -> String
+showCtx = concat . intersperse ", " . map (\(n, t) -> show n ++ " : " ++ show t) 

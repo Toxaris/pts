@@ -34,7 +34,8 @@ sub = (!! 8)
 mul = (!! 9)
 div = (!! 10)
 
-varnames = ["R", "lam", "app", "tlam", "tapp", "ifzero", "nat", "add", "sub", "mul", "div"]
+varnames :: [Name]
+varnames = map read ["R", "lam", "app", "tlam", "tapp", "ifzero", "nat", "add", "sub", "mul", "div"]
 
 unsafeParse :: String -> Term
 unsafeParse text = 
@@ -56,7 +57,7 @@ interface r =
   , p "R Nat -> R Nat -> R Nat"
   ] where
   
-  p text = unsafeParse $ text >>= \x -> if x == 'R' then r else return x
+  p text = unsafeParse $ text >>= \x -> if x == 'R' then show r else return x
 
 unsafeQuote :: Term -> Term
 unsafeQuote t = unsafePerformIO $ do
@@ -73,13 +74,13 @@ unsafeQuoteQuote t = unsafePerformIO $ do
     Right q -> return q 
 
 
-quotequote :: (MonadIO m, MonadReader Options m, MonadErrors Errors m, Functor m) => Int -> [(String, Term)] -> Term -> m Term
+quotequote :: (MonadIO m, MonadReader Options m, MonadErrors Errors m, Functor m) => Int -> [(Name, Term)] -> Term -> m Term
 quotequote d ctx t = do
   let vars = map (freshvarl (Set.fromList (allvars t))) varnames 
   q <- quote (map mkVar vars) 0 [] t
   return $ foldr (uncurry mkLam) q (zip vars (interface (rep vars)))  
 
-debug :: MonadIO m => Int -> String -> [(String, Term)] -> Term -> m Term -> m Term 
+debug :: MonadIO m => Int -> String -> [(Name, Term)] -> Term -> m Term -> m Term 
 debug d n ctx t result | False {- DebugQuote `elem` options -} = do
   liftIO $ putStrLn $ 
     replicate (d+d) ' ' ++ 
@@ -97,7 +98,7 @@ debug d n ctx t result | False {- DebugQuote `elem` options -} = do
 debug d n ctx t result = result
 
 
-quote :: (MonadIO m, MonadErrors Errors m, Functor m, MonadReader Options m) => [Term] -> Int -> [(String, Term)] -> Term -> m Term
+quote :: (MonadIO m, MonadErrors Errors m, Functor m, MonadReader Options m) => [Term] -> Int -> [(Name, Term)] -> Term -> m Term
 
 quote vars d ctx q = case structure q of
   Nat n -> debug d "QuoteNat" ctx q $ do 
@@ -136,7 +137,7 @@ quote vars d ctx q = case structure q of
   NatOp n f x y -> debug d "QuoteNatOp" ctx q $ do
     x' <- quote vars d ctx x
     y' <- quote vars d ctx y
-    case n of
+    case show n of
       "add" -> return $ add vars `mkApp` x' `mkApp` y'
       "sub" -> return $ sub vars `mkApp` x' `mkApp` y'
       "mul" -> return $ mul vars `mkApp` x' `mkApp` y'

@@ -22,7 +22,7 @@ avoidCapture s x y t = (x', s') where
   fvt = freevars t
   fv = Set.unions [fvs, fvt, Set.singleton y]
 
-subst :: Term -> String -> Term -> Term
+subst :: Term -> Name -> Term -> Term
 subst t x t' = case structure t of
   Nat i                 ->  mkNat i
   NatOp i f t1 t2       ->  mkNatOp i f (subst t1 x t') (subst t2 x t')

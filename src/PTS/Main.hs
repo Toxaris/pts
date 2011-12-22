@@ -53,12 +53,12 @@ processJobs jobs = do
     then exitSuccess
     else exitFailure
 
-processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(String, Term)] m) => (Options, FilePath) -> m ()
+processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, Term)] m) => (Options, FilePath) -> m ()
 processJob (opt, file) = do 
   liftIO $ putStrLn $ "process file " ++ file
   runReaderT (processFile file) opt  
 
-processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(String, Term)] m, MonadIO m) => FilePath -> m ()
+processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Term)] m, MonadIO m) => FilePath -> m ()
 processFile file = do
   text <- liftIO (readFile file)
   text <- deliterate text
@@ -85,7 +85,7 @@ processStmt (Term t) = recover () $ do
 processStmt (Bind n Nothing t) = recover () $ do
   pts <- asks (optInstance)
   output (text "")
-  output (text "process binding of" <+> text n)
+  output (text "process binding of" <+> pretty 0 n)
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)])) 
   t <- prepareTerm t
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)])) 
@@ -96,7 +96,7 @@ processStmt (Bind n Nothing t) = recover () $ do
 processStmt (Bind n (Just t') t) = recover () $ do
   pts <- asks (optInstance)
   output (text "")
-  output (text "process binding of" <+> text n)
+  output (text "process binding of" <+> pretty 0 n)
   
   -- preprocess body
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)])) 
@@ -112,7 +112,7 @@ processStmt (Bind n (Just t') t) = recover () $ do
   q' <- typecheck 0 [] t''
   case structure (normalform q') of
     Const _ -> return ()
-    _       -> prettyFail $  text "Type error in top-level binding of " <+> text n
+    _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
                          $$ text "  expected:" <+> text "constant"
                          $$ text "     found:" <+> pretty 0 q'
   
@@ -123,7 +123,7 @@ processStmt (Bind n (Just t') t) = recover () $ do
   if equiv q t''
     then output (nest 2 (sep [text "type:", nest 2 (pretty 0 t' )]))
     else let (expected, given) = showDiff 0 (diff (normalform t'' ) (normalform q)) in 
-           prettyFail $ text "Type mismatch in top-level binding of" <+> text n
+           prettyFail $ text "Type mismatch in top-level binding of" <+> pretty 0 n
                      $$ text "  specified type:" <+> pretty 0 t'
                      $$ text "     normal form:" <+> text expected
                      $$ text "     actual type:" <+> text given

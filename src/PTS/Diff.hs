@@ -98,8 +98,8 @@ showDiff p (DDifferent t1 t2) = (t1' ++ spaces1,
   t2' = showToplevel p t2
 
 showDiff p (DNatOp n x y) = prio 2 p
-                            (n ++ " " ++ x1 ++ " " ++ y1, 
-                             n ++ " " ++ x2 ++ " " ++ y2) where
+                            (show n ++ " " ++ x1 ++ " " ++ y1, 
+                             show n ++ " " ++ x2 ++ " " ++ y2) where
   (x1, x2) = showDiff 3 x
   (y1, y2) = showDiff 3 y
 
@@ -117,30 +117,30 @@ showDiff p (DApp f a) = prio 2 p
   (a1, a2) = showDiff 3 a
 
 showDiff p (DLam n q b) = prio 0 p
-                          ("lambda " ++ n ++ " : " ++ q1 ++ " . " ++ b1,
-                           "lambda " ++ n ++ " : " ++ q2 ++ " . " ++ b2) where
+                          ("lambda " ++ show n ++ " : " ++ q1 ++ " . " ++ b1,
+                           "lambda " ++ show n ++ " : " ++ q2 ++ " . " ++ b2) where
   (q1, q2) = showDiff 0 q
   (b1, b2) = showDiff 0 b
 
 showDiff p (DPi n q b True True) = prio 0 p 
-                         ("Pi " ++ n ++ " : " ++ q1 ++ " . " ++ b1,
-                          "Pi " ++ n ++ " : " ++ q2 ++ " . " ++ b2) where
+                         ("Pi " ++ show n ++ " : " ++ q1 ++ " . " ++ b1,
+                          "Pi " ++ show n ++ " : " ++ q2 ++ " . " ++ b2) where
   (q1, q2) = showDiff 0 q
   (b1, b2) = showDiff 0 b
   
 showDiff p (DPi n q b True False) = prio 1 p 
-                         ("Pi " ++ n  ++ " : " ++ q1 ++ " .  " ++ b1,
-                          "   " ++ n2 ++ "   " ++ q2 ++ " -> " ++ b2) where
+                         ("Pi " ++ show n  ++ " : " ++ q1 ++ " .  " ++ b1,
+                          "   " ++ show n2 ++ "   " ++ q2 ++ " -> " ++ b2) where
   (q1, q2) = showDiff 2 q
   (b1, b2) = showDiff 1 b
-  n2 = replicate (length n) ' '
+  n2 = replicate (length (show n)) ' '
 
 showDiff p (DPi n q b False True) = prio 1 p 
-                         ("   " ++ n1 ++ "   " ++ q1 ++ " -> " ++ b1,
-                          "Pi " ++ n  ++ " : " ++ q2 ++ " .  " ++ b2) where
+                         ("   " ++ show n1 ++ "   " ++ q1 ++ " -> " ++ b1,
+                          "Pi " ++ show n  ++ " : " ++ q2 ++ " .  " ++ b2) where
   (q1, q2) = showDiff 2 q
   (b1, b2) = showDiff 1 b
-  n1 = replicate (length n) ' '
+  n1 = replicate (length (show n)) ' '
 
 showDiff p (DPi n q b False False) = prio 1 p 
                          (q1 ++ " -> " ++ b1,
