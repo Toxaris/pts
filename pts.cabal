@@ -71,7 +71,17 @@ Test-suite tests
   Type: exitcode-stdio-1.0
   Hs-source-dirs: src
   Main-is: tests.hs
+  Other-modules:       Parametric.AST,
+                       PTS.AST,
+                       PTS.Instances,
+                       PTS.Instances.Arbitrary
+                       PTS.Substitution,
+                       PTS.Substitution.Properties
   Build-depends:       base >= 4.0 && < 5,
+                       mtl == 2.0.*,
+                       transformers == 0.2.*,
+                       containers == 0.4.*,
+                       pretty == 1.0.*,
                        test-framework,
                        test-framework-quickcheck2,
                        test-framework-hunit,
