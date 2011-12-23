@@ -1,4 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
 module PTS.Substitution.Properties where
 
 import Data.Set
