@@ -9,12 +9,12 @@ module Parametric.Error
   , strMsg
   ) where
 
-import Control.Monad
-import Control.Monad.Trans.Error(ErrorList(..))
 import Control.Applicative
+import Control.Monad
+import Control.Monad.Trans.Error (ErrorList(..))
 
 import Data.Char
-import Data.List(intercalate)
+import Data.List (intercalate)
 
 import Tools.Errors.Class
 

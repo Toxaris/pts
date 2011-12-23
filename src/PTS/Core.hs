@@ -2,29 +2,27 @@
 module PTS.Core where
 
 import Control.Monad
-import Control.Monad.Trans
 import Control.Monad.Reader
+import Control.Monad.Trans
 
+import Data.Char
 import Data.List
 import Data.Maybe
-import Data.Char
-
 import Data.Set (Set)
 import qualified Data.Set as Set
-
-import Tools.Errors.Class
 
 import Parametric.Error
 import Parametric.Pretty
 
 import PTS.AST
-import PTS.Substitution
-import PTS.Pretty
 import PTS.Diff
-import Parametric.Pretty
 import PTS.Instances
-import PTS.Options
 import PTS.Normalisation
+import PTS.Options
+import PTS.Pretty
+import PTS.Substitution
+
+import Tools.Errors.Class
 
 -- implementation of pure type systems as described on p.98 in Barendregt's "Lambda Calculi with Types"
 -- ftp://ftp.cs.kun.nl/pub/CompMath.Found/HBKJ.ps.Z

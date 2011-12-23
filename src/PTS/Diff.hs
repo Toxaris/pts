@@ -3,11 +3,11 @@ module PTS.Diff where
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import PTS.AST
-import PTS.Substitution (freshCommonVar)
-import PTS.Pretty
-
 import Parametric.Pretty
+
+import PTS.AST
+import PTS.Pretty
+import PTS.Substitution (freshCommonVar)
 
 data Diff
   = DEqual Term

@@ -9,8 +9,8 @@ import Control.Monad.Reader(ReaderT, mapReaderT)
 import Control.Monad.Reader.Class
 import Control.Monad.State.Class
 
-import Tools.Instances
 import Tools.Errors.Class
+import Tools.Instances
 
 type ErrorsT = ErrorsT'
 runErrorsT = runErrorsT'

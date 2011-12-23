@@ -1,27 +1,28 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
 module Main where
 
-import System.Environment
-import System.IO (hPutStrLn, stderr)
-import System.Exit (exitSuccess, exitFailure)
-
 import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.State
 import Control.Monad.Reader
 
-import Tools.Errors
+import System.Environment
+import System.IO (hPutStrLn, stderr)
+import System.Exit (exitSuccess, exitFailure)
+
 import Parametric.Error
 import Parametric.Pretty hiding (when)
 
 import PTS.AST
-import PTS.Substitution
-import PTS.Parser
 import PTS.Core
 import PTS.Diff
 import PTS.Instances
-import PTS.Options
 import PTS.Normalisation
+import PTS.Options
+import PTS.Parser
+import PTS.Substitution
+
+import Tools.Errors
 
 deliterateLine ('>' : ' ' : line) = ' ' : ' ' : line
 deliterateLine _                  = ""

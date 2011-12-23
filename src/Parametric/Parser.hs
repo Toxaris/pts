@@ -8,18 +8,19 @@ import System.IO
 import Control.Applicative hiding (many)
 import Control.Monad
 
-import Data.Eq
 import Data.Either
+import Data.Eq
 import Data.Foldable
 
 import Text.ParserCombinators.Parsec hiding ((<|>))
 import qualified Text.ParserCombinators.Parsec as Parsec
 
-import Tools.Errors.Class
-
-import Tools.Instances
-import Parametric.Parser.Error
 import Parametric.Error
+import Parametric.Parser.Error
+
+import Tools.Errors.Class
+import Tools.Instances
+
 
      ---------------------
     -- PARAMETRIC PARSER --

@@ -4,7 +4,6 @@ module PTS.AST.Arbitrary where
 import Test.QuickCheck
 
 import PTS.AST
-
 import PTS.Instances
 import PTS.Instances.Arbitrary
 

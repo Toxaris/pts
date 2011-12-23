@@ -3,30 +3,30 @@ module PTS.Parser ( parseStmt, parseStmts, parseTerm ) where
 
 import Prelude hiding (abs, pi, elem, notElem, const)
 
-import System.IO
-
 import Control.Applicative hiding (many, Const)
 import Control.Monad
 import Control.Monad.Reader
 
-import Data.Eq
-import Data.Either
-import Data.Foldable
 import Data.Char
+import Data.Either
+import Data.Eq
+import Data.Foldable
+
+import System.IO
 
 import Text.ParserCombinators.Parsec hiding ((<|>))
 import qualified Text.ParserCombinators.Parsec as Parsec
 
-import Tools.Instances
 import Tools.Errors.Class
+import Tools.Instances
 
+import Parametric.Error
 import Parametric.Parser
 import Parametric.Parser.Error
-import Parametric.Error
 
 import PTS.AST
-import PTS.Options
 import PTS.Instances
+import PTS.Options
 
      -----------------
     -- PTS PARSER --

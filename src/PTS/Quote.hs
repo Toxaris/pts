@@ -3,24 +3,27 @@ module PTS.Quote where
 
 import Prelude hiding (div)
 
-import PTS.AST
-import PTS.Instances (C (C))
-import PTS.Core hiding (debug)
-import PTS.Parser (parseTerm)
-import Parametric.Error
-import Tools.Errors.Class
-import Tools.Errors(runErrorsT)
-import Parametric.Pretty(multiLine)
-import Control.Monad.Trans
-import Control.Monad.Reader
 import Control.Monad.Identity
-import PTS.Pretty
-import PTS.Instances (fomegastar)
-import PTS.Options
-import System.IO.Unsafe
-import PTS.Normalisation
+import Control.Monad.Reader
+import Control.Monad.Trans
 
 import qualified Data.Set as Set
+
+import System.IO.Unsafe
+
+import Parametric.Error
+import Parametric.Pretty(multiLine)
+
+import PTS.AST
+import PTS.Core hiding (debug)
+import PTS.Instances (C (C), fomegastar)
+import PTS.Normalisation
+import PTS.Options
+import PTS.Parser (parseTerm)
+import PTS.Pretty
+
+import Tools.Errors (runErrorsT)
+import Tools.Errors.Class
 
 rep = (!! 0)
 lam = (!! 1)

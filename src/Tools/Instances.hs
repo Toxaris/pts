@@ -5,10 +5,9 @@ import Prelude ()
 
 import Control.Applicative(Applicative(..), Alternative(..))
 import Control.Monad(Monad(..), MonadPlus(..), ap)
-
 import Control.Monad.Error(Error, ErrorT)
-import Control.Monad.Reader
 import Control.Monad.Identity(Identity)
+import Control.Monad.Reader
 import Control.Monad.Writer(Writer, WriterT)
 
 import Data.Monoid(Monoid)

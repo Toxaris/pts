@@ -1,14 +1,14 @@
 {-# LANGUAGE NoMonomorphismRestriction, BangPatterns #-}
 module PTS.Normalisation  where
 
-import PTS.AST
-import PTS.Substitution (subst)
-
 import Data.List (nub)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
+
+import PTS.AST
+import PTS.Substitution (subst)
 
 -- select a version
 normalform = normalform1

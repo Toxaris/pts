@@ -2,7 +2,6 @@
 module Parametric.AST where
 
 import Data.Char (isLetter, isDigit, isAlphaNum)
-
 import Data.Set (Set)
 import qualified Data.Set as Set
 

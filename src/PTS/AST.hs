@@ -26,17 +26,17 @@ module PTS.AST
 import Control.Applicative hiding (Const)
 import Control.Monad.Reader
 
+import Data.IORef
 import Data.List (nub, (\\), intersperse)
-
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Parametric.Error
-import Parametric.AST (Name, freshvarl)
-
 import System.IO.Unsafe (unsafePerformIO)
-import Data.IORef
+
+import Parametric.AST (Name, freshvarl)
+import Parametric.Error
 import PTS.Instances (C)
+
 
 -- Syntax
 

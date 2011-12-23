@@ -3,14 +3,13 @@ module PTS.Substitution.Properties where
 
 import Data.Set
 
-import Test.QuickCheck hiding ((.&.))
 import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.QuickCheck hiding ((.&.))
 
 import PTS.AST
 import PTS.AST.Arbitrary
-import PTS.Substitution
-
 import PTS.Pretty
+import PTS.Substitution
 
 substAvoidsCapture = testProperty "substitution avoids capture" $
   \t x t' ->

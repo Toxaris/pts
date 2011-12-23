@@ -1,6 +1,7 @@
 module PTS.Instances where
 
 import Control.Monad
+
 import Data.Char
 import Data.List
 

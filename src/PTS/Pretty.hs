@@ -4,14 +4,13 @@ module PTS.Pretty
   , multiLine
   , showCtx ) where
 
-import Data.Set (Set)
-import qualified Data.Set as Set
-  
 import Control.Arrow(first)
 
-import Parametric.Pretty
-
 import Data.List(intersperse)
+import Data.Set (Set)
+import qualified Data.Set as Set
+
+import Parametric.Pretty
 
 import PTS.AST
 import PTS.Instances

@@ -1,18 +1,20 @@
 module Main where
 
-import PTS.Quote
-import PTS.Parser
-import PTS.Core
-import PTS.Pretty
-import PTS.AST
-import PTS.Options
-import PTS.Instances (fomegastar, C (C))
-import PTS.Normalisation
-
 import Control.Monad.Error
 import Control.Monad.Reader
+
 import Tools.Errors (runErrorsT)
+
 import Parametric.Error (showErrors, annotateCode)
+
+import PTS.AST
+import PTS.Core
+import PTS.Instances (fomegastar, C (C))
+import PTS.Normalisation
+import PTS.Options
+import PTS.Parser
+import PTS.Pretty
+import PTS.Quote
 
 main' = do
   text <- liftIO getContents

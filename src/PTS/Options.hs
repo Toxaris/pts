@@ -2,12 +2,15 @@
 module PTS.Options where
 
 import Control.Monad
-import Control.Monad.Trans
 import Control.Monad.Reader.Class
+import Control.Monad.Trans
+
 import Data.Char
 import Data.List (mapAccumL)
+
 import System.Console.GetOpt
 import System.Environment (getArgs)
+
 import Parametric.Pretty (Pretty, Doc, multiLine)
 
 import PTS.Instances
