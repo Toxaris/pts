@@ -6,10 +6,12 @@ import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.HUnit ((@=?))
 import Test.QuickCheck hiding ((.&.))
 
+import PTS.Core.Tests
 import PTS.Substitution.Tests
 
-main = defaultMain tests
+main = defaultMain Main.tests
 
 tests =
-  [  substAvoidsCapture
+  [  PTS.Substitution.Tests.tests
+  ,  PTS.Core.Tests.tests
   ]

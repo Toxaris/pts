@@ -1,5 +1,11 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, UndecidableInstances, GADTs #-}
-module Test.Property where
+module Test.Property
+  (  Property ()
+  ,  property
+  ,  (==>)
+  ,  test
+  ,  Q.Arbitrary ()
+  )  where
 
 import qualified Test.QuickCheck as Q
 

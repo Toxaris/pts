@@ -29,3 +29,8 @@ substAvoidsCapture
      ,  testCase "(Pi x . y) [y |-> x]" $ assertBool "Variable captured." $ test $
           Prop.substAvoidsCapture (mkPi x (mkConst star) (mkVar y)) y (mkVar x)
      ]
+
+tests
+  =  testGroup "PTS.Substitution"
+     [  substAvoidsCapture
+     ]
