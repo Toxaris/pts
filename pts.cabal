@@ -72,11 +72,16 @@ Test-suite tests
   Hs-source-dirs: src
   Main-is: tests.hs
   Other-modules:       Parametric.AST,
+                       Parametric.Error,
+                       Parametric.Pretty,
                        PTS.AST,
+                       PTS.AST.Arbitrary,
                        PTS.Instances,
                        PTS.Instances.Arbitrary
+                       PTS.Pretty
                        PTS.Substitution,
-                       PTS.Substitution.Properties
+                       PTS.Substitution.Properties,
+                       Tools.Errors.Class
   Build-depends:       base >= 4.0 && < 5,
                        mtl == 2.0.*,
                        transformers == 0.2.*,
