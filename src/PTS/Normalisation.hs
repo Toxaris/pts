@@ -100,7 +100,7 @@ data Context
   | Local !Env !Context
 
 data Env
-  = Env (Set Name) (Map Name (Term, Env))
+  = Env Names (Map Name (Term, Env))
 
 bindEnv :: Name -> Term -> Env -> Env -> Env
 bindEnv n boundT boundEnv (Env ids env) = Env ids' env' where 
@@ -118,10 +118,10 @@ lookupEnv n (Env ids env) = Map.lookup n env
 emptyEnv :: Env
 emptyEnv = Env Set.empty Map.empty
 
-namesEnv :: Env -> Set Name
+namesEnv :: Env -> Names
 namesEnv (Env ids env) = ids
 
-fresh :: Name -> Set Name -> Name
+fresh :: Name -> Names -> Name
 fresh n ns
   = if n `Set.notMember` ns then n else freshvarl ns n
 

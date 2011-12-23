@@ -1,6 +1,7 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 module PTS.AST
   ( Name
+  , Names
   , Term ()
   , TermStructure (..)
   , structure
@@ -33,7 +34,7 @@ import qualified Data.Set as Set
 
 import System.IO.Unsafe (unsafePerformIO)
 
-import Parametric.AST (Name, freshvarl)
+import Parametric.AST (Name, Names, freshvarl)
 import Parametric.Error
 import PTS.Instances (C)
 
@@ -42,8 +43,6 @@ import PTS.Instances (C)
 
 -- the string in NatOp is an identifier for the function. It is necessary
 -- to check equivalence of terms (the functions cannot be directly compared)
-
-type Names = Set Name
 
 -- type Tag = Int
 
@@ -102,7 +101,7 @@ infixl 2 >>>
 
 freevars (MkTerm fv _) = fv
 
-mkFreevars :: Term -> Set Name
+mkFreevars :: Term -> Names
 mkFreevars t = case structure t of
   Var x            ->  Set.singleton x
   App t1 t2        ->  freevars t1 `Set.union` freevars t2

@@ -10,6 +10,8 @@ data Name
   | IndexName String Int
   deriving (Eq, Ord)
 
+type Names = Set Name
+
 instance Show Name where
   showsPrec _ (PlainName text) = showString text
   showsPrec _ (IndexName text i) = showString text . shows i
@@ -30,7 +32,7 @@ nextIndex :: Name -> Name
 nextIndex (PlainName text) = IndexName text 0
 nextIndex (IndexName text index) = IndexName text (index + 1)
 
-freshvarl :: Set Name -> Name -> Name
+freshvarl :: Names -> Name -> Name
 freshvarl xs x
   =  if x `Set.member` xs
      then freshvarl xs (nextIndex x)
