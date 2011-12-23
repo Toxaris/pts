@@ -81,6 +81,8 @@ Test-suite tests
                        PTS.Pretty
                        PTS.Substitution,
                        PTS.Substitution.Properties,
+                       PTS.Substitution.Tests,
+                       Test.Property,
                        Tools.Errors.Class
   Build-depends:       base >= 4.0 && < 5,
                        mtl == 2.0.*,
