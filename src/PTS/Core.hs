@@ -1,4 +1,4 @@
-{-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts, PatternGuards #-}
+{-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts, PatternGuards, FlexibleInstances #-}
 module PTS.Core where
 
 import Control.Monad
@@ -39,7 +39,7 @@ import Debug.Trace
 instance Eq Term where
   t == t' = structure t == structure t'
 
-instance Eq TermStructure where
+instance Eq (TermStructure Term) where
   (Var x) == (Var y) = x == y
   (Nat i) == (Nat j) = i == j
   (NatOp i _ t1 t2) == (NatOp i' _ t1' t2') = i == i' && t1 == t1' && t2 == t2'

@@ -46,21 +46,21 @@ import PTS.Instances (C)
 
 -- type Tag = Int
 
-data Term = MkTerm Names TermStructure
+data Term = MkTerm Names (TermStructure Term)
 
-structure :: Term -> TermStructure
+structure :: Term -> TermStructure Term
 structure (MkTerm _ t) = t
 
-data TermStructure
+data TermStructure alpha
   = Nat     Int
-  | NatOp   Name (Int -> Int -> Int) Term Term
-  | IfZero  Term Term Term
+  | NatOp   Name (Int -> Int -> Int) alpha alpha
+  | IfZero  alpha alpha alpha
   | Var     Name
   | Const   C
-  | App     Term Term
-  | Lam     Name Term Term
-  | Pi      Name Term Term
-  | Pos     Position Term
+  | App     alpha alpha
+  | Lam     Name alpha alpha
+  | Pi      Name alpha alpha
+  | Pos     Position alpha
 
 data Stmt 
   = Bind Name (Maybe Term) Term
@@ -73,7 +73,7 @@ data Stmt
 -- counter :: IORef Tag
 -- counter = unsafePerformIO (newIORef 0)
 
-mkTerm :: TermStructure -> Term
+mkTerm :: TermStructure Term -> Term
 mkTerm t = result where
   result = MkTerm (mkFreevars result) t
 
