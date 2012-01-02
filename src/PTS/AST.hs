@@ -1,4 +1,4 @@
-{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE NoMonomorphismRestriction, DeriveFunctor #-}
 module PTS.AST
   ( Name
   , Names
@@ -61,6 +61,7 @@ data TermStructure alpha
   | Lam     Name alpha alpha
   | Pi      Name alpha alpha
   | Pos     Position alpha
+  deriving (Functor)
 
 data Stmt 
   = Bind Name (Maybe Term) Term
@@ -96,6 +97,13 @@ mkPos p t          =  mkTerm (Pos p t)
 
 handlePos f p t = annotatePos p $ mkPos p <$> f t
 
+-- algebras
+type Algebra alpha
+  = TermStructure alpha -> alpha
+
+eval :: Algebra alpha -> Term -> alpha
+eval algebra term = algebra (fmap (eval algebra) (structure term))
+
 infixl 2 >>>
 (>>>) = flip (.)
 
@@ -116,12 +124,15 @@ freshvar :: Term -> Name -> Name
 freshvar t x = freshvarl (freevars t) x
 
 allvars :: Term -> [Name]
-allvars t = case structure t of
-  Var x            ->  [x]
-  App t1 t2        ->  nub $ allvars t1 ++ allvars t2
-  NatOp _ _ t1 t2  ->  nub $ allvars t1 ++ allvars t2
-  IfZero t1 t2 t3  ->  nub $ allvars t1 ++ allvars t2  ++ allvars t3
-  Lam x t1 t2      ->  nub $ allvars t1 ++ allvars t2 ++ [x]
-  Pi x t1 t2       ->  nub $ allvars t1 ++ allvars t2 ++ [x]
-  Pos p t          ->  allvars t
-  _                ->  []
+allvars t = eval allvarsAlgebra t
+
+allvarsAlgebra :: Algebra [Name]
+allvarsAlgebra (Var x)            =  [x]
+allvarsAlgebra (App t1 t2)        =  nub $ t1 ++ t2
+allvarsAlgebra (NatOp _ _ t1 t2)  =  nub $ t1 ++ t2
+allvarsAlgebra (IfZero t1 t2 t3)  =  nub $ t1 ++ t2 ++ t3
+allvarsAlgebra (Lam x t1 t2)      =  nub $ t1 ++ t2 ++ [x]
+allvarsAlgebra (Pi x t1 t2)       =  nub $ t1 ++ t2 ++ [x]
+allvarsAlgebra (Pos p t)          =  t
+allvarsAlgebra _                  =  []
+
