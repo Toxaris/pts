@@ -79,7 +79,7 @@ unsafeQuoteQuote t = unsafePerformIO $ do
 
 quotequote :: (MonadIO m, MonadReader Options m, MonadErrors Errors m, Functor m) => Int -> [(Name, Term)] -> Term -> m Term
 quotequote d ctx t = do
-  let vars = map (freshvarl (Set.fromList (allvars t))) varnames 
+  let vars = map (freshvarl (allvars t)) varnames
   q <- quote (map mkVar vars) 0 [] t
   return $ foldr (uncurry mkLam) q (zip vars (interface (rep vars)))  
 

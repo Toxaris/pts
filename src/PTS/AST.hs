@@ -123,16 +123,16 @@ mkFreevars t = case structure t of
 freshvar :: Term -> Name -> Name
 freshvar t x = freshvarl (freevars t) x
 
-allvars :: Term -> [Name]
+allvars :: Term -> Names
 allvars t = eval allvarsAlgebra t
 
-allvarsAlgebra :: Algebra [Name]
-allvarsAlgebra (Var x)            =  [x]
-allvarsAlgebra (App t1 t2)        =  nub $ t1 ++ t2
-allvarsAlgebra (NatOp _ _ t1 t2)  =  nub $ t1 ++ t2
-allvarsAlgebra (IfZero t1 t2 t3)  =  nub $ t1 ++ t2 ++ t3
-allvarsAlgebra (Lam x t1 t2)      =  nub $ t1 ++ t2 ++ [x]
-allvarsAlgebra (Pi x t1 t2)       =  nub $ t1 ++ t2 ++ [x]
+allvarsAlgebra :: Algebra Names
+allvarsAlgebra (Var x)            =  Set.singleton x
+allvarsAlgebra (App t1 t2)        =  t1 `Set.union` t2
+allvarsAlgebra (NatOp _ _ t1 t2)  =  t1 `Set.union` t2
+allvarsAlgebra (IfZero t1 t2 t3)  =  t1 `Set.union` t2 `Set.union` t3
+allvarsAlgebra (Lam x t1 t2)      =  Set.insert x (t1 `Set.union` t2)
+allvarsAlgebra (Pi x t1 t2)       =  Set.insert x (t1 `Set.union` t2)
 allvarsAlgebra (Pos p t)          =  t
-allvarsAlgebra _                  =  []
+allvarsAlgebra _                  =  Set.empty
 
