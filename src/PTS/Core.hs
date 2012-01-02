@@ -56,9 +56,8 @@ instance Eq TermStructure where
   Pos _ t == Pos _ t' = t == t'
   _ == _ = False
 
-instance Ord Term where
-  compare a b = compare (show a) (show b)
-
+-- instance Ord Term where
+--   compare a b = compare (show a) (show b)
 
 -- Reduction and Evaluation of terms
 isVal :: Term -> Bool
