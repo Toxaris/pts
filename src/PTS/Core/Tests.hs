@@ -21,40 +21,57 @@ z :: Name
 z = read "z"
 
 alphaEquivalenceReflexive
-  =  testGroup "alpha equivalence is reflexive"
-     [  testProperty "random inputs" $
-          Prop.alphaEquivalenceReflexive
-     ]
+  =  testProperty "alpha equivalence is reflexive"
+       Prop.alphaEquivalenceReflexive
 
 alphaEquivalenceSymmetric
-  =  testGroup "alpha equivalence is symmetric"
-     [  testProperty "random inputs" $
-          Prop.alphaEquivalenceSymmetric
-     ]
+  =  testProperty "symmetry"
+       Prop.alphaEquivalenceSymmetric
 
 alphaEquivalenceTransitive
-  =  testGroup "alpha equivalence is transitive"
-     [  testProperty "random inputs" $
-          Prop.alphaEquivalenceTransitive
-     ]
+  =  testProperty "transitivity"
+       Prop.alphaEquivalenceTransitive
 
 alphaEquivalenceShareFreevars
-  =  testGroup "alpha equivalent terms share the same free variables"
-     [  testProperty "random inputs" $
-          Prop.alphaEquivalenceShareFreevars
-     ]
+  =  testProperty "same free variables" $
+       Prop.alphaEquivalenceShareFreevars
 
 ndotsLength
-  =  testGroup "n dots are n characters long"
-     [  testProperty "random inputs" $
-          Prop.ndotsLength
-     ]
+  =  testProperty "n characters long" $
+       Prop.ndotsLength
+
+ndotsContainsDots
+  =  testProperty "consists only of dots" $
+       Prop.ndotsContainsDots
+
+alphaEquivalent t1 t2
+  =  testCase (show t1 ++ " alpha-equiv. to " ++ show t2) $
+       assertBool "False negative: terms should be considered alpha-equiv." $
+       t1 == t2
+
+alphaInequivalent t1 t2
+  =  testCase (show t1 ++ " not alpha-equiv. to " ++ show t2) $
+       assertBool "False positive: terms should not be considered alpha-equiv." $
+       t1 /= t2
 
 tests
   =  testGroup "PTS.Core"
-     [  alphaEquivalenceReflexive
-     ,  alphaEquivalenceSymmetric
-     ,  alphaEquivalenceTransitive
-     ,  alphaEquivalenceShareFreevars
-     ,  ndotsLength
+     [  testGroup "alpha equivalence"
+        [  alphaEquivalenceReflexive
+        ,  alphaEquivalenceSymmetric
+        ,  alphaEquivalenceTransitive
+        ,  alphaEquivalenceShareFreevars
+        ,  alphaEquivalent x x
+        ,  alphaEquivalent (mkLam x (mkVar x) (mkVar x)) (mkLam y (mkVar x) (mkVar y))
+        ,  alphaEquivalent (mkLam y (mkVar x) (mkVar y)) (mkLam x (mkVar x) (mkVar x))
+        ,  alphaEquivalent (mkPi y (mkVar x) (mkVar y)) (mkPi x (mkVar x) (mkVar x))
+        ,  alphaEquivalent (mkPi x (mkVar x) (mkVar x)) (mkPi y (mkVar x) (mkVar y))
+        ,  alphaInequivalent (mkPi x (mkVar x) (mkVar x)) (mkPi y (mkVar y) (mkVar y))
+        ,  alphaInequivalent (mkLam x (mkVar x) (mkVar x)) (mkLam y (mkVar y) (mkVar y))
+        ,  alphaInequivalent (mkLam x (mkVar x) (mkVar x)) (mkPi x (mkVar x) (mkVar x))
+        ]
+     ,  testGroup "n dots"
+        [  ndotsLength
+        ,  ndotsContainsDots
+        ]
      ]

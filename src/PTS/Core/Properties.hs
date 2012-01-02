@@ -38,3 +38,7 @@ alphaEquivalenceShareFreevars = property $
 ndotsLength :: Property (Int -> Bool)
 ndotsLength = property $
   \n -> n >= 0 && n < 200 ==> length (ndots n) == n
+
+ndotsContainsDots :: Property (Int -> Bool)
+ndotsContainsDots = property $
+  \n -> n >= 0 && n < 200 ==> all ('.' ==) (ndots n)
