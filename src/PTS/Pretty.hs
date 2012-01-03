@@ -20,8 +20,8 @@ pAppR = 3
 pApp  = 2
 pArrL = 2
 pArr  = 1
-pLam  = 0
-pPi   = 0
+pLam  = 1
+pPi   = 1
 pIf0  = 2
 
 -- finding chains of similiar terms
