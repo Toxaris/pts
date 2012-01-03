@@ -28,6 +28,7 @@ Executable pts
                        PTS.Options,
                        Parametric.Error,
                        Parametric.AST,
+                       PTS.Algebra,
                        PTS.AST,
                        PTS.Normalisation,
                        PTS.Pretty,
@@ -75,11 +76,13 @@ Test-suite tests
   Other-modules:       Parametric.AST,
                        Parametric.Error,
                        Parametric.Pretty,
+                       PTS.Algebra,
                        PTS.AST,
                        PTS.AST.Arbitrary,
                        PTS.Instances,
-                       PTS.Instances.Arbitrary
-                       PTS.Pretty
+                       PTS.Instances.Arbitrary,
+                       PTS.Pretty,
+                       PTS.Pretty.Tests,
                        PTS.Substitution,
                        PTS.Substitution.Properties,
                        PTS.Substitution.Tests,

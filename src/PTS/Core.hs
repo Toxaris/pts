@@ -14,6 +14,7 @@ import qualified Data.Set as Set
 import Parametric.Error
 import Parametric.Pretty
 
+import PTS.Algebra
 import PTS.AST
 import PTS.Diff
 import PTS.Instances

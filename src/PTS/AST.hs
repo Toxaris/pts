@@ -15,9 +15,6 @@ module PTS.AST
   , mkLam   
   , mkPi    
   , mkPos   
-  -- , freevars2constants
-  , freevars
-  , freshvar
   , freshvarl
   , handlePos
   , C ()
@@ -45,10 +42,10 @@ import PTS.Instances (C)
 
 -- type Tag = Int
 
-data Term = MkTerm Names (TermStructure Term)
+data Term = MkTerm (TermStructure Term)
 
 structure :: Term -> TermStructure Term
-structure (MkTerm _ t) = t
+structure (MkTerm t) = t
 
 data TermStructure alpha
   = Nat     Int
@@ -75,7 +72,7 @@ data Stmt
 
 mkTerm :: TermStructure Term -> Term
 mkTerm t = result where
-  result = MkTerm (mkFreevars result) t
+  result = MkTerm t
 
 -- mkTerm :: TermStructure -> Term
 -- mkTerm t = unsafePerformIO $ do
@@ -98,19 +95,3 @@ handlePos f p t = annotatePos p $ mkPos p <$> f t
 
 infixl 2 >>>
 (>>>) = flip (.)
-
-freevars (MkTerm fv _) = fv
-
-mkFreevars :: Term -> Names
-mkFreevars t = case structure t of
-  Var x            ->  Set.singleton x
-  App t1 t2        ->  freevars t1 `Set.union` freevars t2
-  NatOp _ _ t1 t2  ->  freevars t1 `Set.union` freevars t2
-  IfZero t1 t2 t3  ->  Set.unions [freevars t1, freevars t2, freevars t3]
-  Lam x t1 t2      ->  freevars t1 `Set.union` (Set.delete x (freevars t2))
-  Pi x t1 t2       ->  freevars t1 `Set.union` (Set.delete x (freevars t2))
-  Pos p t          ->  freevars t
-  _                ->  Set.empty
-
-freshvar :: Term -> Name -> Name
-freshvar t x = freshvarl (freevars t) x

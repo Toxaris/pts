@@ -6,6 +6,7 @@ module PTS.Substitution
 import Data.Set (Set)
 import qualified Data.Set as Set
 
+import PTS.Algebra
 import PTS.AST
 
 -- substitution (generates fresh variables if needed to prevent accidential capture)

@@ -24,6 +24,7 @@ import Parametric.Error
 import Parametric.Parser
 import Parametric.Parser.Error
 
+import PTS.Algebra
 import PTS.AST
 import PTS.Instances
 import PTS.Options

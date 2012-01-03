@@ -4,6 +4,7 @@ import Data.Set
 
 import Test.Property
 
+import PTS.Algebra
 import PTS.AST
 import PTS.AST.Arbitrary
 import PTS.Core

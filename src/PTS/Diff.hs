@@ -5,6 +5,7 @@ import qualified Data.Set as Set
 
 import Parametric.Pretty
 
+import PTS.Algebra
 import PTS.AST
 import PTS.Pretty
 import PTS.Substitution (freshCommonVar)

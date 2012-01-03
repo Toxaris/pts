@@ -4,6 +4,10 @@ module PTS.Algebra
   , fold
   , allvars
   , allvarsAlgebra
+  , freevars
+  , freevarsAlgebra
+  , freshvar
+  , depZip
   ) where
 
 import Data.Set (Set)
@@ -34,3 +38,23 @@ allvarsAlgebra (Pi x t1 t2)       =  Set.insert x (t1 `Set.union` t2)
 allvarsAlgebra (Pos p t)          =  t
 allvarsAlgebra _                  =  Set.empty
 
+freevarsAlgebra :: Algebra Names
+freevarsAlgebra t = case t of
+  Var x            ->  Set.singleton x
+  App t1 t2        ->  t1 `Set.union` t2
+  NatOp _ _ t1 t2  ->  t1 `Set.union` t2
+  IfZero t1 t2 t3  ->  Set.unions [t1, t2, t3]
+  Lam x t1 t2      ->  t1 `Set.union` (Set.delete x t2)
+  Pi x t1 t2       ->  t1 `Set.union` (Set.delete x t2)
+  Pos p t          ->  t
+  _                ->  Set.empty
+
+freevars :: Term -> Names
+freevars = fold freevarsAlgebra
+
+freshvar :: Term -> Name -> Name
+freshvar t x = freshvarl (freevars t) x
+
+-- instance Arrow PreAlgebra?
+depZip :: PreAlgebra alpha alpha -> PreAlgebra (alpha, beta) beta -> PreAlgebra (alpha, beta) (alpha, beta)
+depZip f g x = (f (fmap fst x), g x)

@@ -7,6 +7,7 @@ import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 
+import PTS.Algebra
 import PTS.AST
 import PTS.Substitution (subst)
 
