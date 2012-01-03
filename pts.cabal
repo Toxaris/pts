@@ -58,6 +58,7 @@ Executable pts-quote
                        Tools.Errors,
                        PTS.Instances,
                        PTS.Options,
+                       PTS.Algebra,
                        PTS.AST,
                        PTS.Normalisation,
                        PTS.Pretty,
