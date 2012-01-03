@@ -2,7 +2,8 @@
 module PTS.Pretty 
   ( singleLine 
   , multiLine
-  , showCtx ) where
+  , showCtx
+  , prettyAlgebra) where
 
 import Control.Arrow(first)
 
@@ -25,28 +26,6 @@ pLam  = 1
 pPi   = 1
 pIf0  = 2
 
--- finding chains of similiar terms
-appChain = appChain' [] where
-  appChain' xs t = case structure t of
-    App f x  ->  appChain' (x:xs) f
-    Pos p t  ->  appChain' xs t
-    _        ->  (t, xs)
-
-lamChain t = case structure t of
-  Lam n q t  ->  first ((n, q) :) $ lamChain t
-  Pos p t    ->  lamChain t
-  _          ->  ([], t)
-
-piChain t = case structure t of
-  Pi n q t | n `Set.member` freevars t  ->  first ((n, q) :) $ piChain t
-  Pos p t                               ->  piChain t
-  _                                     ->  ([], t)
-
-arrChain t = case structure t of
-  Pi n q t | n `Set.notMember` freevars t  ->  first (q :) $ arrChain t
-  Pos p t                                  ->  arrChain t
-  _                                        ->  ([], t)
-
 -- pretty printing
 instance Pretty Name where
   pretty _ name = text (show name)
@@ -55,49 +34,92 @@ instance Pretty C where
   pretty _ (C 0) = text "Nat"
   pretty _ (C n) = text (replicate n '*')
 
+data PrettyChain
+  = AppChain Bool Doc [Doc]
+  | LamChain [(Doc, Doc)] Doc
+  | PiChain [(Doc, Doc)] Doc
+  | ArrChain [Doc] Doc
+  | Atomic Doc
+  | Composite Priority Doc
+
+type Priority = Int
+
+instance Pretty PrettyChain where
+  pretty p (AppChain atomic operator arguments) =
+    parens `when` (pApp < p) $
+      (if atomic then hsep else sep)
+        [operator, nest 2 . sep . reverse $ arguments]
+
+  pretty p (LamChain lams body) =
+    parens `when` (pLam < p) $
+      sep [ sep . map (\(n, q) -> text "lambda" <+> pretty 0 n <+> text ":" <+> q <+> text ".") $ lams
+          , nest 2 $ body ]
+
+  pretty p (PiChain pis body) =
+    parens `when` (pPi < p) $
+      sep [ sep . map (\(n, q) -> text "Pi" <+> n <+> text ":" <+> q <+> text ".") $ pis
+          , nest 2 $ body ]
+
+  pretty p (ArrChain arrs body) =
+    parens `when` (pArr < p) $
+      sep $ [sep . map (\q -> q <+> text "->") $ arrs, body] -- TODO is this correct?
+
+  pretty p (Atomic t) =
+    t
+
+  pretty p (Composite p' t) =
+    parens `when` (p' < p) $
+      t
+
+prettyAlgebra :: PreAlgebra (Names, PrettyChain) PrettyChain
+prettyAlgebra (Nat n) = Atomic $
+  int n
+
+prettyAlgebra (NatOp n _ (_, a) (_, b)) = Composite pApp $
+  pretty 0 n <+> pretty pAppR a <+> pretty pAppR b
+
+prettyAlgebra (IfZero (_, c) (_, t) (_, e)) = Composite pIf0 $
+  sep [ text "if" <+> pretty pIf0 c
+      , nest 2 $ text "then" <+> pretty pIf0 t
+      , nest 2 $ text "else" <+> pretty pIf0 e ]
+
+prettyAlgebra (Var n) = Atomic $
+  pretty 0 n
+
+prettyAlgebra (Const c) = Atomic $
+  pretty 0 c
+
+prettyAlgebra (App (_, AppChain atomic operator arguments) (_, argument)) =
+  AppChain atomic operator (pretty pAppR argument : arguments)
+
+prettyAlgebra (App (_, Atomic operator) (_, argument)) =
+  AppChain True (pretty pApp operator) [pretty pAppR argument]
+
+prettyAlgebra (App (_, operator) (_, argument)) =
+  AppChain False (pretty pApp operator) [pretty pAppR argument]
+
+prettyAlgebra (Lam name (_, qualifier) (_, LamChain lams body)) =
+  LamChain ((pretty 0 name, pretty pLam qualifier) : lams) body
+
+prettyAlgebra (Lam name (_, qualifier) (_, body)) =
+  LamChain [(pretty 0 name, pretty pLam qualifier)] (pretty pLam body)
+
+prettyAlgebra (Pi name (_, qualifier) (freevars, PiChain lams body)) | name `Set.member` freevars =
+  PiChain ((pretty 0 name, pretty pPi qualifier) : lams) body
+
+prettyAlgebra (Pi name (_, qualifier) (freevars, body)) | name `Set.member` freevars =
+  PiChain [(pretty 0 name, pretty pPi qualifier)] (pretty pPi body)
+
+prettyAlgebra (Pi name (_, qualifier) (freevars, ArrChain lams body)) | name `Set.notMember` freevars =
+  ArrChain (pretty pArrL qualifier : lams) body
+
+prettyAlgebra (Pi name (_, qualifier) (freevars, body)) | name `Set.notMember` freevars =
+  ArrChain [pretty pArrL qualifier] (pretty pArr body)
+
+prettyAlgebra (Pos _ (_, t)) = t
+
 instance Pretty Term where
-  pretty p t = case structure t of 
-    Nat n -> 
-      int n
-    
-    NatOp n _ a b -> parens `when` (pApp < p) $ 
-      pretty 0 n <+> pretty pAppR a <+> pretty pAppR b
-      
-    IfZero c t e -> parens `when` (pIf0 < p) $ 
-      sep [ text "if" <+> pretty pIf0 c
-          , nest p $ text "then" <+> pretty pIf0 t
-          , nest p $ text "else" <+> pretty pIf0 e ]
-          
-    Var n ->
-      pretty p n
-      
-    Const c -> 
-      pretty p c
-      
-    App _ _ -> parens `when` (pApp < p) $ 
-      let (f, xs) = appChain t in
-        (case structure f of 
-           Var _   -> hsep
-           Const _ -> hsep
-           _       -> sep)
-          [ pretty pApp f
-          , nest 2 . sep . map (pretty pAppR) $ xs ]
-      
-    Lam _ _ _ -> parens `when` (pLam < p) $ 
-      let (lams, body) = lamChain t in
-        sep [ sep . map (\(n, q) -> text "lambda" <+> pretty 0 n <+> text ":" <+> pretty pLam q <+> text ".") $ lams
-            , nest 2 $ pretty pLam body ]
-    
-    Pi n _ t' | n `Set.member` freevars t' -> parens `when` (pPi < p) $
-      let (pis, body) = piChain t in
-       sep [ sep . map (\(n, q) -> text "Pi" <+> pretty 0 n <+> text ":" <+> pretty pPi q <+> pretty p ".") $ pis
-           , nest 2 $ pretty pPi body ]
-    
-    Pi _ _ _ -> parens `when` (pArr < p) $
-      let (arrs, body) = arrChain t in
-       sep $ [ sep . map (\q -> pretty pArrL q <+> pretty p "->") $ arrs] ++ [ pretty pArr body ]
-    
-    Pos _ t -> pretty p t
+  pretty p t = pretty p (snd (fold (depZip freevarsAlgebra prettyAlgebra) t))
 
 instance Pretty Stmt where
   pretty p (Bind n Nothing t)   = pretty 0 n <+> text "=" <+> pretty 0 t
