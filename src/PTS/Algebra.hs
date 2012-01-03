@@ -1,5 +1,6 @@
 module PTS.Algebra
-  ( Algebra
+  ( PreAlgebra
+  , Algebra
   , fold
   , allvars
   , allvarsAlgebra
@@ -11,8 +12,11 @@ import qualified Data.Set as Set
 import PTS.AST
 
 -- algebras
+type PreAlgebra alpha beta
+  = TermStructure alpha -> beta
+
 type Algebra alpha
-  = TermStructure alpha -> alpha
+  = PreAlgebra alpha alpha
 
 fold :: Algebra alpha -> Term -> alpha
 fold algebra term = algebra (fmap (fold algebra) (structure term))
