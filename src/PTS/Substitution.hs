@@ -9,7 +9,7 @@ import qualified Data.Set as Set
 import PTS.Algebra
 import PTS.AST
 
--- substitution (generates fresh variables if needed to prevent accidential capture)
+-- substitution (generates fresh variables if needed to prevent accidental capture)
 
 avoidCapture :: Term -> Name -> Name -> Term -> (Name, Term)
 avoidCapture s x y t = (x', s') where
