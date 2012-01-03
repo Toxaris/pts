@@ -14,6 +14,7 @@ import System.IO.Unsafe
 import Parametric.Error
 import Parametric.Pretty(multiLine)
 
+import PTS.Algebra
 import PTS.AST
 import PTS.Core hiding (debug)
 import PTS.Instances (C (C), fomegastar)

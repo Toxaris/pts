@@ -20,7 +20,6 @@ module PTS.AST
   , freshvar
   , freshvarl
   , handlePos
-  , allvars
   , C ()
   ) where
 
@@ -97,13 +96,6 @@ mkPos p t          =  mkTerm (Pos p t)
 
 handlePos f p t = annotatePos p $ mkPos p <$> f t
 
--- algebras
-type Algebra alpha
-  = TermStructure alpha -> alpha
-
-eval :: Algebra alpha -> Term -> alpha
-eval algebra term = algebra (fmap (eval algebra) (structure term))
-
 infixl 2 >>>
 (>>>) = flip (.)
 
@@ -122,17 +114,3 @@ mkFreevars t = case structure t of
 
 freshvar :: Term -> Name -> Name
 freshvar t x = freshvarl (freevars t) x
-
-allvars :: Term -> Names
-allvars t = eval allvarsAlgebra t
-
-allvarsAlgebra :: Algebra Names
-allvarsAlgebra (Var x)            =  Set.singleton x
-allvarsAlgebra (App t1 t2)        =  t1 `Set.union` t2
-allvarsAlgebra (NatOp _ _ t1 t2)  =  t1 `Set.union` t2
-allvarsAlgebra (IfZero t1 t2 t3)  =  t1 `Set.union` t2 `Set.union` t3
-allvarsAlgebra (Lam x t1 t2)      =  Set.insert x (t1 `Set.union` t2)
-allvarsAlgebra (Pi x t1 t2)       =  Set.insert x (t1 `Set.union` t2)
-allvarsAlgebra (Pos p t)          =  t
-allvarsAlgebra _                  =  Set.empty
-
