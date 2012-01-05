@@ -37,7 +37,8 @@ Executable pts
                        Parametric.Parser.Error,
                        Parametric.Parser,
                        PTS.Parser,
-                       Tools.Errors
+                       Tools.Errors,
+                       Control.Monad.Log
   -- Build-tools:         
 
 Executable pts-quote
@@ -66,14 +67,16 @@ Executable pts-quote
                        PTS.Diff,
                        PTS.Core,
                        PTS.Parser,
-                       PTS.Quote
+                       PTS.Quote,
+                       Control.Monad.Log
 
 
 Test-suite tests
   Type: exitcode-stdio-1.0
   Hs-source-dirs: src
   Main-is: tests.hs
-  Other-modules:       Parametric.AST,
+  Other-modules:       Control.Monad.Log,
+                       Parametric.AST,
                        Parametric.Error,
                        Parametric.Pretty,
                        PTS.Algebra,
@@ -97,5 +100,6 @@ Test-suite tests
                        test-framework-quickcheck2,
                        test-framework-hunit,
                        QuickCheck,
-                       HUnit
+                       HUnit,
+                       parsec == 3.1.*
   -- Ghc-options: -Wall -fno-warn-orphans

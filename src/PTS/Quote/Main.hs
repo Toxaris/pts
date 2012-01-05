@@ -1,6 +1,7 @@
 module Main where
 
 import Control.Monad.Error
+import Control.Monad.Log
 import Control.Monad.Reader
 
 import Tools.Errors (runErrorsT)
@@ -20,11 +21,11 @@ main' = do
   text <- liftIO getContents
   let code = lines text
   e <- parseTerm "<stdin>" text
-  t <- annotateCode code $ typecheck 0 [] e
-  k <- annotateCode code $ typecheck 0 [] t
+  t <- annotateCode code $ typecheck [] e
+  k <- annotateCode code $ typecheck [] t
   case structure (normalform k) of
     Const (C 1) -> do q <- annotateCode code $ quotequote 0 [] e
                       liftIO (putStrLn (multiLine 80 q))
     _ -> do liftIO (putStrLn (multiLine 80 e))
 
-main = runErrorsT $ runReaderT (main' `catchError` \e -> liftIO $ putStrLn (showErrors e)) defaultOptions
+main = runErrorsT $ runReaderT (runConsoleLogT (main' `catchError` \e -> liftIO $ putStrLn (showErrors e)) False) defaultOptions

@@ -2,6 +2,7 @@
 module Main where
 
 import Control.Monad
+import Control.Monad.Log
 import Control.Monad.Trans
 import Control.Monad.State
 import Control.Monad.Reader
@@ -57,9 +58,9 @@ processJobs jobs = do
 processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, Term)] m) => (Options, FilePath) -> m ()
 processJob (opt, file) = do 
   liftIO $ putStrLn $ "process file " ++ file
-  runReaderT (processFile file) opt  
+  runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt
 
-processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Term)] m, MonadIO m) => FilePath -> m ()
+processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Term)] m, MonadIO m, MonadLog m) => FilePath -> m ()
 processFile file = do
   text <- liftIO (readFile file)
   text <- deliterate text
@@ -78,7 +79,7 @@ processStmt (Term t) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)])) 
   t <- prepareTerm t
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)])) 
-  q <- typecheck 0 [] t
+  q <- typecheck [] t
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)])) 
   let x = normalform t
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
@@ -90,7 +91,7 @@ processStmt (Bind n Nothing t) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)])) 
   t <- prepareTerm t
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)])) 
-  q <- typecheck 0 [] t
+  q <- typecheck [] t
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   modify ((n, t) :)
 
@@ -110,7 +111,7 @@ processStmt (Bind n (Just t') t) = recover () $ do
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t'' )]))
   
   -- typecheck type
-  q' <- typecheck 0 [] t''
+  q' <- typecheck [] t''
   case structure (normalform q') of
     Const _ -> return ()
     _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
@@ -118,7 +119,7 @@ processStmt (Bind n (Just t') t) = recover () $ do
                          $$ text "     found:" <+> pretty 0 q'
   
   -- typecheck body
-  q <- typecheck 0 [] t
+  q <- typecheck [] t
   
   -- compare specified and actual type
   if equiv q t''

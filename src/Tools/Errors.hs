@@ -3,10 +3,12 @@ module Tools.Errors
   ( ErrorsT, runErrorsT, module Tools.Errors.Class ) where
 
 import Control.Applicative
+import Control.Arrow (first)
 import Control.Monad.Error
 import Control.Monad.Writer
 import Control.Monad.Reader(ReaderT, mapReaderT)
 import Control.Monad.Reader.Class
+import Control.Monad.State (StateT (StateT), mapStateT)
 import Control.Monad.State.Class
 
 import Tools.Errors.Class
@@ -184,6 +186,10 @@ runErrorsT = runErrorsT'
 instance (Monoid e, Error e, MonadErrors e m) => MonadErrors e (ReaderT r m) where
   annotate f = mapReaderT (annotate f)
   recover x = mapReaderT (recover x)
+
+instance (Monoid e, Error e, MonadErrors e m) => MonadErrors e (StateT s m) where
+  annotate f = mapStateT (annotate f)
+  recover x (StateT f) = StateT (\s -> recover (x, s) (f s))
 
 -- instance (Monoid e, Error e, MonadReader r m) => MonadReader r (ErrorsT e m) where
 --   ask = lift ask
