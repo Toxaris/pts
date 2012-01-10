@@ -1,5 +1,6 @@
 module Main where
 
+import Control.Monad.Environment
 import Control.Monad.Error
 import Control.Monad.Log
 import Control.Monad.Reader
@@ -21,10 +22,10 @@ main' = do
   text <- liftIO getContents
   let code = lines text
   e <- parseTerm "<stdin>" text
-  t <- annotateCode code $ typecheck [] e
-  k <- annotateCode code $ typecheck [] t
+  t <- annotateCode code $ typecheck e `runEnvironmentT` []
+  k <- annotateCode code $ typecheck t `runEnvironmentT` []
   case structure (normalform k) of
-    Const (C 1) -> do q <- annotateCode code $ quotequote 0 [] e
+    Const (C 1) -> do q <- annotateCode code $ quotequote e `runEnvironmentT` []
                       liftIO (putStrLn (multiLine 80 q))
     _ -> do liftIO (putStrLn (multiLine 80 e))
 

@@ -2,10 +2,11 @@
 module Main where
 
 import Control.Monad
-import Control.Monad.Log
-import Control.Monad.Trans
-import Control.Monad.State
+import Control.Monad.Environment
 import Control.Monad.Reader
+import Control.Monad.State
+import Control.Monad.Trans
+import Control.Monad.Log
 
 import System.Environment
 import System.IO (hPutStrLn, stderr)
@@ -79,7 +80,7 @@ processStmt (Term t) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)])) 
   t <- prepareTerm t
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)])) 
-  q <- typecheck [] t
+  q <- runEnvironmentT (typecheck t) []
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)])) 
   let x = normalform t
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
@@ -91,7 +92,7 @@ processStmt (Bind n Nothing t) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)])) 
   t <- prepareTerm t
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)])) 
-  q <- typecheck [] t
+  q <- runEnvironmentT (typecheck t) []
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   modify ((n, t) :)
 
@@ -111,7 +112,7 @@ processStmt (Bind n (Just t') t) = recover () $ do
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t'' )]))
   
   -- typecheck type
-  q' <- typecheck [] t''
+  q' <- runEnvironmentT (typecheck t'') []
   case structure (normalform q') of
     Const _ -> return ()
     _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
@@ -119,7 +120,7 @@ processStmt (Bind n (Just t') t) = recover () $ do
                          $$ text "     found:" <+> pretty 0 q'
   
   -- typecheck body
-  q <- typecheck [] t
+  q <- runEnvironmentT (typecheck t) []
   
   -- compare specified and actual type
   if equiv q t''

@@ -1,18 +1,24 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts, PatternGuards, FlexibleInstances #-}
 module PTS.Core where
 
-import Prelude hiding (log)
+import Prelude ()
 
 import Control.Monad
+import Control.Monad.Environment
 import Control.Monad.Log
 import Control.Monad.Reader
 import Control.Monad.Trans
 
+import Data.Bool (Bool (False, True), (&&))
 import Data.Char
-import Data.List
+import Data.Eq (Eq ((==)))
+import Data.Function (($))
+import Data.Int (Int)
+import Data.List (map, null, replicate, (++))
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Data.Tuple (fst)
 
 import Parametric.Error
 import Parametric.Pretty
@@ -25,6 +31,8 @@ import PTS.Normalisation
 import PTS.Options
 import PTS.Pretty
 import PTS.Substitution
+
+import Text.Show (Show (show))
 
 import Tools.Errors.Class
 
@@ -91,14 +99,21 @@ ndots n = replicate n '.'
 --   trace ((show d) ++ (ndots d) ++ (show ctx) ++ " |- "++(show t) ++ " : ???") False
 
 -- safe bind
-bind :: [(Name, Term)] -> Name -> Term -> Term -> (Name, Term, [(Name, Term)])
-bind ctx x t b = case lookup x ctx of 
-  Nothing -> (x, b, (x, t) : ctx)
-  Just _ -> let nx = freshvarl (freevars b `Set.union` Set.fromList (map fst ctx)) x in (nx, subst b x (mkVar nx), (nx, t) : ctx)
+safebind :: MonadEnvironment Name Term m => Name -> Term -> Term -> (Name -> Term -> m a) -> m a
+safebind x t b f = do
+  result <- lookup x
+  case result of
+    Nothing -> do
+      bind x t (f x b)
+    Just _ -> do
+      vars <- keys
+      let nx = freshvarl (freevars b `Set.union` vars) x
+      bind nx t (f nx (subst b x (mkVar nx)))
 
-debug :: MonadLog m => String -> [(Name, Term)] -> Term -> m Term -> m Term
-debug n ctx t result = do
+debug :: (MonadEnvironment Name Term m, MonadLog m) => String -> Term -> m Term -> m Term
+debug n t result = do
   enter n
+  ctx <- getEnvironment
   log $ "Context: " ++ showCtx ctx
   log $ "Subject: " ++ show t
   x <- result
@@ -163,98 +178,91 @@ msgNotPi context info t t'
     sep [info <> text ":", nest 2 (pretty 0 t)] $$
     sep [text "Type of" <+> info <> text ":", nest 2 (pretty 0 t')])
 
-typecheck :: (MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => [(Name, Term)] -> Term -> m Term
+typecheck :: (MonadEnvironment Name Term m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m Term
 --typecheck p d ctx t | mytrace d ctx t = undefined
 
-typecheck ctx t = case structure t of
+typecheck t = case structure t of
   -- constant
-  Const c | null ctx -> debug "TypeConst" [] t $ do
+  Const c -> debug "TypeConst" t $ do
     pts <- asks optInstance
     case axioms pts c of
       Just t  ->  return (mkConst t)
       _       ->  prettyFail $ text "Unknown constant:" <+> pretty 0 c
 
   -- start
-  Var x' | (x, a) : ctx <- ctx, x == x' -> debug "TypeVar" ((x,a):ctx) t $ do
-    s <- typecheck ctx a
-    normalizeToSort s a (text "in variable") (text "as type of" <+> pretty 0 x)
-    return a
+  Var x -> debug "TypeVar" t $ do
+    xt <- lookup x
+    case xt of
+      Just xt -> do
+        s <- typecheck xt
+        normalizeToSort s xt (text "in variable") (text "as type of" <+> pretty 0 x)
+        return xt
 
-  -- var-not-found
-  Var a | null ctx -> debug "TypeVar" [] t $ do
-    fail $ "Unbound identifier: " ++ show a
+      Nothing ->
+        fail $ "Unbound identifier: " ++ show x
 
   -- product
-  Pi x a b -> debug "TypeFun" ctx t $ do
-    s1 <- typecheck ctx a
+  Pi x a b -> debug "TypeFun" t $ do
+    s1 <- typecheck a
     s1' <- normalizeToSort s1 a (text "in product type") (text "as domain")
     
-    let (newx, newb, newctx) = bind ctx x a b
-    s2 <- typecheck newctx newb
-    s2' <- normalizeToSort s2 newb (text "in product type") (text "as codomain")
-    
-    pts <- asks optInstance
-    case relations pts s1' s2' of
-      Just s -> return (mkConst s)
-      Nothing -> prettyFail $ text "no relation" <+> pretty 0 s1' <+> text ":" <+> pretty 0 s2'
+    safebind x a b $ \newx newb -> do
+      s2 <- typecheck newb
+      s2' <- normalizeToSort s2 newb (text "in product type") (text "as codomain")
+
+      pts <- asks optInstance
+      case relations pts s1' s2' of
+        Just s -> return (mkConst s)
+        Nothing -> prettyFail $ text "no relation" <+> pretty 0 s1' <+> text ":" <+> pretty 0 s2'
 
   -- application
-  App t1 t2 -> debug "TypeApp" ctx t $ do
-    tt1 <- typecheck ctx t1
+  App t1 t2 -> debug "TypeApp" t $ do
+    tt1 <- typecheck t1
     Pi x a b <- normalizeToPi tt1 t1 (text "in application") (text "operator")
     
-    tt2 <- typecheck ctx t2
+    tt2 <- typecheck t2
     normalizeToSame a tt2 (pretty 0 x) t2 (text "in application") (text "formal parameter") (text "actual parameter")
     
     return (subst b x t2)
 
   -- abstraction
-  Lam x a b -> debug "TypeAbs" ctx t $ do
-    s1  <- typecheck ctx a
+  Lam x a b -> debug "TypeAbs" t $ do
+    s1  <- typecheck a
     s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
     
-    let (newx, newb, newctx) = bind ctx x a b
-    tb  <- typecheck newctx newb
-    let tb' = normalform tb
-    s2  <- typecheck newctx tb'
-    s2' <- normalizeToSort s2 tb' (text "in lambda abstraction") (text "as type of body")
-    
-    pts <- asks optInstance
-    maybe (fail $ "no relation " ++ show s1 ++ " : " ++ show s2) return (relations pts s1' s2')
-    
-    return (mkPi newx a tb')
+    safebind x a b $ \newx newb -> do
+      tb  <- typecheck newb
+      let tb' = normalform tb
+      s2  <- typecheck tb'
+      s2' <- normalizeToSort s2 tb' (text "in lambda abstraction") (text "as type of body")
+
+      pts <- asks optInstance
+      maybe (fail $ "no relation " ++ show s1 ++ " : " ++ show s2) return (relations pts s1' s2')
+
+      return (mkPi newx a tb')
 
   -- Nat
-  Nat i -> debug "TypeNat" ctx t $ do
+  Nat i -> debug "TypeNat" t $ do
     return (mkConst nat)
 
   -- NatOp
-  NatOp i f t1 t2 -> debug "TypeNatOp" ctx t $ do
-    tt1 <- typecheck ctx t1
+  NatOp i f t1 t2 -> debug "TypeNatOp" t $ do
+    tt1 <- typecheck t1
     normalizeToNat tt1 t1 (text "in" <+> pretty 0 i) (text "first argument of" <+> pretty 0 i)
-    tt2 <- typecheck ctx t2
+    tt2 <- typecheck t2
     normalizeToNat tt2 t2 (text "in" <+> pretty 0 i) (text "second argument of" <+> pretty 0 i)
 
   -- IfZero
-  IfZero t1 t2 t3 -> debug "TypeIfZero" ctx t $ do
-    tt1 <- typecheck ctx t1
+  IfZero t1 t2 t3 -> debug "TypeIfZero" t $ do
+    tt1 <- typecheck t1
     normalizeToNat tt1 t1 (text "in if0") (text "condition")
-    tt2 <- typecheck ctx t2
-    tt3 <- typecheck ctx t3
+    tt2 <- typecheck t2
+    tt3 <- typecheck t3
     normalizeToSame tt2 tt3 t2 t3 (text "in if0") (text "then branch") (text "else branch")
   
   -- Position information
   Pos p t -> do
     -- trace ("Start: "++(show ctx) ++ " |- " ++ (show t) ++ " : ???") (return ())
-    x <- handlePos (typecheck ctx) p t
+    x <- handlePos typecheck p t
     -- trace ("End: "++(show ctx) ++ " |- " ++ (show t) ++ " : "++(show x)) (return ())
     return x
-
-  --- weakening
-  -- The check of the context has been disabled.
-  -- If we start with the empty context (which is well-formed), then this
-  -- check is not necessary, since everything that is added to the context
-  -- has already been checked earlier.
-  _ | (x, c) : ctx <- ctx -> debug "TypeWeakening" ((x,c):ctx) t $ do
-    check (lookup x ctx == Nothing) $ "Please rename variable " ++ show x ++ "  - weakening error: Capture of variable "++ (show x) ++ " in context "++(show ctx)
-    typecheck ctx t
