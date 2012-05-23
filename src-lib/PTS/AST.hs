@@ -6,15 +6,15 @@ module PTS.AST
   , TermStructure (..)
   , structure
   , Stmt (..)
-  , mkNat   
-  , mkNatOp 
+  , mkNat
+  , mkNatOp
   , mkIfZero
-  , mkVar   
-  , mkConst 
-  , mkApp   
-  , mkLam   
-  , mkPi    
-  , mkPos   
+  , mkVar
+  , mkConst
+  , mkApp
+  , mkLam
+  , mkPi
+  , mkPos
   , freshvarl
   , handlePos
   , C ()
@@ -79,7 +79,7 @@ data TermStructure alpha
   | Unquote Name
   deriving (Functor, Data, Typeable)
 
-data Stmt 
+data Stmt
   = Bind Name (Maybe Term) Term
   | Term Term
   | StmtPos Position Stmt
@@ -102,14 +102,14 @@ mkTerm t = result where
 
 -- smart constructors
 mkNat i            =  mkTerm (Nat i)
-mkNatOp n f t1 t2  =  mkTerm (NatOp n f t1 t2) 
-mkIfZero t1 t2 t3  =  mkTerm (IfZero t1 t2 t3) 
-mkVar n            =  mkTerm (Var n) 
+mkNatOp n f t1 t2  =  mkTerm (NatOp n f t1 t2)
+mkIfZero t1 t2 t3  =  mkTerm (IfZero t1 t2 t3)
+mkVar n            =  mkTerm (Var n)
 mkConst c          =  mkTerm (Const c)
-mkApp t1 t2        =  mkTerm (App t1 t2) 
-mkLam n t1 t2      =  mkTerm (Lam n t1 t2) 
-mkPi n t1 t2       =  mkTerm (Pi n t1 t2) 
-mkPos p t          =  mkTerm (Pos p t) 
+mkApp t1 t2        =  mkTerm (App t1 t2)
+mkLam n t1 t2      =  mkTerm (Lam n t1 t2)
+mkPi n t1 t2       =  mkTerm (Pi n t1 t2)
+mkPos p t          =  mkTerm (Pos p t)
 
 handlePos f p t = annotatePos p $ mkPos p <$> f t
 

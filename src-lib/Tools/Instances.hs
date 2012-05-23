@@ -17,7 +17,7 @@ import Text.ParserCombinators.Parsec(GenParser)
 -- instance Applicative (GenParser a st) where
 --   pure = return
 --   (<*>) = ap
-  
+
 -- instance Alternative (GenParser a st) where
 --   empty = mzero
 --   (<|>) = mplus
@@ -25,19 +25,19 @@ import Text.ParserCombinators.Parsec(GenParser)
 -- instance Monad m => Applicative (ReaderT r m) where
 --   pure = return
 --   (<*>) = ap
-  
+
 -- instance (Applicative m, MonadPlus m) => Alternative (ReaderT r m) where
 --   empty = mzero
 --   (<|>) = mplus
--- 
+--
 -- instance (Error e, Monad m) => Applicative (ErrorT e m) where
 --   pure = return
 --   (<*>) = ap
---   
+--
 -- instance (Monad m, Error e) => Alternative (ErrorT e m) where
 --   empty = mzero
 --   (<|>) = mplus
--- 
+--
 -- instance (Monoid w, Monad m) => Applicative (WriterT w m) where
 --   pure = return
 --   (<*>) = ap

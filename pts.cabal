@@ -1,15 +1,15 @@
 Name:                pts
 Version:             0.1
 Synopsis:            Interpreter for functional pure type systems.
--- Description:         
+-- Description:
 License:             AllRightsReserved
 -- License-file:        LICENSE
 Author:              Tillmann Rendel, Klaus Ostermann
 Maintainer:          rendel@informatik.uni-marburg.de
--- Copyright:           
+-- Copyright:
 Category:            Language
 Build-type:          Simple
--- Extra-source-files:  
+-- Extra-source-files:
 Cabal-version:       >= 1.8
 
 Library
@@ -56,7 +56,7 @@ Executable pts
                        parsec == 3.1.*,
                        pts
 
-  -- Build-tools:         
+  -- Build-tools:
 
 -- Executable pts-quote
 --   Hs-source-dirs:      src-exec

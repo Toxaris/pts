@@ -24,11 +24,11 @@ instance Read Name where
     plainName text (c:cs) | isDigit c = indexName text [c] cs
     plainName text (c:cs) | isAlphaNum c = plainName (c : text) cs
     plainName text rest = (PlainName (reverse text), rest)
-    
+
     indexName text index (c:cs) | isDigit c = indexName text (c : index) cs
     indexName text index (c:cs) | isAlphaNum c = plainName (index ++ text) cs
     indexName text index rest = (IndexName (reverse text) (read (reverse index)), rest)
-  
+
   readsPrec _ _ = []
 
 nextIndex :: Name -> Name

@@ -31,18 +31,18 @@ import PTS.Options
 
      -----------------
     -- PTS PARSER --
-     ----------------- 
+     -----------------
 
 natop n f x = mkNatOp n f <$> (keyword (show n) *> x) <*> (x <?> "second argument of '" ++ show n ++ "'")
 
 expr = term simple rec mkPos "expression" where
-  simple = withPos mkPos $ asum 
+  simple = withPos mkPos $ asum
     [ parens expr
     , brackets expr
     , abs mkLam lambda ident colon1 expr dot expr
     , abs mkPi  pi     ident colon1 expr dot expr
-    , mkIfZero <$> (keyword "if0" *> expr) 
-             <*> (keyword "then" *> expr) 
+    , mkIfZero <$> (keyword "if0" *> expr)
+             <*> (keyword "then" *> expr)
              <*> (keyword "else" *> expr)
     , natop (read "add") Add simple
     , natop (read "sub") Sub simple
@@ -51,7 +51,7 @@ expr = term simple rec mkPos "expression" where
     , mkConst <$> const
     , var mkVar ident
     , mkNat <$> number ]
-    
+
   rec = asum
     [ app mkApp simple
     , arr (\a b -> mkPi (freshvar b (read "unused")) a b) arrow (expr )]
@@ -85,29 +85,29 @@ keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul",
 
 identChar x = not (isSpace x) && x `notElem` ".:=;/()[]"
 
-ident = lexem (do name <- many1 (satisfy identChar) 
+ident = lexem (do name <- many1 (satisfy identChar)
                   when (name `elem` keywords) $
                     unexpected ("keyword " ++ name)
-                             
+
                   when (Prelude.all (`elem` ['0'..'9']) name) $
                     unexpected ("numeric literal " ++ name)
-                  
+
                   when (isDigit (head name)) $
                     pzero
-                  
+
                   when (Prelude.all (== '*') name) $
                     unexpected ("constant")
-                  
+
                   when (name == "Nat") $
                     unexpected ("constant")
-                  
+
                   return (read name))
           <?> "variable name"
 
 number = read <$> lexem (many1 (satisfy isDigit) <* notFollowedBy (satisfy identChar))
 
 const = lexem (do name <- many1 (satisfy identChar)
-                  if name == "Nat" 
+                  if name == "Nat"
                     then return (C 0)
                     else if (Prelude.all ('*' ==) name)
                       then return (C (length name))
@@ -119,7 +119,7 @@ keyword s  = lexem (string s <* notFollowedBy (satisfy identChar))
 comment = string "/*" <* manyTill anyChar (try (string "*/"))
 
 skipSpace = skipMany ((space *> pure () <|> comment *> pure ()) <?> "")
-lexem p = try p <* skipSpace 
+lexem p = try p <* skipSpace
 
 dot    = lexem (char '.')
 colon1 = lexem (char ':')
@@ -145,7 +145,7 @@ rbracket = lexem(char ']')
 parseInternal parser file text = do
   case parse (skipSpace *> parser <* eof) file text of
     Left e -> throwError . pure . formatError file text $ e
-    Right r -> return r 
+    Right r -> return r
 
 parseStmt = parseInternal stmt
 

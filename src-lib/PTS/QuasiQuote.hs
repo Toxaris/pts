@@ -29,14 +29,14 @@ antiExprExp t = case structure t of
   _          ->  Nothing
 
 quoteExprPat :: String -> TH.PatQ
-quoteExprPat text = do 
+quoteExprPat text = do
   loc <- TH.location
   let  file  =  TH.loc_filename loc
        line  =  fst (TH.loc_start loc)
        col   =  snd (TH.loc_start loc)
   expr <- parseTermAtPos file line col text
   dataToPatQ (const Nothing `extQ` antiExprPat) expr
- 
+
 antiExprPat :: Term -> Maybe (TH.Q TH.Pat)
 antiExprPat t = case structure t of
   (Unquote v)  -> Just $ TH.varP  (TH.mkName (show v))

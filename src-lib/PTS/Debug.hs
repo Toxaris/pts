@@ -1,13 +1,13 @@
 module PTS.Debug where
 
-data Options 
-  = DebugType 
-  | DebugQuote 
-  | ShowFullTerms 
-  
+data Options
+  = DebugType
+  | DebugQuote
+  | ShowFullTerms
+
   deriving Eq
-  
-options = [ 
+
+options = [
 --  ShowFullTerms
 --  , DebugType
 --  , DebugQuote

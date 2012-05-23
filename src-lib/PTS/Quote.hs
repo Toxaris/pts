@@ -44,12 +44,12 @@ varnames :: [Name]
 varnames = map read ["R", "lam", "app", "tlam", "tapp", "ifzero", "nat", "add", "sub", "mul", "div"]
 
 unsafeParse :: String -> Term
-unsafeParse text = 
+unsafeParse text =
   case runIdentity (runErrorsT (runReaderT (parseTerm "<Quote.hs>" text) defaultOptions)) of
     Right x -> x
     Left e -> error (showErrors e)
 
-interface r = 
+interface r =
   [ p "* -> *"
   , p "Pi S : * . Pi T : * . (R S -> R T) -> R (S -> T)"
   , p "Pi S : * . Pi T : * . R (S -> T) -> R S -> R T"
@@ -62,15 +62,15 @@ interface r =
   , p "R Nat -> R Nat -> R Nat"
   , p "R Nat -> R Nat -> R Nat"
   ] where
-  
+
   p text = unsafeParse $ text >>= \x -> if x == 'R' then show r else return x
 
 unsafeQuote :: Term -> Term
 unsafeQuote t = unsafePerformIO $ do
   res <- runErrorsT (((quote (map mkVar varnames) t `runEnvironmentT` []) `runConsoleLogT` False) `runReaderT` defaultOptions)
-  case res of 
+  case res of
     Left e -> fail (showErrors e)
-    Right q -> return q 
+    Right q -> return q
 
 unsafeQuoteQuote :: Term -> Term
 unsafeQuoteQuote t = unsafePerformIO $ do
@@ -83,7 +83,7 @@ quotequote :: (MonadEnvironment Name Term m, MonadReader Options m, MonadErrors 
 quotequote t = do
   let vars = map (freshvarl (allvars t)) varnames
   q <- quote (map mkVar vars) t
-  return $ foldr (uncurry mkLam) q (zip vars (interface (rep vars)))  
+  return $ foldr (uncurry mkLam) q (zip vars (interface (rep vars)))
 
 quote :: (MonadEnvironment Name Term m, MonadErrors Errors m, Functor m, MonadReader Options m, MonadLog m) => [Term] -> Term -> m Term
 
@@ -102,8 +102,8 @@ quote vars q = case structure q of
       b' <- quote vars newb
 
       r <- case (s1, s2) of
-        (C 1, C 1) -> return $ lam vars `mkApp` a `mkApp` tb `mkApp` mkLam newx (rep vars `mkApp` a) b' 
-        (C 2, C 1) -> return $ tlam vars `mkApp` a `mkApp` mkLam newx a tb `mkApp` mkLam newx a b' 
+        (C 1, C 1) -> return $ lam vars `mkApp` a `mkApp` tb `mkApp` mkLam newx (rep vars `mkApp` a) b'
+        (C 2, C 1) -> return $ tlam vars `mkApp` a `mkApp` mkLam newx a tb `mkApp` mkLam newx a b'
         _ -> fail $ "cannot quote non-value-level term " ++ show q
 
       return r

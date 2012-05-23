@@ -30,7 +30,7 @@ whenOption :: (MonadReader Options m) => (Options -> Bool) -> m () -> m ()
 whenOption  f act = ask >>= \opt            -> when (f opt) act
 
 prettyFail :: MonadReader Options m => Doc -> m a
-prettyFail doc = asks (flip multiLine doc . optColumns) >>= fail 
+prettyFail doc = asks (flip multiLine doc . optColumns) >>= fail
 
 -- default options
 defaultOptions = Options
@@ -49,7 +49,7 @@ setDebugTerms f4 (Options f1 f2 f3 _  f5 f6) = Options f1 f2 f3 f4 f5 f6
 setDebugQuote f5 (Options f1 f2 f3 f4 _  f6) = Options f1 f2 f3 f4 f5 f6
 setDebugType  f6 (Options f1 f2 f3 f4 f5 _ ) = Options f1 f2 f3 f4 f5 f6
 
-data Flag 
+data Flag
   = Error String
   | Help
   | Global (Options -> Options)
@@ -57,7 +57,7 @@ data Flag
   | FilePath FilePath
 
 -- option descriptions
-options =                                                            
+options =
   [ Option ['c'] ["columns"]         (ReqArg handleColumns  "c"     ) "wrap output at specified column"
   , Option ['p'] ["pts", "instance"] (ReqArg handlePTS      "i"     ) "implement specified pure type systems instance"
   , Option ['l'] ["literate"]        (OptArg handleLiterate "b"     ) "treat input as literate source files"
@@ -66,7 +66,7 @@ options =
   ]
 
 -- option processing
-handleHelp         = Help 
+handleHelp         = Help
 
 handleColumns  arg = case reads arg of
                        [(n, "")]     -> Local  (setColumns    n         )
@@ -81,12 +81,12 @@ handlePTS      arg = case map toLower arg of
                        "fomegaomega" -> Global (setInstance fomegaomega )
                        other         -> Error  ("Error: Unknown pure type system instance " ++ arg)
 
-handleLiterate arg = case fmap (map toLower) arg of 
+handleLiterate arg = case fmap (map toLower) arg of
                        Nothing       -> Local  (setLiterate   True      )
                        Just "yes"    -> Local  (setLiterate   True      )
                        Just "no"     -> Local  (setLiterate   False     )
                        Just other    -> Error  ("Error: literate option expects 'yes' or 'no' instead of " ++ other)
-                       
+
 handleDebug arg    = case map toLower arg of
                        "toplevel"    -> Local  (setDebugTerms True       )
                        "typing"      -> Local  (setDebugType  True       )

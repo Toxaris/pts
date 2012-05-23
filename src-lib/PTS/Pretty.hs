@@ -1,6 +1,6 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
-module PTS.Pretty 
-  ( singleLine 
+module PTS.Pretty
+  ( singleLine
   , multiLine
   , showCtx
   , prettyAlgebra) where
@@ -128,6 +128,6 @@ instance Pretty Stmt where
 
 instance Show Term where
   show t = singleLine t
-  
+
 showCtx :: [(Name, Term)] -> String
-showCtx = concat . intersperse ", " . map (\(n, t) -> show n ++ " : " ++ show t) 
+showCtx = concat . intersperse ", " . map (\(n, t) -> show n ++ " : " ++ show t)

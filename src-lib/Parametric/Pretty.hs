@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
-module Parametric.Pretty 
+module Parametric.Pretty
   ( Pretty (..)
   , when
   , module Text.PrettyPrint.HughesPJ
@@ -9,7 +9,7 @@ module Parametric.Pretty
 
 import Text.PrettyPrint.HughesPJ
 
-class Pretty p where 
+class Pretty p where
   pretty :: Int -> p -> Doc
 
 instance Pretty [Char] where

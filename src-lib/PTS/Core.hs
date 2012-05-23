@@ -58,13 +58,13 @@ instance Eq (TermStructure Term) where
   (IfZero t1 t2 t3) == (IfZero t1' t2' t3') = t1==t1' && t2==t2' && t3==t3'
   (Const c) == (Const c') = c == c'
   (App t1 t2) == (App t1' t2') = t1 == t1' && t2 == t2'
-  
+
   (Lam x1 q1 b1) == (Lam x2 q2 b2) = q1 == q2 && b1' == b2' where
     (_, b1', b2') = freshCommonVar x1 x2 b1 b2
-  
+
   (Pi x1 q1 b1) == (Pi x2 q2 b2) = q1 == q2 && b1' == b2' where
     (_, b1', b2') = freshCommonVar x1 x2 b1 b2
-  
+
   Pos _ t == Pos _ t' = t == t'
   _ == _ = False
 
@@ -125,26 +125,26 @@ debug n t result = do
 
 normalizeToSort t' t context info = do
   pts <- asks optInstance
-  
+
   case structure (normalform t') of
     Const s | sorts pts s  ->  return s
     _                      ->  prettyFail $ msgNotProperType context info t t'
 
 msgNotProperType context info t t'
-  = text "Type Error" <+> context <+> text ": Expected proper type" <+> info <> text "." $$ nest 2 ( 
+  = text "Type Error" <+> context <+> text ": Expected proper type" <+> info <> text "." $$ nest 2 (
     sep [text "Explanation:", nest 2 (text "The type is not a sort, so the term is not a proper type and therefore not valid at this position.")] $$
     sep [text "Term:", nest 2 (pretty 0 t)] $$
-    sep [text "Type:", nest 2 (pretty 0 t')]) 
+    sep [text "Type:", nest 2 (pretty 0 t')])
 
 normalizeToSame s' t' s t context info1 info2
   = let s'' = normalform s'
         t'' = normalform t'
-     in if s'' == t'' 
-        then return s'' 
+     in if s'' == t''
+        then return s''
         else prettyFail $ msgNotSame context info1 info2 s t s'' t''
 
 msgNotSame context info1 info2 s t s' t'
-  = let (s'', t'') = showDiff 0 (diff s' t') 
+  = let (s'', t'') = showDiff 0 (diff s' t')
      in text "Type Error" <+> context <> text ": Types do not match." $$ nest 2 (
         sep [text "Explanation:", nest 2 (text "The types of the" <+> info1 <+> text "and the" <+> info2 <+> text "should be beta-equivalent.")] $$
         sep [info1 <> text ":", nest 2 (pretty 0 s)] $$
@@ -205,7 +205,7 @@ typecheck t = case structure t of
   Pi x a b -> debug "TypeFun" t $ do
     s1 <- typecheck a
     s1' <- normalizeToSort s1 a (text "in product type") (text "as domain")
-    
+
     safebind x a b $ \newx newb -> do
       s2 <- typecheck newb
       s2' <- normalizeToSort s2 newb (text "in product type") (text "as codomain")
@@ -219,17 +219,17 @@ typecheck t = case structure t of
   App t1 t2 -> debug "TypeApp" t $ do
     tt1 <- typecheck t1
     Pi x a b <- normalizeToPi tt1 t1 (text "in application") (text "operator")
-    
+
     tt2 <- typecheck t2
     normalizeToSame a tt2 (pretty 0 x) t2 (text "in application") (text "formal parameter") (text "actual parameter")
-    
+
     return (subst b x t2)
 
   -- abstraction
   Lam x a b -> debug "TypeAbs" t $ do
     s1  <- typecheck a
     s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
-    
+
     safebind x a b $ \newx newb -> do
       tb  <- typecheck newb
       let tb' = normalform tb
@@ -259,7 +259,7 @@ typecheck t = case structure t of
     tt2 <- typecheck t2
     tt3 <- typecheck t3
     normalizeToSame tt2 tt3 t2 t3 (text "in if0") (text "then branch") (text "else branch")
-  
+
   -- Position information
   Pos p t -> do
     -- trace ("Start: "++(show ctx) ++ " |- " ++ (show t) ++ " : ???") (return ())

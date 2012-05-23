@@ -32,7 +32,7 @@ term simple rec pos msg = result where
   combine p = foldl' (\x (f, q) -> setPos pos p (f x) q)
 
 -- right-recursive syntax pattern: "lambda ident : qualifier . body"
-abs cons lambda ident colon qualifier dot body 
+abs cons lambda ident colon qualifier dot body
   = cons <$> try (lambda *> ident <* colon) <*> qualifier <*> (dot *> body)
 
 -- left-recursive syntax pattern: "x -> y"
@@ -49,5 +49,5 @@ con cons constant = cons <$ constant
 
 withPos f p = setPos f <$> getPosition <*> p <*> getPosition where
 
-setPos f p1 x p2 = f (Position (sourceName p1) (sourceLine p1) (sourceLine p2) (sourceColumn p1) (pred $ sourceColumn p2)) x 
+setPos f p1 x p2 = f (Position (sourceName p1) (sourceLine p1) (sourceLine p2) (sourceColumn p1) (pred $ sourceColumn p2)) x
 

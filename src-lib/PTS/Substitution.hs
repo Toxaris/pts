@@ -1,4 +1,4 @@
-module PTS.Substitution 
+module PTS.Substitution
   ( subst
   , freshCommonVar
   ) where

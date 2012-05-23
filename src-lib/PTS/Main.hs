@@ -28,12 +28,12 @@ import Tools.Errors
 
 deliterateLine ('>' : ' ' : line) = ' ' : ' ' : line
 deliterateLine _                  = ""
-  
+
 deliterate text = do
   flag <- asks optLiterate
   if flag then return . unlines . map deliterateLine . lines $ text
           else return text
-  
+
 infixl 2 >>>
 (>>>) = flip (.)
 
@@ -52,12 +52,12 @@ runMainState act = evalStateT act []
 
 processJobs jobs = do
   success <- runMainState $ runMainErrors $ mapM_ processJob jobs
-  if success 
+  if success
     then exitSuccess
     else exitFailure
 
 processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, Term)] m) => (Options, FilePath) -> m ()
-processJob (opt, file) = do 
+processJob (opt, file) = do
   liftIO $ putStrLn $ "process file " ++ file
   runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt
 
@@ -77,21 +77,21 @@ processStmt (Term t) = recover () $ do
   pts <- asks (optInstance)
   output (text "")
   output (text "process expression")
-  output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)])) 
+  output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   t <- prepareTerm t
-  whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)])) 
+  whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
   q <- runEnvironmentT (typecheck t) []
-  output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)])) 
+  output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let x = normalform t
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
-  
+
 processStmt (Bind n Nothing t) = recover () $ do
   pts <- asks (optInstance)
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
-  output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)])) 
+  output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   t <- prepareTerm t
-  whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)])) 
+  whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
   q <- runEnvironmentT (typecheck t) []
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   modify ((n, t) :)
@@ -100,17 +100,17 @@ processStmt (Bind n (Just t') t) = recover () $ do
   pts <- asks (optInstance)
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
-  
+
   -- preprocess body
-  output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)])) 
+  output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   t <- prepareTerm t
-  whenOption optShowFullTerms $ output (nest 2 (sep [text "full term", nest 2 (pretty 0 t)])) 
+  whenOption optShowFullTerms $ output (nest 2 (sep [text "full term", nest 2 (pretty 0 t)]))
 
   -- preprocess type
   output (nest 2 (sep [text "specified type:", nest 2 (pretty 0 t')]))
   t'' <- prepareTerm t'
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t'' )]))
-  
+
   -- typecheck type
   q' <- runEnvironmentT (typecheck t'') []
   case structure (normalform q') of
@@ -118,14 +118,14 @@ processStmt (Bind n (Just t') t) = recover () $ do
     _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
                          $$ text "  expected:" <+> text "constant"
                          $$ text "     found:" <+> pretty 0 q'
-  
+
   -- typecheck body
   q <- runEnvironmentT (typecheck t) []
-  
+
   -- compare specified and actual type
   if equiv q t''
     then output (nest 2 (sep [text "type:", nest 2 (pretty 0 t' )]))
-    else let (expected, given) = showDiff 0 (diff (normalform t'' ) (normalform q)) in 
+    else let (expected, given) = showDiff 0 (diff (normalform t'' ) (normalform q)) in
            prettyFail $ text "Type mismatch in top-level binding of" <+> pretty 0 n
                      $$ text "  specified type:" <+> pretty 0 t'
                      $$ text "     normal form:" <+> text expected

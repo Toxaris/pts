@@ -15,7 +15,7 @@ import PTS.Substitution (subst)
 normalform = normalform1
 
 -- normalization and equivalence of terms
--- 
+--
 -- this is the original, rather slow code
 --
 -- benchmark: 54s
@@ -46,19 +46,19 @@ normalform2 t = case structure t of
     where
       t1'  =  normalform2 t1
       t2'  =  normalform2 t2
-  
-  Lam x t1 t2 
+
+  Lam x t1 t2
     ->  mkLam x t1' t2'
     where
       t1'  =  normalform2 t1
       t2'  =  normalform2 t2
-  
+
   Pi x t1 t2
     ->  mkPi x t1' t2'
     where
       t1'  =  normalform2 t1
       t2'  =  normalform2 t2
-  
+
   NatOp i f t1 t2
     ->  case (structure t1', structure t2') of
          (Nat i, Nat j)  ->  mkNat (evalOp f i j)
@@ -66,7 +66,7 @@ normalform2 t = case structure t of
     where
       t1'  =  normalform2 t1
       t2'  =  normalform2 t2
-  
+
   IfZero t1 t2 t3
     ->  case structure t1' of
          Nat j  ->  if (j==0) then t2' else t3'
@@ -75,14 +75,14 @@ normalform2 t = case structure t of
       t1'  =  normalform2 t1
       t2'  =  normalform2 t2
       t3'  =  normalform2 t3
-  
+
   Pos p t
     ->  normalform2 t
-  
-  _ 
+
+  _
     ->  t
 
-  
+
 -- cool version: does not work yet :(
 data Context
   = Top
@@ -104,7 +104,7 @@ data Env
   = Env Names (Map Name (Term, Env))
 
 bindEnv :: Name -> Term -> Env -> Env -> Env
-bindEnv n boundT boundEnv (Env ids env) = Env ids' env' where 
+bindEnv n boundT boundEnv (Env ids env) = Env ids' env' where
   env'  =  Map.insert n (boundT, boundEnv) env
   ids'  =  Set.unions [freevars boundT, ids, namesEnv boundEnv]
 
@@ -132,7 +132,7 @@ normalize term = decompose emptyEnv Top term where
     Nat i            ->  continueNat env i ctx
     NatOp n f t1 t2  ->  decompose env (NatOp1 n f ctx t2) t1
     IfZero t1 t2 t3  ->  decompose env (IfZero1 ctx t2 t3) t1
-    Var n            ->  reduceVar env n ctx 
+    Var n            ->  reduceVar env n ctx
     Const c          ->  continueTerm env (mkConst c) ctx
     App t1 t2        ->  decompose env (App1 ctx t2) t1
     Lam n t1 t2      ->  continueLam env env n t1 t2 ctx
@@ -141,7 +141,7 @@ normalize term = decompose emptyEnv Top term where
 
   continueTerm !env !t  !Top                   =  t
   continueTerm !_   !t  !(Local env ctx)       =  continueTerm env t ctx
-  continueTerm !env !t1 !(NatOp1 n f ctx t2)   =  decompose env (NatOp2T n f t1 ctx) t2 
+  continueTerm !env !t1 !(NatOp1 n f ctx t2)   =  decompose env (NatOp2T n f t1 ctx) t2
   continueTerm !env !t2 !(NatOp2V n f i ctx)   =  continueTerm env (mkNatOp n f (mkNat i) t2) ctx
   continueTerm !env !t2 !(NatOp2T n f t1 ctx)  =  continueTerm env (mkNatOp n f t1 t2) ctx
   continueTerm !env !t1 !(IfZero1 ctx t2 t3)   =  decompose env (IfZero2 t1 ctx t3) t2
@@ -153,47 +153,47 @@ normalize term = decompose emptyEnv Top term where
   continueTerm !_   !t2 !(Lam2 env n t1 ctx)   =  continueTerm env (mkLam n t1 t2) ctx
   continueTerm !env !t1 !(Pi1 n ctx t2)        =  avoidCapturePi env t1 n ctx t2
   continueTerm !_   !t2 !(Pi2 env n t1 ctx)    =  continueTerm env (mkPi n t1 t2) ctx
-  
+
   continueNat !_   !j !(Local env ctx)       =  continueNat env j ctx
-  continueNat !env !j !(NatOp1 n f ctx t2)   =  decompose env (NatOp2V n f j ctx) t2 
+  continueNat !env !j !(NatOp1 n f ctx t2)   =  decompose env (NatOp2V n f j ctx) t2
   continueNat !env !j !(NatOp2V n f i ctx)   =  reduceNatOp env n f i j ctx
   continueNat !env !j !(IfZero1 ctx t2 t3)   =  reduceIfZero env j t2 t3 ctx
-  continueNat !env !j !ctx                   =  continueTerm env (mkNat j) ctx 
-  
+  continueNat !env !j !ctx                   =  continueTerm env (mkNat j) ctx
+
   continueLam !_   !env' !n !t1 !t2 !(Local env ctx)  =  continueLam env env' n t1 t2 ctx
   continueLam !env !env' !n !t1 !t2 !(App1 ctx t3)    =  reduceBeta env env' n t1 t2 t3 ctx
   continueLam !env !env' !n !t1 !t2 !ctx              =  reduceLam env env' n t1 t2 ctx
 
-  avoidCaptureLam !env !t1 !env' !n !ctx !t2 
+  avoidCaptureLam !env !t1 !env' !n !ctx !t2
     =  decompose (bindEnv n (mkVar n') emptyEnv env) (Lam2 env' n' t1 ctx) t2
     where n' = fresh n (namesEnv env)
-       
-  avoidCapturePi !env !t1 !n !ctx !t2 
+
+  avoidCapturePi !env !t1 !n !ctx !t2
     =  decompose (bindEnv n (mkVar n') emptyEnv env) (Pi2 env n' t1 ctx) t2
     where n' = fresh n (namesEnv env)
-    
+
   reduceBeta !env !env' !n !t1 !t2 !t3 !ctx
     =  decompose env'' (Local env ctx) t2
     where env'' = bindEnv n t3 env env'
-    
+
   reduceLam !env !env' !n !t1 !t2 !ctx
     =  decompose env' (Lam1 env n ctx t2) t1
-  
-  reduceVar !env !n !ctx 
+
+  reduceVar !env !n !ctx
     =  case lookupEnv n env of
          Just (t, env')  ->  decompose env' (Local env ctx) t
          Nothing         ->  continueTerm env (mkVar n) ctx
-  
+
   reduceNatOp !env !n !f !i !j !ctx
     =  continueNat env (evalOp f i j) ctx
-  
+
   reduceIfZero !env !i !t2 !t3 !ctx
     =  if i == 0
          then decompose env ctx t2
          else decompose env ctx t3
-  
+
   {-
-  continueNat env i (NatOp1 n f ctx t2) 
+  continueNat env i (NatOp1 n f ctx t2)
   continueNat env i (NatOp2 n f t1 ctx)
   continueNat env i (IfZero1 ctx t2 t3)
   continueNat env i (IfZero2 t1 ctx t3)
