@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE TemplateHaskell #-}
 module PTS.QuasiQuote (pts) where
 
 import Parametric.Error (Position (..))
@@ -25,60 +25,59 @@ quoteExprExp text = do
        line  =  fst (TH.loc_start loc)
        col   =  snd (TH.loc_start loc)
   term <- parseTermAtPos file line col text
-  lift term
+  liftE term
 
-class LiftList t where
-  liftListDefault :: Lift e t => [e] -> Q t
+class Lift e where
+  liftE :: e -> ExpQ
+  -- liftP :: e -> PatQ
 
-instance LiftList Exp where
-  liftListDefault es = listE (map lift es)
+  liftListE :: [e] -> ExpQ
+  liftListE es = listE (map liftE es)
 
-class LiftList t => Lift e t where
-  lift :: e -> Q t
+  -- liftListP :: [e] -> PatQ
+  -- liftListP = listP (map liftP es)
 
-  liftList :: [e] -> Q t
-  liftList = liftListDefault
+instance Lift e => Lift [e] where
+  liftE = liftListE
+  -- liftP = liftListP
 
-instance Lift e t => Lift [e] t where
-  lift = liftList
+instance Lift Position where
+  liftE (Position file i1 i2 i3 i4) = [| Position $(liftE file) $(liftE i1) $(liftE i2) $(liftE i3) $(liftE i4) |]
 
-instance Lift Position Exp where
-  lift (Position file i1 i2 i3 i4) = [| Position $(lift file) $(lift i1) $(lift i2) $(lift i3) $(lift i4) |]
+instance Lift Char where
+  liftE c = litE (charL c)
+  liftListE s = litE (stringL s)
 
-instance Lift Char Exp where
-  lift c = litE (charL c)
-  liftList s = litE (stringL s)
+instance Lift Integer where
+  liftE n = litE (integerL n)
 
-instance Lift Integer Exp where
-  lift n = litE (integerL n)
+instance Lift Int where
+  liftE n = litE (integerL (toInteger n))
 
-instance Lift Int Exp where
-  lift n = litE (integerL (toInteger n))
+instance Lift BinOp where
+  liftE Add = [| Add |]
+  liftE Sub = [| Add |]
+  liftE Mul = [| Add |]
+  liftE Div = [| Add |]
 
-instance Lift BinOp Exp where
-  lift Add = [| Add |]
-  lift Sub = [| Add |]
-  lift Mul = [| Add |]
-  lift Div = [| Add |]
+instance Lift C where
+  liftE (C n) = [| C $(liftE n) |]
 
-instance Lift C Exp where
-  lift (C n) = [| C $(lift n) |]
+instance Lift Name where
+  liftE (PlainName s) = [| PlainName $(liftE s) |]
+  liftE (IndexName s i) = [| IndexName $(liftE s) $(liftE i) |]
 
-instance Lift Name Exp where
-  lift (PlainName s) = [| PlainName $(lift s) |]
-  lift (IndexName s i) = [| IndexName $(lift s) $(lift i) |]
-
-instance Lift Term Exp where
-  lift t = case structure t of
-    Nat     n           ->  [| mkNat $(lift n) |]
-    NatOp   v op e1 e2  ->  [| mkNatOp $(lift v) $(lift op) $(lift e1) $(lift e2) |]
-    IfZero  c t e       ->  [| mkIfZero $(lift c) $(lift t) $(lift e) |]
-    Var     v           ->  [| mkVar $(lift v) |]
-    Const   c           ->  [| mkConst $(lift c) |]
-    App     f a         ->  [| mkApp $(lift f) $(lift a) |]
-    Lam     v t e       ->  [| mkLam $(lift v) $(lift t) $(lift e) |]
-    Pi      v t e       ->  [| mkPi $(lift v) $(lift t) $(lift e) |]
-    Pos     p e         ->  [| mkPos $(lift p) $(lift e) |]
+instance Lift Term where
+  liftE t = case structure t of
+    Nat     n           ->  [| mkNat $(liftE n) |]
+    NatOp   v op e1 e2  ->  [| mkNatOp $(liftE v) $(liftE op) $(liftE e1) $(liftE e2) |]
+    IfZero  c t e       ->  [| mkIfZero $(liftE c) $(liftE t) $(liftE e) |]
+    Var     v           ->  [| mkVar $(liftE v) |]
+    Const   c           ->  [| mkConst $(liftE c) |]
+    App     f a         ->  [| mkApp $(liftE f) $(liftE a) |]
+    Lam     v t e       ->  [| mkLam $(liftE v) $(liftE t) $(liftE e) |]
+    Pi      v t e       ->  [| mkPi $(liftE v) $(liftE t) $(liftE e) |]
+    Pos     p e         ->  [| mkPos $(liftE p) $(liftE e) |]
     Unquote v           ->  TH.varE (TH.mkName (show v))
 
 quoteExprPat :: String -> TH.PatQ
