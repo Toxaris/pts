@@ -19,7 +19,9 @@ Library
                        pretty == 1.0.*,
                        mtl == 2.0.*,
                        transformers ==0.2.*,
-                       parsec == 3.1.*
+                       parsec == 3.1.*,
+                       template-haskell,
+                       syb
   Exposed-modules:     Tools.Instances,
                        Tools.Errors.Class,
                        Parametric.Pretty,
@@ -35,6 +37,7 @@ Library
                        PTS.Core,
                        PTS.Main,
                        PTS.Substitution,
+                       PTS.QuasiQuote,
                        Parametric.Parser.Error,
                        Parametric.Parser,
                        PTS.Parser,

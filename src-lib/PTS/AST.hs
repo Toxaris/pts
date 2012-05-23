@@ -1,8 +1,8 @@
-{-# LANGUAGE NoMonomorphismRestriction, DeriveFunctor #-}
+{-# LANGUAGE NoMonomorphismRestriction, DeriveFunctor, DeriveDataTypeable #-}
 module PTS.AST
   ( Name
   , Names
-  , Term ()
+  , Term (..)
   , TermStructure (..)
   , structure
   , Stmt (..)
@@ -18,10 +18,15 @@ module PTS.AST
   , freshvarl
   , handlePos
   , C ()
+  , evalOp
+  , BinOp (..)
   ) where
 
 import Control.Applicative hiding (Const)
 import Control.Monad.Reader
+
+import Data.Typeable
+import Data.Data
 
 import Data.IORef
 import Data.List (nub, (\\), intersperse)
@@ -43,13 +48,27 @@ import PTS.Instances (C)
 -- type Tag = Int
 
 data Term = MkTerm (TermStructure Term)
+  deriving (Data, Typeable)
 
 structure :: Term -> TermStructure Term
 structure (MkTerm t) = t
 
+data BinOp
+  = Add
+  | Sub
+  | Mul
+  | Div
+  deriving (Data, Typeable)
+
+evalOp :: BinOp -> (Int -> Int -> Int)
+evalOp Add = (+)
+evalOp Sub = (-)
+evalOp Mul = (*)
+evalOp Div = div
+
 data TermStructure alpha
   = Nat     Int
-  | NatOp   Name (Int -> Int -> Int) alpha alpha
+  | NatOp   Name BinOp alpha alpha
   | IfZero  alpha alpha alpha
   | Var     Name
   | Const   C
@@ -57,7 +76,8 @@ data TermStructure alpha
   | Lam     Name alpha alpha
   | Pi      Name alpha alpha
   | Pos     Position alpha
-  deriving (Functor)
+  | Unquote Name
+  deriving (Functor, Data, Typeable)
 
 data Stmt 
   = Bind Name (Maybe Term) Term

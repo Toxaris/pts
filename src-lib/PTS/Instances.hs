@@ -1,6 +1,10 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 module PTS.Instances where
 
 import Control.Monad
+
+import Data.Typeable
+import Data.Data
 
 import Data.Char
 import Data.List
@@ -23,7 +27,7 @@ data PTS = PTS
 
 -- constants
 newtype C = C Int
-  deriving (Eq)
+  deriving (Eq, Data, Typeable)
 
 nat :: C
 nat = C 0

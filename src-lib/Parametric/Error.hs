@@ -1,4 +1,4 @@
-{-# LANGUAGE NoMonomorphismRestriction, FlexibleInstances, TypeSynonymInstances #-}
+{-# LANGUAGE NoMonomorphismRestriction, FlexibleInstances, TypeSynonymInstances, DeriveDataTypeable #-}
 module Parametric.Error 
   ( Errors
   , FOmegaError (..)
@@ -12,6 +12,10 @@ module Parametric.Error
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Trans.Error (ErrorList(..))
+
+
+import Data.Typeable
+import Data.Data
 
 import Data.Char
 import Data.List (intercalate)
@@ -27,8 +31,7 @@ type Errors = [FOmegaError]
 
 data Position
   = Position String Int Int Int Int
-  
-  deriving (Show, Eq)
+  deriving (Show, Eq, Data, Typeable)
 
 instance ErrorList FOmegaError where
   listMsg msg = pure (Error empty (pure msg) empty empty)

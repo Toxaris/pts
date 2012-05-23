@@ -27,7 +27,7 @@ normalform1 t = case structure t of
   Lam x t1 t2      ->  mkLam x (normalform1 t1) (normalform1 t2)
   Pi x t1 t2       ->  mkPi x (normalform1 t1) (normalform1 t2)
   NatOp i f t1 t2  ->  case (structure (normalform1 t1), structure (normalform1 t2)) of
-                         (Nat i, Nat j)  ->  mkNat (f i j)
+                         (Nat i, Nat j)  ->  mkNat (evalOp f i j)
                          _               ->  mkNatOp i f (normalform1 t1) (normalform1 t2)
   IfZero t1 t2 t3  ->  case structure (normalform1 t1) of
                           Nat 0  ->  normalform1 t2
@@ -61,7 +61,7 @@ normalform2 t = case structure t of
   
   NatOp i f t1 t2
     ->  case (structure t1', structure t2') of
-         (Nat i, Nat j)  ->  mkNat (f i j)
+         (Nat i, Nat j)  ->  mkNat (evalOp f i j)
          _               ->  mkNatOp i f t1' t2'
     where
       t1'  =  normalform2 t1
@@ -86,9 +86,9 @@ normalform2 t = case structure t of
 -- cool version: does not work yet :(
 data Context
   = Top
-  | NatOp1 !Name !(Int -> Int -> Int) !Context !Term
-  | NatOp2V !Name !(Int -> Int -> Int) !Int !Context
-  | NatOp2T !Name !(Int -> Int -> Int) !Term !Context
+  | NatOp1 !Name !BinOp !Context !Term
+  | NatOp2V !Name !BinOp !Int !Context
+  | NatOp2T !Name !BinOp !Term !Context
   | IfZero1 !Context !Term !Term
   | IfZero2 !Term !Context !Term
   | IfZero3 !Term !Term !Context
@@ -185,7 +185,7 @@ normalize term = decompose emptyEnv Top term where
          Nothing         ->  continueTerm env (mkVar n) ctx
   
   reduceNatOp !env !n !f !i !j !ctx
-    =  continueNat env (f i j) ctx
+    =  continueNat env (evalOp f i j) ctx
   
   reduceIfZero !env !i !t2 !t3 !ctx
     =  if i == 0

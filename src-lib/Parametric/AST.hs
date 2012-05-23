@@ -1,5 +1,8 @@
-{-# LANGUAGE NoMonomorphismRestriction, GeneralizedNewtypeDeriving, FlexibleContexts, FlexibleInstances, KindSignatures, EmptyDataDecls, MultiParamTypeClasses, FunctionalDependencies, UndecidableInstances, RankNTypes #-}
+{-# LANGUAGE NoMonomorphismRestriction, GeneralizedNewtypeDeriving, FlexibleContexts, FlexibleInstances, KindSignatures, EmptyDataDecls, MultiParamTypeClasses, FunctionalDependencies, UndecidableInstances, RankNTypes, DeriveDataTypeable #-}
 module Parametric.AST where
+
+import Data.Typeable
+import Data.Data
 
 import Data.Char (isLetter, isDigit, isAlphaNum)
 import Data.Set (Set)
@@ -8,7 +11,7 @@ import qualified Data.Set as Set
 data Name
   = PlainName String
   | IndexName String Int
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Data, Typeable)
 
 type Names = Set Name
 

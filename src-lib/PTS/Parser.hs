@@ -1,5 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
-module PTS.Parser ( parseStmt, parseStmts, parseTerm ) where
+module PTS.Parser ( parseStmt, parseStmts, parseTerm, parseTermAtPos ) where
 
 import Prelude hiding (abs, pi, elem, notElem, const)
 
@@ -44,10 +44,10 @@ expr = term simple rec mkPos "expression" where
     , mkIfZero <$> (keyword "if0" *> expr) 
              <*> (keyword "then" *> expr) 
              <*> (keyword "else" *> expr)
-    , natop (read "add") (+) simple
-    , natop (read "sub") (-) simple
-    , natop (read "mul") (*) simple
-    , natop (read "div") div simple
+    , natop (read "add") Add simple
+    , natop (read "sub") Sub simple
+    , natop (read "mul") Mul simple
+    , natop (read "div") Div simple
     , mkConst <$> const
     , var mkVar ident
     , mkNat <$> number ]
@@ -151,3 +151,20 @@ parseStmt = parseInternal stmt
 
 parseStmts = parseInternal stmts
 parseTerm = parseInternal expr
+
+parseTermAtPos :: Monad m => String -> Int -> Int -> String -> m Term
+parseTermAtPos file line col text =
+    case parse p file text of
+      Left err  -> fail $ show err
+      Right e   -> return e
+  where
+    p = do  pos <- getPosition
+            setPosition $
+              (flip setSourceName) file $
+              (flip setSourceLine) line $
+              (flip setSourceColumn) col $
+              pos
+            skipSpace
+            e <- expr
+            eof
+            return e
