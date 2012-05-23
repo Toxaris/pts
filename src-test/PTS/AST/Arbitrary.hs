@@ -64,10 +64,10 @@ arbitraryNatOp = do
   t1      <-  resize s1 arbitrary
   t2      <-  resize s2 arbitrary
   (n, f)  <-  elements
-                [  (read "add", (+))
-                ,  (read "sub", (-))
-                ,  (read "mul", (*))
-                ,  (read "div", div)
+                [  (read "add", Add)
+                ,  (read "sub", Sub)
+                ,  (read "mul", Mul)
+                ,  (read "div", Div)
                 ]
   return (mkNatOp n f t1 t2)
 
