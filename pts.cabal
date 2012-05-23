@@ -12,16 +12,15 @@ Build-type:          Simple
 -- Extra-source-files:  
 Cabal-version:       >= 1.8
 
-Executable pts
-  Hs-source-dirs:      src
-  Main-is:             PTS/Main.hs
+Library
+  Hs-source-dirs:      src-lib
   Build-depends:       base < 5,
                        containers == 0.4.*,
                        pretty == 1.0.*,
                        mtl == 2.0.*,
                        transformers ==0.2.*,
                        parsec == 3.1.*
-  Other-modules:       Tools.Instances,
+  Exposed-modules:     Tools.Instances,
                        Tools.Errors.Class,
                        Parametric.Pretty,
                        PTS.Instances,
@@ -34,63 +33,48 @@ Executable pts
                        PTS.Pretty,
                        PTS.Diff,
                        PTS.Core,
+                       PTS.Main,
+                       PTS.Substitution,
                        Parametric.Parser.Error,
                        Parametric.Parser,
                        PTS.Parser,
                        Tools.Errors,
-                       Control.Monad.Log
+                       Control.Monad.Log,
+                       Control.Monad.Environment
+
+Executable pts
+  Hs-source-dirs:      src-exec
+  Main-is:             pts.hs
+  Build-depends:       base < 5,
+                       containers == 0.4.*,
+                       pretty == 1.0.*,
+                       mtl == 2.0.*,
+                       transformers ==0.2.*,
+                       parsec == 3.1.*,
+                       pts
+
   -- Build-tools:         
 
-Executable pts-quote
-  Hs-source-dirs:      src
-  Main-is:             PTS/Quote/Main.hs
-  Build-depends:       base < 5,
-                       mtl == 2.0.*,
-                       transformers == 0.2.*,
-                       parsec == 3.1.*,
-                       containers == 0.4.*,
-                       pretty == 1.0.*
-  Other-modules:       Parametric.Pretty,
-                       Tools.Instances,
-                       Tools.Errors.Class,
-                       Parametric.Error,
-                       Parametric.AST,
-                       Parametric.Parser.Error,
-                       Parametric.Parser,
-                       Tools.Errors,
-                       PTS.Instances,
-                       PTS.Options,
-                       PTS.Algebra,
-                       PTS.AST,
-                       PTS.Normalisation,
-                       PTS.Pretty,
-                       PTS.Diff,
-                       PTS.Core,
-                       PTS.Parser,
-                       PTS.Quote,
-                       Control.Monad.Log
+-- Executable pts-quote
+--   Hs-source-dirs:      src-exec
+--   Main-is:             pts-quote.hs
+--   Build-depends:       base < 5,
+--                        mtl == 2.0.*,
+--                        transformers == 0.2.*,
+--                        parsec == 3.1.*,
+--                        containers == 0.4.*,
+--                        pretty == 1.0.*,
+--                        pts
 
 
 Test-suite tests
   Type: exitcode-stdio-1.0
-  Hs-source-dirs: src
-  Main-is: tests.hs
-  Other-modules:       Control.Monad.Log,
-                       Parametric.AST,
-                       Parametric.Error,
-                       Parametric.Pretty,
-                       PTS.Algebra,
-                       PTS.AST,
-                       PTS.AST.Arbitrary,
-                       PTS.Instances,
-                       PTS.Instances.Arbitrary,
-                       PTS.Pretty,
-                       PTS.Pretty.Tests,
-                       PTS.Substitution,
+  Hs-source-dirs:      src-test
+  Main-is:             tests.hs
+  Other-modules:       PTS.Pretty.Tests,
                        PTS.Substitution.Properties,
                        PTS.Substitution.Tests,
-                       Test.Property,
-                       Tools.Errors.Class
+                       Test.Property
   Build-depends:       base >= 4.0 && < 5,
                        mtl == 2.0.*,
                        transformers == 0.2.*,
@@ -101,5 +85,6 @@ Test-suite tests
                        test-framework-hunit,
                        QuickCheck,
                        HUnit,
-                       parsec == 3.1.*
+                       parsec == 3.1.*,
+                       pts
   -- Ghc-options: -Wall -fno-warn-orphans

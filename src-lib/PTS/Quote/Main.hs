@@ -1,4 +1,4 @@
-module Main where
+module PTS.Quote.Main where
 
 import Control.Monad.Environment
 import Control.Monad.Error
@@ -29,4 +29,5 @@ main' = do
                       liftIO (putStrLn (multiLine 80 q))
     _ -> do liftIO (putStrLn (multiLine 80 e))
 
+main :: IO ()
 main = runErrorsT $ runReaderT (runConsoleLogT (main' `catchError` \e -> liftIO $ putStrLn (showErrors e)) False) defaultOptions

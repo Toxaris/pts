@@ -1,5 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
-module Main where
+module PTS.Main where
 
 import Control.Monad
 import Control.Monad.Environment
