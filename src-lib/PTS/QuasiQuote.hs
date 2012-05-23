@@ -78,7 +78,7 @@ instance Lift Term where
     Lam     v t e       ->  [| mkLam $(liftE v) $(liftE t) $(liftE e) |]
     Pi      v t e       ->  [| mkPi $(liftE v) $(liftE t) $(liftE e) |]
     Pos     p e         ->  [| mkPos $(liftE p) $(liftE e) |]
-    Unquote v           ->  TH.varE (TH.mkName (show v))
+    Unquote v           ->  TH.varE (TH.mkName v)
 
 quoteExprPat :: String -> TH.PatQ
 quoteExprPat text = do

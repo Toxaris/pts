@@ -50,6 +50,7 @@ expr = term simple rec mkPos "expression" where
     , natop (read "div") Div simple
     , mkConst <$> const
     , var mkVar ident
+    , var mkUnquote meta
     , mkNat <$> number ]
 
   rec = asum
@@ -83,7 +84,12 @@ pragma = lexem $ do
 
 keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div"]
 
-identChar x = not (isSpace x) && x `notElem` ".:=;/()[]"
+identChar x = not (isSpace x) && x `notElem` ".:=;/()[]$"
+
+meta = lexem (do char '$'
+                 first <- satisfy (\c -> isLetter c && isLower c)
+                 rest <- many (satisfy (\c -> isAlphaNum c || c `elem` "'_"))
+                 return (first : rest))
 
 ident = lexem (do name <- many1 (satisfy identChar)
                   when (name `elem` keywords) $

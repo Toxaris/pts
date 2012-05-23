@@ -15,6 +15,7 @@ module PTS.AST
   , mkLam
   , mkPi
   , mkPos
+  , mkUnquote
   , freshvarl
   , handlePos
   , C ()
@@ -76,7 +77,7 @@ data TermStructure alpha
   | Lam     Name alpha alpha
   | Pi      Name alpha alpha
   | Pos     Position alpha
-  | Unquote Name
+  | Unquote String
   deriving (Functor, Data, Typeable)
 
 data Stmt
@@ -110,6 +111,7 @@ mkApp t1 t2        =  mkTerm (App t1 t2)
 mkLam n t1 t2      =  mkTerm (Lam n t1 t2)
 mkPi n t1 t2       =  mkTerm (Pi n t1 t2)
 mkPos p t          =  mkTerm (Pos p t)
+mkUnquote v        =  mkTerm (Unquote v)
 
 handlePos f p t = annotatePos p $ mkPos p <$> f t
 
