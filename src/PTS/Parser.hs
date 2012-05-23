@@ -3,7 +3,7 @@ module PTS.Parser ( parseStmt, parseStmts, parseTerm ) where
 
 import Prelude hiding (abs, pi, elem, notElem, const)
 
-import Control.Applicative hiding (many, Const)
+import Control.Applicative hiding (many, Const, optional)
 import Control.Monad
 import Control.Monad.Reader
 
@@ -61,7 +61,21 @@ stmt = withPos StmtPos $ asum
   , Bind <$> try (ident <* assign) <*> pure Nothing <*> expr
   , Term <$> expr]
 
-stmts = stmt `endBy` semi
+stmts = (optional pragma *> stmt) `endBy` semi
+
+     ----------------
+    -- LINE PRAGMAS --
+     ----------------
+
+pragma = lexem $ do
+  string "{-# LINE "
+  line <- read <$> many1 digit
+  string " \""
+  name <- many1 ((char '\\' *> char '"') <|> noneOf "\"")
+  string "\" #-}"
+
+  pos <- getPosition
+  setPosition (setSourceName (setSourceLine pos (pred line)) name)
 
      ---------
     -- LEXER --
@@ -130,7 +144,7 @@ rbracket = lexem(char ']')
 
 parseInternal parser file text = do
   case parse (skipSpace *> parser <* eof) file text of
-    Left e -> throwError . pure . formatError text $ e 
+    Left e -> throwError . pure . formatError file text $ e
     Right r -> return r 
 
 parseStmt = parseInternal stmt

@@ -10,9 +10,9 @@ import Parametric.Error
 
   -- ERROR OUTPUT --
 
-formatError :: String -> ParseError -> FOmegaError
-formatError src err 
-  = Error (Just file) (Just "Syntax Error") (lines msg) (Just (lines src)) where
+formatError :: FilePath -> String -> ParseError -> FOmegaError
+formatError expectedName src err
+  = Error (Just file) (Just "Syntax Error") (lines msg) maybeSrc where
   
   -- extract information
   messages = errorMessages err
@@ -23,6 +23,10 @@ formatError src err
   convert l c = if l > srcLineCount 
                   then (srcLineCount, succ srcLineLength)
                   else (l, min c (length srcLine))
+
+  maybeSrc = if name == expectedName
+               then Just (lines src)
+               else Nothing
   
   srcLines = lines src
   srcLineCount = length srcLines
