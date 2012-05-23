@@ -87,7 +87,7 @@ normalform2 t = case structure t of
 data Context
   = Top
   | NatOp1 !Name !BinOp !Context !Term
-  | NatOp2V !Name !BinOp !Int !Context
+  | NatOp2V !Name !BinOp !Integer !Context
   | NatOp2T !Name !BinOp !Term !Context
   | IfZero1 !Context !Term !Term
   | IfZero2 !Term !Context !Term

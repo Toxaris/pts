@@ -60,14 +60,14 @@ data BinOp
   | Div
   deriving (Data, Typeable)
 
-evalOp :: BinOp -> (Int -> Int -> Int)
+evalOp :: BinOp -> (Integer -> Integer -> Integer)
 evalOp Add = (+)
 evalOp Sub = (-)
 evalOp Mul = (*)
 evalOp Div = div
 
 data TermStructure alpha
-  = Nat     Int
+  = Nat     Integer
   | NatOp   Name BinOp alpha alpha
   | IfZero  alpha alpha alpha
   | Var     Name

@@ -73,7 +73,7 @@ instance Pretty PrettyChain where
 
 prettyAlgebra :: PreAlgebra (Names, PrettyChain) PrettyChain
 prettyAlgebra (Nat n) = Atomic $
-  int n
+  integer n
 
 prettyAlgebra (NatOp n _ (_, a) (_, b)) = Composite pApp $
   pretty 0 n <+> pretty pAppR a <+> pretty pAppR b
