@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, FlexibleInstances #-}
 module PTS.QuasiQuote (pts) where
 
 import Parametric.Error (Position (..))
@@ -6,6 +6,8 @@ import Parametric.AST
 import PTS.Instances
 import PTS.AST
 import PTS.Parser (parseTermAtPos)
+
+import Data.Char
 
 import Data.Generics
 import Language.Haskell.TH hiding (Name)
@@ -33,18 +35,21 @@ class PatOrExp t where
   con   ::  TH.Name -> [Q t] -> Q t
   lit   ::  Lit -> Q t
   var   ::  TH.Name -> Q t
+  app   ::  Q t -> [Q t] -> Q t
 
 instance PatOrExp Pat where
   list  =  listP
   con   =  conP
   lit   =  litP
   var   =  varP
+  app   =  error "cannot apply in patterns"
 
 instance PatOrExp Exp where
   list  =  listE
   con   =  \name -> foldl appE (conE name)
   lit   =  litE
   var   =  varE
+  app   =  foldl appE
 
 class Lift e where
   lift :: PatOrExp t => e -> Q t
@@ -80,18 +85,26 @@ instance Lift C where
 instance Lift Name where
   lift (PlainName  s)    = con 'PlainName [lift s]
   lift (IndexName  s i)  = con 'IndexName [lift s, lift i]
+  lift (MetaName s)      = var (TH.mkName s)
 
 instance Lift Term where
-  lift (MkTerm t) = con 'MkTerm [lift t]
+  lift (MkTerm (Nat     n))              =  con 'MkTerm  [con 'Nat     [lift n]]
+  lift (MkTerm (NatOp   v  op  e1  e2))  =  con 'MkTerm  [con 'NatOp   [lift v,  lift op,  lift e1,  lift e2]]
+  lift (MkTerm (IfZero  c  t   e))       =  con 'MkTerm  [con 'IfZero  [lift c,  lift t,   lift e]]
+  lift (MkTerm (Var     v))              =  con 'MkTerm  [con 'Var     [lift v]]
+  lift (MkTerm (Const   c))              =  con 'MkTerm  [con 'Const   [lift c]]
+  lift (MkTerm (App     f  a))           =  con 'MkTerm  [con 'App     [lift f, lift a]]
+  lift (MkTerm (Lam     v  t  e))        =  con 'MkTerm  [con 'Lam     [lift v, lift t, lift e]]
+  lift (MkTerm (Pi      v  t  e))        =  con 'MkTerm  [con 'Pi      [lift v, lift t, lift e]]
+  lift (MkTerm (Unquote t))              =  unquote t
+  lift (MkTerm (Pos     p  e))           =  lift e
 
-instance Lift t => Lift (TermStructure t) where
-  lift (Nat     n)              =  con 'Nat     [lift n]
-  lift (NatOp   v  op  e1  e2)  =  con 'NatOp   [lift v,  lift op,  lift e1,  lift e2]
-  lift (IfZero  c  t   e)       =  con 'IfZero  [lift c,  lift t,   lift e]
-  lift (Var     v)              =  con 'Var     [lift v]
-  lift (Const   c)              =  con 'Const   [lift c]
-  lift (App     f  a)           =  con 'App     [lift f, lift a]
-  lift (Lam     v  t  e)        =  con 'Lam     [lift v, lift t, lift e]
-  lift (Pi      v  t  e)        =  con 'Pi      [lift v, lift t, lift e]
-  lift (Pos     p  e)           =  lift e
-  lift (Unquote v)              =  var (TH.mkName v)
+class Unquote e where
+  unquote :: PatOrExp t => e -> Q t
+
+instance Unquote Term where
+  unquote (MkTerm (App f a)) = app (unquote f) [unquote a]
+  unquote (MkTerm (Var v))
+    | isUpper (head (show v))  =  con (TH.mkName (show v)) []
+    | otherwise                =  var (TH.mkName (show v))
+  unquote (MkTerm (Pos p e)) = unquote e

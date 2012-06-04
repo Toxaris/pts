@@ -4,13 +4,14 @@ module Parametric.AST where
 import Data.Typeable
 import Data.Data
 
-import Data.Char (isLetter, isDigit, isAlphaNum)
+import Data.Char (isLetter, isDigit, isAlphaNum, isLower)
 import Data.Set (Set)
 import qualified Data.Set as Set
 
 data Name
   = PlainName String
   | IndexName String Int
+  | MetaName String
   deriving (Eq, Ord, Data, Typeable)
 
 type Names = Set Name
@@ -18,6 +19,7 @@ type Names = Set Name
 instance Show Name where
   showsPrec _ (PlainName text) = showString text
   showsPrec _ (IndexName text i) = showString text . shows i
+  showsPrec _ (MetaName text) = showChar '$' . showString text
 
 instance Read Name where
   readsPrec _ (c:cs) | isLetter c = [plainName [c] cs] where
@@ -28,6 +30,10 @@ instance Read Name where
     indexName text index (c:cs) | isDigit c = indexName text (c : index) cs
     indexName text index (c:cs) | isAlphaNum c = plainName (index ++ text) cs
     indexName text index rest = (IndexName (reverse text) (read (reverse index)), rest)
+
+  readsPrec _ ('$':c:cs) | isLower c = [metaName [c] cs] where
+    metaName text (c:cs) | isAlphaNum c = metaName (c : text) cs
+    metaName text rest = (MetaName (reverse text), rest)
 
   readsPrec _ _ = []
 

@@ -39,8 +39,8 @@ expr = term simple rec mkPos "expression" where
   simple = withPos mkPos $ asum
     [ parens expr
     , brackets expr
-    , abs mkLam lambda ident colon1 expr dot expr
-    , abs mkPi  pi     ident colon1 expr dot expr
+    , abs mkLam lambda identOrMeta colon1 expr dot expr
+    , abs mkPi  pi     identOrMeta colon1 expr dot expr
     , mkIfZero <$> (keyword "if0" *> expr)
              <*> (keyword "then" *> expr)
              <*> (keyword "else" *> expr)
@@ -49,13 +49,17 @@ expr = term simple rec mkPos "expression" where
     , natop (read "mul") Mul simple
     , natop (read "div") Div simple
     , mkConst <$> const
+    , mkUnquote <$> unquote
     , var mkVar ident
-    , var mkUnquote meta
     , mkNat <$> number ]
 
   rec = asum
     [ app mkApp simple
     , arr (\a b -> mkPi (freshvar b (read "unused")) a b) arrow (expr )]
+
+unquote = char '$' *> asum
+  [ var mkVar ident
+  , parens expr]
 
 stmt = withPos StmtPos $ asum
   [ Bind <$> try (ident <* colon1) <*> (Just <$> expr) <* assign <*> expr
@@ -86,10 +90,13 @@ keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul",
 
 identChar x = not (isSpace x) && x `notElem` ".:=;/()[]$"
 
+identOrMeta = ident <|> meta
+
 meta = lexem (do char '$'
                  first <- satisfy (\c -> isLetter c && isLower c)
                  rest <- many (satisfy (\c -> isAlphaNum c || c `elem` "'_"))
-                 return (first : rest))
+                 return (read ('$' : first : rest)))
+         <?> "meta variable name"
 
 ident = lexem (do name <- many1 (satisfy identChar)
                   when (name `elem` keywords) $
