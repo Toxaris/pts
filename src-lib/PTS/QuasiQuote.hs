@@ -8,88 +8,90 @@ import PTS.AST
 import PTS.Parser (parseTermAtPos)
 
 import Data.Generics
-import Language.Haskell.TH as TH hiding (Name)
+import Language.Haskell.TH hiding (Name)
+import qualified Language.Haskell.TH as TH
 import Language.Haskell.TH.Quote
 
 pts  :: QuasiQuoter
 pts  =  QuasiQuoter
-  quoteExprExp
-  quoteExprPat
+  quoteTerm
+  quoteTerm
   (error "cannot use pts quasiquoter in types")
   (error "cannot use pts quasiquoter in declarations")
 
-quoteExprExp :: String -> TH.ExpQ
-quoteExprExp text = do
+quoteTerm :: PatOrExp t => String -> Q t
+quoteTerm text = do
   loc <- TH.location
   let  file  =  TH.loc_filename loc
        line  =  fst (TH.loc_start loc)
        col   =  snd (TH.loc_start loc)
   term <- parseTermAtPos file line col text
-  liftE term
+  lift term
+
+class PatOrExp t where
+  list  ::  [Q t] -> Q t
+  con   ::  TH.Name -> [Q t] -> Q t
+  lit   ::  Lit -> Q t
+  var   ::  TH.Name -> Q t
+
+instance PatOrExp Pat where
+  list  =  listP
+  con   =  conP
+  lit   =  litP
+  var   =  varP
+
+instance PatOrExp Exp where
+  list  =  listE
+  con   =  \name -> foldl appE (conE name)
+  lit   =  litE
+  var   =  varE
 
 class Lift e where
-  liftE :: e -> ExpQ
-  -- liftP :: e -> PatQ
+  lift :: PatOrExp t => e -> Q t
 
-  liftListE :: [e] -> ExpQ
-  liftListE es = listE (map liftE es)
-
-  -- liftListP :: [e] -> PatQ
-  -- liftListP = listP (map liftP es)
+  liftList :: PatOrExp t => [e] -> Q t
+  liftList es = list (map lift es)
 
 instance Lift e => Lift [e] where
-  liftE = liftListE
-  -- liftP = liftListP
+  lift = liftList
 
 instance Lift Position where
-  liftE (Position file i1 i2 i3 i4) = [| Position $(liftE file) $(liftE i1) $(liftE i2) $(liftE i3) $(liftE i4) |]
+  lift (Position file i1 i2 i3 i4) = con 'Position [lift file, lift i1, lift i2, lift i3, lift i4]
 
 instance Lift Char where
-  liftE c = litE (charL c)
-  liftListE s = litE (stringL s)
+  lift c = lit (charL c)
+  liftList s = lit (stringL s)
 
 instance Lift Integer where
-  liftE n = litE (integerL n)
+  lift n = lit (integerL n)
 
 instance Lift Int where
-  liftE n = litE (integerL (toInteger n))
+  lift n = lit (integerL (toInteger n))
 
 instance Lift BinOp where
-  liftE Add = [| Add |]
-  liftE Sub = [| Add |]
-  liftE Mul = [| Add |]
-  liftE Div = [| Add |]
+  lift Add = con 'Add []
+  lift Sub = con 'Sub []
+  lift Mul = con 'Mul []
+  lift Div = con 'Div []
 
 instance Lift C where
-  liftE (C n) = [| C $(liftE n) |]
+  lift (C n) = con 'C [lift n]
 
 instance Lift Name where
-  liftE (PlainName s) = [| PlainName $(liftE s) |]
-  liftE (IndexName s i) = [| IndexName $(liftE s) $(liftE i) |]
+  lift (PlainName  s)    = con 'PlainName [lift s]
+  lift (IndexName  s i)  = con 'IndexName [lift s, lift i]
 
 instance Lift Term where
-  liftE t = case structure t of
-    Nat     n           ->  [| mkNat $(liftE n) |]
-    NatOp   v op e1 e2  ->  [| mkNatOp $(liftE v) $(liftE op) $(liftE e1) $(liftE e2) |]
-    IfZero  c t e       ->  [| mkIfZero $(liftE c) $(liftE t) $(liftE e) |]
-    Var     v           ->  [| mkVar $(liftE v) |]
-    Const   c           ->  [| mkConst $(liftE c) |]
-    App     f a         ->  [| mkApp $(liftE f) $(liftE a) |]
-    Lam     v t e       ->  [| mkLam $(liftE v) $(liftE t) $(liftE e) |]
-    Pi      v t e       ->  [| mkPi $(liftE v) $(liftE t) $(liftE e) |]
-    Pos     p e         ->  [| mkPos $(liftE p) $(liftE e) |]
-    Unquote v           ->  TH.varE (TH.mkName v)
+  lift (MkTerm t) = con 'MkTerm [lift t]
 
-quoteExprPat :: String -> TH.PatQ
-quoteExprPat text = do
-  loc <- TH.location
-  let  file  =  TH.loc_filename loc
-       line  =  fst (TH.loc_start loc)
-       col   =  snd (TH.loc_start loc)
-  expr <- parseTermAtPos file line col text
-  dataToPatQ (const Nothing `extQ` antiExprPat) expr
-
-antiExprPat :: Term -> Maybe (TH.Q TH.Pat)
-antiExprPat t = case structure t of
-  (Unquote v)  -> Just $ TH.varP  (TH.mkName (show v))
-  _            -> Nothing
+instance Lift t => Lift (TermStructure t) where
+  lift (Nat     n)              =  con 'Nat     [lift n]
+  lift (NatOp   v  op  e1  e2)  =  con 'NatOp   [lift v,  lift op,  lift e1,  lift e2]
+  lift (IfZero  c  t   e)       =  con 'IfZero  [lift c,  lift t,   lift e]
+  lift (Var     v)              =  con 'Var     [lift v]
+  lift (Const   c)              =  con 'Const   [lift c]
+  lift (App     f  a)           =  con 'App     [lift f, lift a]
+  lift (Lam     v  t  e)        =  con 'Lam     [lift v, lift t, lift e]
+  lift (Pi      v  t  e)        =  con 'Pi      [lift v, lift t, lift e]
+  lift (Pos     p  e)           =  con 'Pos     [lift p, lift e]
+  lift (Unquote v)              =  var (TH.mkName v)
