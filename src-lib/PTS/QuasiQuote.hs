@@ -93,5 +93,5 @@ instance Lift t => Lift (TermStructure t) where
   lift (App     f  a)           =  con 'App     [lift f, lift a]
   lift (Lam     v  t  e)        =  con 'Lam     [lift v, lift t, lift e]
   lift (Pi      v  t  e)        =  con 'Pi      [lift v, lift t, lift e]
-  lift (Pos     p  e)           =  con 'Pos     [lift p, lift e]
+  lift (Pos     p  e)           =  lift e
   lift (Unquote v)              =  var (TH.mkName v)
