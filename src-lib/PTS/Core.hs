@@ -1,7 +1,7 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts, PatternGuards, FlexibleInstances #-}
 module PTS.Core where
 
-import Prelude ()
+import Prelude (String)
 
 import Control.Monad
 import Control.Monad.Environment

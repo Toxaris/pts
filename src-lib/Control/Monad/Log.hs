@@ -18,7 +18,7 @@ import Data.Bool (Bool (True, False))
 import Data.Function (($))
 import Data.Int (Int)
 import Data.List (replicate, length, (++))
-import Data.Char (String)
+import Prelude (String)
 
 import System.IO (putStrLn)
 
