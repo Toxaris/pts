@@ -25,6 +25,50 @@ newtype M a = M (State Names a)
 runM :: Names -> M a -> a
 runM names (M p) = evalState p names
 
+equivTerm :: Names -> Term -> Term -> Bool
+equivTerm names t1 t2 = runM names $ do
+  v1 <- eval t1 []
+  v2 <- eval t2 []
+  equiv v1 v2
+
+equiv :: Value -> Value -> M Bool
+equiv (Function n v1 f) (Function _ v1' f') = do
+  r1 <- equiv v1 v1'
+  n'   <- fresh n
+  v2   <- f   (ResidualVar n')
+  v2'  <- f'  (ResidualVar n')
+  r2 <- equiv v2 v2'
+  return (r1 && r2)
+equiv (Number n) (Number n') = do
+  return (n == n')
+equiv (Constant c) (Constant c') = do
+  return (c == c')
+equiv (PiType n v1 f) (PiType _ v1' f') = do
+  r1   <- equiv v1 v1'
+  n'   <- fresh n
+  v2   <- f   (ResidualVar n')
+  v2'  <- f'  (ResidualVar n')
+  r2   <- equiv v2 v2'
+  return (r1 && r2)
+equiv (ResidualNatOp n op v1 v2) (ResidualNatOp n' op' v1' v2') = do
+  let r1 = op == op'
+  r2 <- equiv v1 v1'
+  r3 <- equiv v2 v2'
+  return (r1 && r2 && r3)
+equiv (ResidualIfZero v1 v2 v3) (ResidualIfZero v1' v2' v3') = do
+  r1 <- equiv v1 v1'
+  r2 <- equiv v2 v2'
+  r3 <- equiv v3 v3'
+  return (r1 && r2 && r3)
+equiv (ResidualVar n) (ResidualVar n') = do
+  return (n == n')
+equiv (ResidualApp v1 v2) (ResidualApp v1' v2') = do
+  r1 <- equiv v1 v1'
+  r2 <- equiv v2 v2'
+  return (r1 && r2)
+equiv _ _ = do
+  return False
+
 nbe :: Names -> Term -> Term
 nbe names e = runM names $ do
   v   <- eval e []

@@ -11,8 +11,10 @@ import PTS.Algebra
 import PTS.AST
 import PTS.Substitution (subst)
 
+import PTS.Evaluation (nbe)
+
 -- select a version
-normalform = normalform1
+normalform = nbe
 
 -- normalization and equivalence of terms
 --

@@ -126,7 +126,7 @@ processStmt (Bind n (Just t') t) = recover () $ do
   q <- runEnvironmentT (typecheck t) []
 
   -- compare specified and actual type
-  if equiv Set.empty q t''
+  if equivTerm Set.empty q t''
     then output (nest 2 (sep [text "type:", nest 2 (pretty 0 t' )]))
     else let (expected, given) = showDiff 0 (diff (nbe Set.empty t'' ) (nbe Set.empty q)) in
            prettyFail $ text "Type mismatch in top-level binding of" <+> pretty 0 n

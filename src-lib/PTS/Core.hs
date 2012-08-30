@@ -1,7 +1,7 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts, PatternGuards, FlexibleInstances #-}
 module PTS.Core where
 
-import Prelude (String)
+import Prelude (fst, snd, String)
 
 import Control.Monad
 import Control.Monad.Environment
@@ -31,7 +31,7 @@ import PTS.Normalisation
 import PTS.Options
 import PTS.Pretty
 import PTS.Substitution
-import PTS.Evaluation (nbe)
+import PTS.Evaluation
 
 import Text.Show (Show (show))
 
@@ -48,27 +48,6 @@ import Tools.Errors.Class
 
 import Debug.Trace
 
--- alpha equivalence
-instance Eq Term where
-  t == t' = structure t == structure t'
-
-instance Eq (TermStructure Term) where
-  (Var x) == (Var y) = x == y
-  (Nat i) == (Nat j) = i == j
-  (NatOp i _ t1 t2) == (NatOp i' _ t1' t2') = i == i' && t1 == t1' && t2 == t2'
-  (IfZero t1 t2 t3) == (IfZero t1' t2' t3') = t1==t1' && t2==t2' && t3==t3'
-  (Const c) == (Const c') = c == c'
-  (App t1 t2) == (App t1' t2') = t1 == t1' && t2 == t2'
-
-  (Lam x1 q1 b1) == (Lam x2 q2 b2) = q1 == q2 && b1' == b2' where
-    (_, b1', b2') = freshCommonVar x1 x2 b1 b2
-
-  (Pi x1 q1 b1) == (Pi x2 q2 b2) = q1 == q2 && b1' == b2' where
-    (_, b1', b2') = freshCommonVar x1 x2 b1 b2
-
-  Pos _ t == Pos _ t' = t == t'
-  _ == _ = False
-
 -- instance Ord Term where
 --   compare a b = compare (show a) (show b)
 
@@ -81,9 +60,6 @@ isVal t = case structure t of
   Nat _      ->  True
   _          ->  False
 
-equiv :: Names -> Term -> Term -> Bool
-equiv names t1 t2 = nbe names t1 == nbe names t2
-
 check :: Monad m => Bool -> String -> m ()
 check True _ = return ()
 check False s = fail s
@@ -95,23 +71,31 @@ checkMaybe Nothing s = fail s
 ndots :: Int -> String
 ndots n = replicate n '.'
 
+lookupValue x = do
+  m <- lookup x
+  return (fmap fst m)
+
+lookupType x = do
+  m <- lookup x
+  return (fmap snd m)
+
 -- mytrace d ctx (Const x) | x == star = False
 -- mytrace d ctx t =
 --   trace ((show d) ++ (ndots d) ++ (show ctx) ++ " |- "++(show t) ++ " : ???") False
 
 -- safe bind
-safebind :: MonadEnvironment Name Term m => Name -> Term -> Term -> (Name -> Term -> m a) -> m a
+safebind :: MonadEnvironment Name (Value, Term) m => Name -> Term -> Term -> (Name -> Term -> m a) -> m a
 safebind x t b f = do
-  result <- lookup x
+  result <- lookupType x
   case result of
     Nothing -> do
-      bind x t (f x b)
+      bind x (ResidualVar x, t) (f x b)
     Just _ -> do
       vars <- keys
       let nx = freshvarl (freevars b `Set.union` vars) x
-      bind nx t (f nx (subst b x (mkVar nx)))
+      bind nx (ResidualVar nx, t) (f nx (subst b x (mkVar nx)))
 
-debug :: (MonadEnvironment Name Term m, MonadLog m) => String -> Term -> m Term -> m Term
+debug :: (MonadEnvironment Name (Value, Term) m, MonadLog m) => String -> Term -> m Term -> m Term
 debug n t result = do
   enter n
   ctx <- getEnvironment
@@ -140,11 +124,11 @@ msgNotProperType context info t t'
 
 normalizeToSame s' t' s t context info1 info2 = do
   names <- keys
-  let s'' = nbe names s'
-      t'' = nbe names t'
-   in if s'' == t''
-      then return s''
-      else prettyFail $ msgNotSame context info1 info2 s t s'' t''
+  if (equivTerm names s' t')
+      then return ()
+      else let  s'' = nbe names s'
+                t'' = nbe names t'
+             in prettyFail $ msgNotSame context info1 info2 s t s'' t''
 
 msgNotSame context info1 info2 s t s' t'
   = let (s'', t'') = showDiff 0 (diff s' t')
@@ -158,10 +142,10 @@ msgNotSame context info1 info2 s t s' t'
 normalizeToNat :: (MonadEnvironment Name t m, MonadReader Options m, MonadErrors Errors m) => Term -> Term -> Doc -> Doc -> m Term
 normalizeToNat t' t context info = do
   names <- keys
-  let t'' = nbe names t'
-  if t'' == mkConst nat
+  if equivTerm names t' (mkConst nat)
     then return (mkConst nat)
-    else prettyFail $ msgNotNat context info t t'' nat
+    else let t'' = nbe names t'
+          in prettyFail $ msgNotNat context info t t'' nat
 
 msgNotNat context info t t' nat
   = text "Type Error" <+> context <> text ": Types do not match." $$ nest 2 (
@@ -183,7 +167,7 @@ msgNotPi context info t t'
     sep [info <> text ":", nest 2 (pretty 0 t)] $$
     sep [text "Type of" <+> info <> text ":", nest 2 (pretty 0 t')])
 
-typecheck :: (MonadEnvironment Name Term m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m Term
+typecheck :: (MonadEnvironment Name (Value, Term) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m Term
 --typecheck p d ctx t | mytrace d ctx t = undefined
 
 typecheck t = case structure t of
@@ -196,7 +180,7 @@ typecheck t = case structure t of
 
   -- start
   Var x -> debug "TypeVar" t $ do
-    xt <- lookup x
+    xt <- lookupType x
     case xt of
       Just xt -> do
         s <- typecheck xt
@@ -265,6 +249,7 @@ typecheck t = case structure t of
     tt2 <- typecheck t2
     tt3 <- typecheck t3
     normalizeToSame tt2 tt3 t2 t3 (text "in if0") (text "then branch") (text "else branch")
+    return tt2
 
   -- Position information
   Pos p t -> do

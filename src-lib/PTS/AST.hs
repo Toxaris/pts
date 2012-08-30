@@ -59,7 +59,7 @@ data BinOp
   | Sub
   | Mul
   | Div
-  deriving (Data, Typeable)
+  deriving (Eq, Data, Typeable)
 
 evalOp :: BinOp -> (Integer -> Integer -> Integer)
 evalOp Add = (+)

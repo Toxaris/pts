@@ -16,6 +16,7 @@ import Parametric.Pretty
 import PTS.Algebra
 import PTS.AST
 import PTS.Instances
+import PTS.Evaluation (Value)
 
 -- priorities
 pAppR = 3
@@ -129,5 +130,5 @@ instance Pretty Stmt where
 instance Show Term where
   show t = singleLine t
 
-showCtx :: [(Name, Term)] -> String
-showCtx = concat . intersperse ", " . map (\(n, t) -> show n ++ " : " ++ show t)
+showCtx :: [(Name, (Value, Term))] -> String
+showCtx = concat . intersperse ", " . map (\(n, (v, t)) -> show n ++ " : " ++ show t)
