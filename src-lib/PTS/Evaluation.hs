@@ -13,7 +13,11 @@ data Value
   = Function  Name Term (Value -> M Value)
   | Number    Integer
   | Constant  C
-  | Residual  Term
+  | PiType    Name Value (Value -> M Value)
+  | ResidualNatOp  Name BinOp Value Value
+  | ResidualIfZero Value Value Value
+  | ResidualVar    Name
+  | ResidualApp    Value Value
 
 newtype M a = M (State Names a)
   deriving (Functor, Monad, MonadState Names)
@@ -26,7 +30,6 @@ nbe e = runM $ do
   v   <- eval e []
   e'  <- reify v
   return e'
-  
 
 fresh :: Name -> M Name
 fresh n = do
@@ -38,15 +41,34 @@ fresh n = do
 reify :: Value -> M Term
 reify (Function n t f) = do
   n' <- fresh n
-  v <- f (Residual (mkVar n'))
+  v <- f (ResidualVar n')
   e <- reify v
   return (mkLam n' t e)
 reify (Number n) = do
   return (mkNat n)
 reify (Constant c) = do
   return (mkConst c)
-reify (Residual e) = do
-  return e
+reify (PiType n v1 f) = do
+  e1 <- reify v1
+  n' <- fresh n
+  v2 <- f (ResidualVar n')
+  e2 <- reify v2
+  return (mkPi n' e1 e2)
+reify (ResidualNatOp n op v1 v2) = do
+  e1 <- reify v1
+  e2 <- reify v2
+  return (mkNatOp n op e1 e2)
+reify (ResidualIfZero v1 v2 v3) = do
+  e1 <- reify v1
+  e2 <- reify v2
+  e3 <- reify v3
+  return (mkIfZero e1 e2 e3)
+reify (ResidualVar n) = do
+  return (mkVar n)
+reify (ResidualApp v1 v2) = do
+  e1 <- reify v1
+  e2 <- reify v2
+  return (mkApp e1 e2)
 
 eval :: Term -> Env -> M Value
 eval t env = case structure t of
@@ -59,9 +81,7 @@ eval t env = case structure t of
       (Number n1, Number n2) -> do
         return (Number (evalOp op n1 n2))
       _ -> do
-        e1'  <- reify v1
-        e2'  <- reify v2
-        return (Residual (mkNatOp n op e1' e2'))
+        return (ResidualNatOp n op v1 v2)
   IfZero e1 e2 e3 -> do
     v1 <- eval e1 env
     case v1 of
@@ -72,14 +92,11 @@ eval t env = case structure t of
       _ -> do
         v2   <- eval e2 env
         v3   <- eval e3 env
-        e1'  <- reify v1
-        e2'  <- reify v2
-        e3'  <- reify v3
-        return (Residual (mkIfZero e1' e2' e3'))
+        return (ResidualIfZero v1 v2 v3)
   Var n -> do
     case lookup n env of
       Just v -> return v
-      Nothing -> return (Residual (mkVar n))
+      Nothing -> return (ResidualVar n)
   Const c -> do
     return (Constant c)
   App e1 e2 -> do
@@ -89,18 +106,12 @@ eval t env = case structure t of
       Function n t f -> do
         f v2
       _ -> do
-        e1'  <- reify v1
-        e2'  <- reify v2
-        return (Residual (mkApp e1' e2'))
+        return (ResidualApp v1 v2)
   Lam n e1 e2 -> do
     return (Function n e1 (\v -> eval e2 ((n, v) : env)))
   Pi n e1 e2 -> do
-    n'   <- fresh n
-    v1   <- eval e1 env
-    v2   <- eval e2 ((n, Residual (mkVar n')) : env)
-    e1'  <- reify v1
-    e2'  <- reify v2
-    return (Residual (mkPi n' e1' e2'))
+    v1 <- eval e1 env
+    return (PiType n v1 (\v -> eval e2 ((n, v) : env)))
   Pos _ e -> do
     eval e env
 
