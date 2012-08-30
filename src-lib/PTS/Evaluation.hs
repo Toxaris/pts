@@ -22,11 +22,11 @@ data Value
 newtype M a = M (State Names a)
   deriving (Functor, Monad, MonadState Names)
 
-runM :: M a -> a
-runM (M p) = evalState p Set.empty
+runM :: Names -> M a -> a
+runM names (M p) = evalState p names
 
-nbe :: Term -> Term
-nbe e = runM $ do
+nbe :: Names -> Term -> Term
+nbe names e = runM names $ do
   v   <- eval e []
   e'  <- reify v
   return e'
@@ -36,7 +36,7 @@ fresh n = do
   ns <- get
   let n' = freshvarl ns n
   put (Set.insert n' ns)
-  return n
+  return n'
 
 reify :: Value -> M Term
 reify (Function n v1 f) = do

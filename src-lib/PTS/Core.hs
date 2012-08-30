@@ -31,6 +31,7 @@ import PTS.Normalisation
 import PTS.Options
 import PTS.Pretty
 import PTS.Substitution
+import PTS.Evaluation (nbe)
 
 import Text.Show (Show (show))
 
@@ -80,8 +81,8 @@ isVal t = case structure t of
   Nat _      ->  True
   _          ->  False
 
-equiv :: Term -> Term -> Bool
-equiv t1 t2 = (normalform t1) == (normalform t2)
+equiv :: Names -> Term -> Term -> Bool
+equiv names t1 t2 = nbe names t1 == nbe names t2
 
 check :: Monad m => Bool -> String -> m ()
 check True _ = return ()
@@ -125,8 +126,9 @@ debug n t result = do
 
 normalizeToSort t' t context info = do
   pts <- asks optInstance
+  names <- keys
 
-  case structure (normalform t') of
+  case structure (nbe names t') of
     Const s | sorts pts s  ->  return s
     _                      ->  prettyFail $ msgNotProperType context info t t'
 
@@ -136,12 +138,13 @@ msgNotProperType context info t t'
     sep [text "Term:", nest 2 (pretty 0 t)] $$
     sep [text "Type:", nest 2 (pretty 0 t')])
 
-normalizeToSame s' t' s t context info1 info2
-  = let s'' = normalform s'
-        t'' = normalform t'
-     in if s'' == t''
-        then return s''
-        else prettyFail $ msgNotSame context info1 info2 s t s'' t''
+normalizeToSame s' t' s t context info1 info2 = do
+  names <- keys
+  let s'' = nbe names s'
+      t'' = nbe names t'
+   in if s'' == t''
+      then return s''
+      else prettyFail $ msgNotSame context info1 info2 s t s'' t''
 
 msgNotSame context info1 info2 s t s' t'
   = let (s'', t'') = showDiff 0 (diff s' t')
@@ -152,9 +155,10 @@ msgNotSame context info1 info2 s t s' t'
         sep [text "Type of" <+> info1 <> text ":", nest 2 (text s'')] $$
         sep [text "Type of" <+> info2 <> text ":", nest 2 (text t'')])
 
-normalizeToNat :: (MonadReader Options m, MonadErrors Errors m) => Term -> Term -> Doc -> Doc -> m Term
+normalizeToNat :: (MonadEnvironment Name t m, MonadReader Options m, MonadErrors Errors m) => Term -> Term -> Doc -> Doc -> m Term
 normalizeToNat t' t context info = do
-  let t'' = normalform t'
+  names <- keys
+  let t'' = nbe names t'
   if t'' == mkConst nat
     then return (mkConst nat)
     else prettyFail $ msgNotNat context info t t'' nat
@@ -166,11 +170,12 @@ msgNotNat context info t t' nat
     sep [text "Type of" <+> info <> text ":", nest 2 (pretty 0 t')] $$
     sep [text "Expected Type:" <+> nest 2 (pretty 0 (mkConst nat))])
 
-normalizeToPi t' t context info
-  =  let t'' = normalform t' in
-       case structure t'' of
-         result@(Pi _ _ _)  ->  return result
-         _                  ->  prettyFail $ msgNotPi context info t t''
+normalizeToPi t' t context info = do
+  names <- keys
+  let t'' = nbe names t' in
+     case structure t'' of
+       result@(Pi _ _ _)  ->  return result
+       _                  ->  prettyFail $ msgNotPi context info t t''
 
 msgNotPi context info t t'
   = text "Type Error" <+> context <> text ": Not a product type." $$ nest 2 (
@@ -232,7 +237,8 @@ typecheck t = case structure t of
 
     safebind x a b $ \newx newb -> do
       tb  <- typecheck newb
-      let tb' = normalform tb
+      names <- keys
+      let tb' = nbe names tb
       s2  <- typecheck tb'
       s2' <- normalizeToSort s2 tb' (text "in lambda abstraction") (text "as type of body")
 

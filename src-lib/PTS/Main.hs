@@ -23,6 +23,9 @@ import PTS.Normalisation
 import PTS.Options
 import PTS.Parser
 import PTS.Substitution
+import PTS.Evaluation
+
+import qualified Data.Set as Set
 
 import Tools.Errors
 
@@ -82,7 +85,7 @@ processStmt (Term t) = recover () $ do
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
   q <- runEnvironmentT (typecheck t) []
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
-  let x = normalform t
+  let x = nbe Set.empty t
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
 
 processStmt (Bind n Nothing t) = recover () $ do
@@ -113,7 +116,7 @@ processStmt (Bind n (Just t') t) = recover () $ do
 
   -- typecheck type
   q' <- runEnvironmentT (typecheck t'') []
-  case structure (normalform q') of
+  case structure (nbe Set.empty q') of
     Const _ -> return ()
     _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
                          $$ text "  expected:" <+> text "constant"
@@ -123,9 +126,9 @@ processStmt (Bind n (Just t') t) = recover () $ do
   q <- runEnvironmentT (typecheck t) []
 
   -- compare specified and actual type
-  if equiv q t''
+  if equiv Set.empty q t''
     then output (nest 2 (sep [text "type:", nest 2 (pretty 0 t' )]))
-    else let (expected, given) = showDiff 0 (diff (normalform t'' ) (normalform q)) in
+    else let (expected, given) = showDiff 0 (diff (nbe Set.empty t'' ) (nbe Set.empty q)) in
            prettyFail $ text "Type mismatch in top-level binding of" <+> pretty 0 n
                      $$ text "  specified type:" <+> pretty 0 t'
                      $$ text "     normal form:" <+> text expected
