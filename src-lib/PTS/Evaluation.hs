@@ -79,7 +79,7 @@ eval t env = case structure t of
   Var n -> do
     case lookup n env of
       Just v -> return v
-      Nothing -> fail ("unbound variable '" ++ show n ++ "'")
+      Nothing -> return (Residual (mkVar n))
   Const c -> do
     return (Constant c)
   App e1 e2 -> do
