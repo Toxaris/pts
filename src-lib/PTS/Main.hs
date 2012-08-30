@@ -59,12 +59,12 @@ processJobs jobs = do
     then exitSuccess
     else exitFailure
 
-processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, Term)] m) => (Options, FilePath) -> m ()
+processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, (Value, Term))] m) => (Options, FilePath) -> m ()
 processJob (opt, file) = do
   liftIO $ putStrLn $ "process file " ++ file
   runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt
 
-processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Term)] m, MonadIO m, MonadLog m) => FilePath -> m ()
+processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, (Value, Term))] m, MonadIO m, MonadLog m) => FilePath -> m ()
 processFile file = do
   text <- liftIO (readFile file)
   text <- deliterate text
@@ -81,11 +81,11 @@ processStmt (Term t) = recover () $ do
   output (text "")
   output (text "process expression")
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
-  t <- prepareTerm t
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
-  q <- runEnvironmentT (typecheck t) []
+  env <- get
+  q <- runEnvironmentT (typecheck t) env
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
-  let x = nbe Set.empty t
+  let x = nbe env t
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
 
 processStmt (Bind n Nothing t) = recover () $ do
@@ -93,11 +93,12 @@ processStmt (Bind n Nothing t) = recover () $ do
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
-  t <- prepareTerm t
+  env <- get
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
-  q <- runEnvironmentT (typecheck t) []
+  q <- runEnvironmentT (typecheck t) env
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
-  modify ((n, t) :)
+  let v = evalTerm env t
+  modify ((n, (v, q)) :)
 
 processStmt (Bind n (Just t') t) = recover () $ do
   pts <- asks (optInstance)
@@ -106,38 +107,35 @@ processStmt (Bind n (Just t') t) = recover () $ do
 
   -- preprocess body
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
-  t <- prepareTerm t
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term", nest 2 (pretty 0 t)]))
 
   -- preprocess type
   output (nest 2 (sep [text "specified type:", nest 2 (pretty 0 t')]))
-  t'' <- prepareTerm t'
+  let t'' = t'
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t'' )]))
+  env <- get
 
   -- typecheck type
-  q' <- runEnvironmentT (typecheck t'') []
-  case structure (nbe Set.empty q') of
+  q' <- runEnvironmentT (typecheck t'') env
+  case structure (nbe env q') of
     Const _ -> return ()
     _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
                          $$ text "  expected:" <+> text "constant"
                          $$ text "     found:" <+> pretty 0 q'
 
   -- typecheck body
-  q <- runEnvironmentT (typecheck t) []
+  q <- runEnvironmentT (typecheck t) env
 
   -- compare specified and actual type
-  if equivTerm Set.empty q t''
+  if equivTerm env q t''
     then output (nest 2 (sep [text "type:", nest 2 (pretty 0 t' )]))
-    else let (expected, given) = showDiff 0 (diff (nbe Set.empty t'' ) (nbe Set.empty q)) in
+    else let (expected, given) = showDiff 0 (diff (nbe env t'' ) (nbe env q)) in
            prettyFail $ text "Type mismatch in top-level binding of" <+> pretty 0 n
                      $$ text "  specified type:" <+> pretty 0 t'
                      $$ text "     normal form:" <+> text expected
                      $$ text "     actual type:" <+> text given
-  modify ((n, t) :)
 
-prepareTerm t =
-  gets (foldr substGlobal t)
-
-substGlobal (n, e) t = subst t n e
+  let v = evalTerm env t
+  modify ((n, (v, q)) :)
 
 output doc = asks (flip multiLine doc . optColumns) >>= liftIO . putStrLn

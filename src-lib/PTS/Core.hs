@@ -110,9 +110,9 @@ debug n t result = do
 
 normalizeToSort t' t context info = do
   pts <- asks optInstance
-  names <- keys
+  env <- getEnvironment
 
-  case structure (nbe names t') of
+  case structure (nbe env t') of
     Const s | sorts pts s  ->  return s
     _                      ->  prettyFail $ msgNotProperType context info t t'
 
@@ -123,11 +123,11 @@ msgNotProperType context info t t'
     sep [text "Type:", nest 2 (pretty 0 t')])
 
 normalizeToSame s' t' s t context info1 info2 = do
-  names <- keys
-  if (equivTerm names s' t')
+  env <- getEnvironment
+  if (equivTerm env s' t')
       then return ()
-      else let  s'' = nbe names s'
-                t'' = nbe names t'
+      else let  s'' = nbe env s'
+                t'' = nbe env t'
              in prettyFail $ msgNotSame context info1 info2 s t s'' t''
 
 msgNotSame context info1 info2 s t s' t'
@@ -139,12 +139,12 @@ msgNotSame context info1 info2 s t s' t'
         sep [text "Type of" <+> info1 <> text ":", nest 2 (text s'')] $$
         sep [text "Type of" <+> info2 <> text ":", nest 2 (text t'')])
 
-normalizeToNat :: (MonadEnvironment Name t m, MonadReader Options m, MonadErrors Errors m) => Term -> Term -> Doc -> Doc -> m Term
+normalizeToNat :: (Functor m, MonadEnvironment Name (Value, Term) m, MonadReader Options m, MonadErrors Errors m) => Term -> Term -> Doc -> Doc -> m Term
 normalizeToNat t' t context info = do
-  names <- keys
-  if equivTerm names t' (mkConst nat)
+  env <- getEnvironment
+  if equivTerm env t' (mkConst nat)
     then return (mkConst nat)
-    else let t'' = nbe names t'
+    else let t'' = nbe env t'
           in prettyFail $ msgNotNat context info t t'' nat
 
 msgNotNat context info t t' nat
@@ -155,8 +155,8 @@ msgNotNat context info t t' nat
     sep [text "Expected Type:" <+> nest 2 (pretty 0 (mkConst nat))])
 
 normalizeToPi t' t context info = do
-  names <- keys
-  let t'' = nbe names t' in
+  env <- getEnvironment
+  let t'' = nbe env t' in
      case structure t'' of
        result@(Pi _ _ _)  ->  return result
        _                  ->  prettyFail $ msgNotPi context info t t''
@@ -221,8 +221,8 @@ typecheck t = case structure t of
 
     safebind x a b $ \newx newb -> do
       tb  <- typecheck newb
-      names <- keys
-      let tb' = nbe names tb
+      env <- getEnvironment
+      let tb' = nbe env tb
       s2  <- typecheck tb'
       s2' <- normalizeToSort s2 tb' (text "in lambda abstraction") (text "as type of body")
 

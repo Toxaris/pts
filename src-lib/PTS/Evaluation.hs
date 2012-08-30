@@ -8,6 +8,13 @@ import qualified Data.Set as Set
 import Control.Monad.State
 
 type Env = [(Name, Value)]
+type Env' = [(Name, (Value, Term))]
+
+envToNames :: Env -> Names
+envToNames env = Set.fromList (map fst env)
+
+dropTypes :: Env' -> Env
+dropTypes = map (\(x, (y, z)) -> (x, y))
 
 data Value
   = Function  Name Value (Value -> M Value)
@@ -25,11 +32,12 @@ newtype M a = M (State Names a)
 runM :: Names -> M a -> a
 runM names (M p) = evalState p names
 
-equivTerm :: Names -> Term -> Term -> Bool
-equivTerm names t1 t2 = runM names $ do
-  v1 <- eval t1 []
-  v2 <- eval t2 []
+equivTerm :: Env' -> Term -> Term -> Bool
+equivTerm env' t1 t2 = runM (envToNames env) $ do
+  v1 <- eval t1 env
+  v2 <- eval t2 env
   equiv v1 v2
+ where env = dropTypes env'
 
 equiv :: Value -> Value -> M Bool
 equiv (Function n v1 f) (Function _ v1' f') = do
@@ -69,11 +77,12 @@ equiv (ResidualApp v1 v2) (ResidualApp v1' v2') = do
 equiv _ _ = do
   return False
 
-nbe :: Names -> Term -> Term
-nbe names e = runM names $ do
-  v   <- eval e []
+nbe :: Env' -> Term -> Term
+nbe env' e = runM (envToNames env) $ do
+  v   <- eval e env
   e'  <- reify v
   return e'
+ where env = dropTypes env'
 
 fresh :: Name -> M Name
 fresh n = do
@@ -114,6 +123,12 @@ reify (ResidualApp v1 v2) = do
   e1 <- reify v1
   e2 <- reify v2
   return (mkApp e1 e2)
+
+evalTerm :: Env' -> Term -> Value
+evalTerm env' t = runM (envToNames env) $ do
+  eval t env
+ where env = dropTypes env'
+
 
 eval :: Term -> Env -> M Value
 eval t env = case structure t of
