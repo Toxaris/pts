@@ -65,11 +65,6 @@ Executable pts-nbe
   Hs-source-dirs:      src-exec
   Main-is:             pts-nbe.hs
   Build-depends:       base < 5,
-                       containers == 0.4.*,
-                       pretty == 1.0.*,
-                       mtl == 2.0.*,
-                       transformers ==0.2.*,
-                       parsec == 3.1.*,
                        pts
 
   -- Build-tools:

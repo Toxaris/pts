@@ -17,7 +17,7 @@ import Control.Monad.Error (MonadError)
 import Control.Monad.Log (MonadLog (..))
 import Control.Monad.Reader (MonadReader (ask, local), asks, ReaderT, runReaderT, mapReaderT)
 import Control.Monad.State (MonadState)
-import Control.Monad.Trans (MonadTrans (lift))
+import Control.Monad.Trans (MonadTrans (lift), MonadIO)
 
 import Data.Maybe (Maybe)
 
@@ -38,7 +38,7 @@ instance MonadEnvironment k v m => MonadEnvironment k v (ReaderT r m) where
 type Env k v = [(k, v)]
 
 newtype EnvironmentT k v m a = EnvironmentT (ReaderT (Env k v) m a)
-  deriving (Functor, Applicative, Monad, MonadError e, MonadErrors e, MonadState s, MonadTrans)
+  deriving (Functor, Applicative, Monad, MonadError e, MonadErrors e, MonadState s, MonadTrans, MonadIO)
 
 runEnvironmentT :: EnvironmentT k v m a -> Env k v -> m a
 runEnvironmentT (EnvironmentT p) = runReaderT p
@@ -67,4 +67,3 @@ instance MonadLog m => MonadLog (EnvironmentT k v m) where
   stacktrace = lift stacktrace
   enableLogging = lift enableLogging
   disableLogging = lift disableLogging
-

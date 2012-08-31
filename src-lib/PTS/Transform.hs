@@ -1,12 +1,18 @@
 module PTS.Transform
-  ( transform
-  ) where
+  (  transform
+  ,  typeOf
+  )  where
 
+import Control.Monad.Environment (runEnvironmentT)
+import Control.Monad.Log (runConsoleLogT)
+import Control.Monad.Reader (runReaderT)
 import Control.Monad.Trans (liftIO)
 
 import Parametric.Error (showErrors)
 
-import PTS.AST (TypedTerm)
+import PTS.AST (TypedTerm, typeOf)
+import PTS.Core (typecheck)
+import PTS.Options (defaultOptions)
 import PTS.Parser (parseTerm)
 import PTS.Pretty ()
 
@@ -16,7 +22,7 @@ import System.Exit (exitSuccess, exitFailure)
 import Tools.Errors (runErrorsT)
 
 run p = do
-  result <- runErrorsT $ p
+  result <- runErrorsT (p `runConsoleLogT` False) `runReaderT` defaultOptions
   case result of
     Left errors -> do
       hPutStrLn stderr $ showErrors $ errors
@@ -29,4 +35,5 @@ transform :: (TypedTerm -> TypedTerm) -> IO ()
 transform f = run $ do
   text <- liftIO $ getContents
   term <- parseTerm "<stdin>" text
-  return term
+  typed <- runEnvironmentT (typecheck term) []
+  return (f typed)
