@@ -9,6 +9,7 @@ module PTS.Transform
   ,  Term
   ,  TermStructure (..)
   ,  strip
+  ,  mkVar
   )  where
 
 import Control.Applicative (Applicative)
@@ -23,7 +24,7 @@ import Parametric.Error (showErrors)
 import Parametric.AST (Name, Names, freshvarl)
 
 import PTS.Algebra (strip)
-import PTS.AST (TypedTerm, typeOf, structure, Term, TermStructure (..))
+import PTS.AST (TypedTerm, typeOf, structure, Term, TermStructure (..), mkVar)
 import PTS.Core (typecheck)
 import PTS.Options (defaultOptions)
 import PTS.Parser (parseTerm)
