@@ -40,6 +40,7 @@ Library
                        PTS.Substitution,
                        PTS.QuasiQuote,
                        PTS.Constants,
+                       PTS.Transform,
                        Parametric.Parser.Error,
                        Parametric.Parser,
                        PTS.Parser,
@@ -59,6 +60,22 @@ Executable pts
                        pts
 
   -- Build-tools:
+
+Executable pts-nbe
+  Hs-source-dirs:      src-exec
+  Main-is:             pts-nbe.hs
+  Build-depends:       base < 5,
+                       containers == 0.4.*,
+                       pretty == 1.0.*,
+                       mtl == 2.0.*,
+                       transformers ==0.2.*,
+                       parsec == 3.1.*,
+                       pts
+
+  -- Build-tools:
+
+
+
 
 -- Executable pts-quote
 --   Hs-source-dirs:      src-exec
