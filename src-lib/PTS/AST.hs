@@ -3,9 +3,11 @@ module PTS.AST
   ( Name
   , Names
   , Term (..)
+  , TypedTerm (..)
   , TermStructure (..)
-  , structure
+  , Structure (structure)
   , Stmt (..)
+  , typeOf
   , mkNat
   , mkNatOp
   , mkIfZero
@@ -26,8 +28,8 @@ module PTS.AST
 import Control.Applicative hiding (Const)
 import Control.Monad.Reader
 
-import Data.Typeable
-import Data.Data
+import Data.Typeable (Typeable)
+import Data.Data (Data)
 
 import Data.IORef
 import Data.List (nub, (\\), intersperse)
@@ -51,11 +53,20 @@ import PTS.Instances (C)
 data Term = MkTerm (TermStructure Term)
   deriving (Data, Typeable)
 
+data TypedTerm = MkTypedTerm (TermStructure TypedTerm) TypedTerm
+  deriving (Data, Typeable)
+
 class Structure term where
   structure :: term -> TermStructure term
 
 instance Structure Term where
   structure (MkTerm t) = t
+
+instance Structure TypedTerm where
+  structure (MkTypedTerm t _) = t
+
+typeOf :: TypedTerm -> TypedTerm
+typeOf (MkTypedTerm _ t) = t
 
 data BinOp
   = Add
