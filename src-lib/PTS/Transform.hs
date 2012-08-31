@@ -1,20 +1,29 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module PTS.Transform
   (  transform
   ,  typeOf
   ,  sortOf
   ,  structure
+  ,  Name
   ,  Sort (Term, Type)
+  ,  Term
   ,  TermStructure (..)
+  ,  strip
   )  where
 
+import Control.Applicative (Applicative)
 import Control.Monad.Environment (runEnvironmentT)
 import Control.Monad.Log (runConsoleLogT)
 import Control.Monad.Reader (runReaderT)
 import Control.Monad.Trans (liftIO)
 
-import Parametric.Error (showErrors)
+import qualified Data.Set as Set (insert)
 
-import PTS.AST (TypedTerm, typeOf, structure, TermStructure (..))
+import Parametric.Error (showErrors)
+import Parametric.AST (Name, Names, freshvarl)
+
+import PTS.Algebra (strip)
+import PTS.AST (TypedTerm, typeOf, structure, Term, TermStructure (..))
 import PTS.Core (typecheck)
 import PTS.Options (defaultOptions)
 import PTS.Parser (parseTerm)
@@ -45,7 +54,7 @@ run p = do
       print result
       exitSuccess
 
-transform :: (TypedTerm -> TypedTerm) -> IO ()
+transform :: (TypedTerm -> Term) -> IO ()
 transform f = run $ do
   text <- liftIO $ getContents
   term <- parseTerm "<stdin>" text

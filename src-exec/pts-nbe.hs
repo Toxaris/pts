@@ -2,4 +2,4 @@ module Main where
 
 import PTS.Transform
 
-main = transform id
+main = transform strip
