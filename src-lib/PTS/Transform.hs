@@ -30,7 +30,7 @@ import PTS.AST (TypedTerm, typeOf, structure, Term, TermStructure (..), mkVar)
 import PTS.Core (typecheck)
 import PTS.Options (defaultOptions)
 import PTS.Parser (parseTerm)
-import PTS.Pretty ()
+import PTS.Pretty (multiLine)
 import PTS.Constants (C (C))
 
 import System.IO (hPutStrLn, stderr)
@@ -58,7 +58,7 @@ run p = do
       hPutStrLn stderr $ showErrors $ errors
       exitFailure
     Right result -> do
-      print result
+      putStrLn (multiLine 80 result)
       exitSuccess
 
 transform :: (TypedTerm -> Term) -> IO ()
