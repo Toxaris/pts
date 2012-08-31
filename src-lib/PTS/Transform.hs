@@ -15,17 +15,18 @@ import System.Exit (exitSuccess, exitFailure)
 
 import Tools.Errors (runErrorsT)
 
-transform :: (TypedTerm -> TypedTerm) -> IO ()
-transform f = do
-  result <- runErrorsT $ do
-    text <- liftIO $ getContents
-    term <- parseTerm "<stdin>" text
-    return term
+run p = do
+  result <- runErrorsT $ p
   case result of
     Left errors -> do
-      liftIO $ hPutStrLn stderr $ showErrors $ errors
+      hPutStrLn stderr $ showErrors $ errors
       exitFailure
     Right result -> do
       print result
       exitSuccess
 
+transform :: (TypedTerm -> TypedTerm) -> IO ()
+transform f = run $ do
+  text <- liftIO $ getContents
+  term <- parseTerm "<stdin>" text
+  return term
