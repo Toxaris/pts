@@ -28,6 +28,7 @@ import PTS.Algebra
 import PTS.AST
 import PTS.Instances
 import PTS.Options
+import PTS.Constants
 
      -----------------
     -- PTS PARSER --

@@ -8,7 +8,7 @@ import qualified Data.Set as Set
 import Control.Monad.State
 
 type Env = [(Name, Value)]
-type Env' = [(Name, (Value, Term))]
+type Env' = [(Name, (Value, TypedTerm))]
 
 envToNames :: Env -> Names
 envToNames env = Set.fromList (map fst env)

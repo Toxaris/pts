@@ -39,6 +39,7 @@ Library
                        PTS.Main,
                        PTS.Substitution,
                        PTS.QuasiQuote,
+                       PTS.Constants,
                        Parametric.Parser.Error,
                        Parametric.Parser,
                        PTS.Parser,

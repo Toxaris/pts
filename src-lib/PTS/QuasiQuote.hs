@@ -6,6 +6,7 @@ import Parametric.AST
 import PTS.Instances
 import PTS.AST
 import PTS.Parser (parseTermAtPos)
+import PTS.Constants
 
 import Data.Char
 

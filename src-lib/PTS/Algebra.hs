@@ -2,6 +2,7 @@ module PTS.Algebra
   ( PreAlgebra
   , Algebra
   , fold
+  , strip
   , allvars
   , allvarsAlgebra
   , freevars
@@ -22,10 +23,13 @@ type PreAlgebra alpha beta
 type Algebra alpha
   = PreAlgebra alpha alpha
 
-fold :: Algebra alpha -> Term -> alpha
+fold :: Structure term => Algebra alpha -> term -> alpha
 fold algebra term = algebra (fmap (fold algebra) (structure term))
 
-allvars :: Term -> Names
+strip :: Structure term => term -> Term
+strip t = fold MkTerm t
+
+allvars :: Structure term => term -> Names
 allvars t = fold allvarsAlgebra t
 
 allvarsAlgebra :: Algebra Names
@@ -49,10 +53,10 @@ freevarsAlgebra t = case t of
   Pos p t          ->  t
   _                ->  Set.empty
 
-freevars :: Term -> Names
+freevars :: Structure term => term -> Names
 freevars = fold freevarsAlgebra
 
-freshvar :: Term -> Name -> Name
+freshvar :: Structure term => term -> Name -> Name
 freshvar t x = freshvarl (freevars t) x
 
 -- instance Arrow PreAlgebra?

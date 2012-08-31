@@ -15,8 +15,8 @@ import Parametric.Pretty
 
 import PTS.Algebra
 import PTS.AST
-import PTS.Instances
 import PTS.Evaluation (Value)
+import PTS.Constants
 
 -- priorities
 pAppR = 3
@@ -122,6 +122,9 @@ prettyAlgebra (Pos _ (_, t)) = t
 instance Pretty Term where
   pretty p t = pretty p (snd (fold (depZip freevarsAlgebra prettyAlgebra) t))
 
+instance Pretty TypedTerm where
+  pretty p t = pretty p (snd (fold (depZip freevarsAlgebra prettyAlgebra) t))
+
 instance Pretty Stmt where
   pretty p (Bind n Nothing t)   = pretty 0 n <+> text "=" <+> pretty 0 t
   pretty p (Bind n (Just t') t) = pretty 0 n <+> text ":" <+> pretty 0 t' <+> text "=" <+> pretty 0 t
@@ -130,5 +133,8 @@ instance Pretty Stmt where
 instance Show Term where
   show t = singleLine t
 
-showCtx :: [(Name, (Value, Term))] -> String
+instance Show TypedTerm where
+  show t = singleLine t
+
+showCtx :: [(Name, (Value, TypedTerm))] -> String
 showCtx = concat . intersperse ", " . map (\(n, (v, t)) -> show n ++ " : " ++ show t)

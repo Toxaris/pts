@@ -24,6 +24,7 @@ import PTS.Options
 import PTS.Parser
 import PTS.Substitution
 import PTS.Evaluation
+import PTS.Algebra
 
 import qualified Data.Set as Set
 
@@ -59,12 +60,12 @@ processJobs jobs = do
     then exitSuccess
     else exitFailure
 
-processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, (Value, Term))] m) => (Options, FilePath) -> m ()
+processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, (Value, TypedTerm))] m) => (Options, FilePath) -> m ()
 processJob (opt, file) = do
   liftIO $ putStrLn $ "process file " ++ file
   runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt
 
-processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, (Value, Term))] m, MonadIO m, MonadLog m) => FilePath -> m ()
+processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, (Value, TypedTerm))] m, MonadIO m, MonadLog m) => FilePath -> m ()
 processFile file = do
   text <- liftIO (readFile file)
   text <- deliterate text
@@ -83,7 +84,7 @@ processStmt (Term t) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
   env <- get
-  q <- runEnvironmentT (typecheck t) env
+  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let x = nbe env t
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
@@ -95,7 +96,7 @@ processStmt (Bind n Nothing t) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   env <- get
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
-  q <- runEnvironmentT (typecheck t) env
+  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let v = evalTerm env t
   modify ((n, (v, q)) :)
@@ -116,20 +117,20 @@ processStmt (Bind n (Just t') t) = recover () $ do
   env <- get
 
   -- typecheck type
-  q' <- runEnvironmentT (typecheck t'') env
-  case structure (nbe env q') of
+  MkTypedTerm _ q' <- runEnvironmentT (typecheck t'') env
+  case structure (nbe env (strip q')) of
     Const _ -> return ()
     _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
                          $$ text "  expected:" <+> text "constant"
                          $$ text "     found:" <+> pretty 0 q'
 
   -- typecheck body
-  q <- runEnvironmentT (typecheck t) env
+  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
 
   -- compare specified and actual type
-  if equivTerm env q t''
-    then output (nest 2 (sep [text "type:", nest 2 (pretty 0 t' )]))
-    else let (expected, given) = showDiff 0 (diff (nbe env t'' ) (nbe env q)) in
+  if equivTerm env (strip q) t''
+    then output (nest 2 (sep [text "type:", nest 2 (pretty 0 (strip t') )]))
+    else let (expected, given) = showDiff 0 (diff (nbe env t'' ) (nbe env (strip q))) in
            prettyFail $ text "Type mismatch in top-level binding of" <+> pretty 0 n
                      $$ text "  specified type:" <+> pretty 0 t'
                      $$ text "     normal form:" <+> text expected

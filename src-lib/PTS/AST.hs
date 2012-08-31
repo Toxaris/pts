@@ -20,6 +20,7 @@ module PTS.AST
   , mkUnquote
   , freshvarl
   , handlePos
+  , typedHandlePos
   , C ()
   , evalOp
   , BinOp (..)
@@ -40,7 +41,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 import Parametric.AST (Name, Names, freshvarl)
 import Parametric.Error
-import PTS.Instances (C)
+import PTS.Constants (C)
 
 
 -- Syntax
@@ -128,6 +129,8 @@ mkPos p t          =  mkTerm (Pos p t)
 mkUnquote t        =  mkTerm (Unquote t)
 
 handlePos f p t = annotatePos p $ mkPos p <$> f t
+
+typedHandlePos f p t = annotatePos p $ (\t -> MkTypedTerm (Pos p t) (typeOf t)) <$> f t
 
 infixl 2 >>>
 (>>>) = flip (.)
