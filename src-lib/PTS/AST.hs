@@ -51,8 +51,11 @@ import PTS.Instances (C)
 data Term = MkTerm (TermStructure Term)
   deriving (Data, Typeable)
 
-structure :: Term -> TermStructure Term
-structure (MkTerm t) = t
+class Structure term where
+  structure :: term -> TermStructure term
+
+instance Structure Term where
+  structure (MkTerm t) = t
 
 data BinOp
   = Add
