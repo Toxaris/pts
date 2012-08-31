@@ -3,11 +3,13 @@ module PTS.Transform
   (  transform
   ,  typeOf
   ,  sortOf
+  ,  asSort
   ,  structure
   ,  Name
   ,  Sort (Term, Type)
   ,  Term
   ,  TermStructure (..)
+  ,  TypedTerm
   ,  strip
   ,  mkVar
   )  where
@@ -41,9 +43,13 @@ data Sort
   | Type
 
 sortOf :: TypedTerm -> Sort
-sortOf t = case structure (typeOf (typeOf t)) of
+sortOf t = asSort (typeOf (typeOf t))
+
+asSort :: TypedTerm -> Sort
+asSort t = case structure t of
   Const (C 1) -> Term
   Const (C 2) -> Type
+  Pos p t     -> asSort t
 
 run p = do
   result <- runErrorsT (p `runConsoleLogT` False) `runReaderT` defaultOptions
