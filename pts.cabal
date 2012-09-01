@@ -67,22 +67,11 @@ Executable pts-nbe
   Build-depends:       base < 5,
                        pts
 
-  -- Build-tools:
-
-
-
-
--- Executable pts-quote
---   Hs-source-dirs:      src-exec
---   Main-is:             pts-quote.hs
---   Build-depends:       base < 5,
---                        mtl == 2.0.*,
---                        transformers == 0.2.*,
---                        parsec == 3.1.*,
---                        containers == 0.4.*,
---                        pretty == 1.0.*,
---                        pts
-
+Executable pts-quote
+  Hs-source-dirs:      src-exec
+  Main-is:             pts-quote.hs
+  Build-depends:       base < 5,
+                       pts
 
 Test-suite tests
   Type: exitcode-stdio-1.0
