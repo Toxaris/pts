@@ -16,7 +16,7 @@ Library
   Hs-source-dirs:      src-lib
   Build-depends:       base < 5,
                        containers == 0.4.*,
-                       pretty == 1.0.*,
+                       pretty >= 1.0 && < 1.2,
                        mtl == 2.0.*,
                        transformers ==0.2.*,
                        parsec == 3.1.*,
@@ -53,7 +53,7 @@ Executable pts
   Main-is:             pts.hs
   Build-depends:       base < 5,
                        containers == 0.4.*,
-                       pretty == 1.0.*,
+                       pretty >= 1.0 && < 1.2,
                        mtl == 2.0.*,
                        transformers ==0.2.*,
                        parsec == 3.1.*,
@@ -85,7 +85,7 @@ Test-suite tests
                        mtl == 2.0.*,
                        transformers == 0.2.*,
                        containers == 0.4.*,
-                       pretty == 1.0.*,
+                       pretty >= 1.0 && < 1.2,
                        test-framework,
                        test-framework-quickcheck2,
                        test-framework-hunit,
