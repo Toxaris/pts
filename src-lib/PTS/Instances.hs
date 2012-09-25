@@ -44,6 +44,27 @@ simplytyped = PTS axioms sorts relations where
 
   typedStar = MkTypedTerm (Const star) notExpressible
 
+
+f :: PTS
+f = PTS axioms sorts relations where
+  axioms (C 0) = Just (typedStar)
+  axioms (C 1) = Just (typedBox)
+  axioms (C _) = Nothing
+
+  sorts (C 1) = True
+  sorts (C 2) = True
+  sorts (C _) = False
+
+  relations (C 1) (C 1) = Just (typedStar)
+  relations (C 1) (C 2) = Nothing
+  relations (C 2) (C 1) = Just (typedStar)
+  relations (C 2) (C 2) = Nothing
+  relations (C _) (C _) = Nothing
+
+  typedStar = MkTypedTerm (Const star) typedBox
+  typedBox  = MkTypedTerm (Const box) notExpressible
+
+
 fomega :: PTS
 fomega = PTS axioms sorts relations where
   axioms (C 0) = Just (typedStar)

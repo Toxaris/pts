@@ -79,6 +79,9 @@ handlePTS      arg = case map toLower arg of
                        "lambdastar"  -> Global (setInstance lambdastar  )
                        "fomegastar"  -> Global (setInstance fomegastar  )
                        "fomegaomega" -> Global (setInstance fomegaomega )
+                       "f"           -> Global (setInstance f)
+                       "systemf"     -> Global (setInstance f)
+                       "system-f"    -> Global (setInstance f)
                        other         -> Error  ("Error: Unknown pure type system instance " ++ arg)
 
 handleLiterate arg = case fmap (map toLower) arg of
