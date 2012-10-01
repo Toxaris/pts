@@ -89,7 +89,8 @@ processStmt (Term t) = recover () $ do
   let x = nbe env t
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
 
-processStmt (Bind n Nothing t) = recover () $ do
+processStmt (Bind n args Nothing body) = recover () $ do
+  let t = desugarArgs mkLam args body
   pts <- asks (optInstance)
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
@@ -101,7 +102,9 @@ processStmt (Bind n Nothing t) = recover () $ do
   let v = evalTerm env t
   modify ((n, (v, q)) :)
 
-processStmt (Bind n (Just t') t) = recover () $ do
+processStmt (Bind n args (Just body') body) = recover () $ do
+  let t   =  desugarArgs mkLam args body
+  let t'  =  desugarArgs mkPi args body'
   pts <- asks (optInstance)
   output (text "")
   output (text "process binding of" <+> pretty 0 n)

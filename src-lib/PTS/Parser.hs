@@ -63,11 +63,17 @@ unquote = char '$' *> asum
   , parens expr]
 
 stmt = withPos StmtPos $ asum
-  [ Bind <$> try (ident <* colon1) <*> (Just <$> expr) <* assign <*> expr
-  , Bind <$> try (ident <* assign) <*> pure Nothing <*> expr
+  [ try (Bind <$> ident <*> args <* colon1 <*> (Just <$> expr) <* assign <*> expr)
+  , try (Bind <$> ident <*> args <* assign <*> pure Nothing <*> expr)
   , Term <$> expr]
 
 stmts = (optional pragma *> stmt) `endBy` semi
+
+args = many (parens argGroup)
+
+argGroup = (,) <$> names <* colon1 <*> expr
+
+names = many ident
 
      ----------------
     -- LINE PRAGMAS --

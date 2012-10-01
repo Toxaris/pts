@@ -24,6 +24,7 @@ module PTS.AST
   , C ()
   , evalOp
   , BinOp (..)
+  , desugarArgs
   ) where
 
 import Control.Applicative hiding (Const)
@@ -96,9 +97,14 @@ data TermStructure alpha
   deriving (Functor, Data, Typeable)
 
 data Stmt
-  = Bind Name (Maybe Term) Term
+  = Bind Name [([Name], Term)] (Maybe Term) Term
   | Term Term
   | StmtPos Position Stmt
+
+desugarArgs :: (Name -> Term -> Term -> Term) -> [([Name], Term)] -> Term -> Term
+desugarArgs mk [] body = body
+desugarArgs mk (([], _) : args) body = desugarArgs mk args body
+desugarArgs mk (((n : ns), t) : args) body = mk n t (desugarArgs mk ((ns, t) : args) body) 
 
 -- adapted from the Haskell wiki
 -- http://www.haskell.org/haskellwiki/Top_level_mutable_state

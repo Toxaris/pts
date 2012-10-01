@@ -125,9 +125,12 @@ instance Pretty Term where
 instance Pretty TypedTerm where
   pretty p t = pretty p (snd (fold (depZip freevarsAlgebra prettyAlgebra) t))
 
+prettyArgs :: [([Name], Term)] -> Doc
+prettyArgs [] = empty
+
 instance Pretty Stmt where
-  pretty p (Bind n Nothing t)   = pretty 0 n <+> text "=" <+> pretty 0 t
-  pretty p (Bind n (Just t') t) = pretty 0 n <+> text ":" <+> pretty 0 t' <+> text "=" <+> pretty 0 t
+  pretty p (Bind n args Nothing t)   = pretty 0 n <+> prettyArgs args <+> text "=" <+> pretty 0 t
+  pretty p (Bind n args (Just t') t) = pretty 0 n <+> prettyArgs args <+> text ":" <+> pretty 0 t' <+> text "=" <+> pretty 0 t
   pretty p (Term t) = pretty 0 t
 
 instance Show Term where
