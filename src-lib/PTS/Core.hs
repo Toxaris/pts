@@ -173,6 +173,12 @@ msgNotPi context info t t'
 
 typecheck :: (MonadEnvironment Name (Value, TypedTerm) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m TypedTerm
 --typecheck p d ctx t | mytrace d ctx t = undefined
+--
+prettyRelations pts s1 s2 =
+  maybe
+    (prettyFail $ let s1t = pretty 0 s1; s2t = pretty 0 s2 in text "in this PTS you can't abstract on expressions of sort" <+> s1t <+> text "in expressions of sort" <+> s2t <+> text ": no relation" <+> s1t <+> text ":" <+> s2t)
+    return
+    (relations pts s1 s2)
 
 typecheck t = case structure t of
   -- constant
@@ -204,9 +210,8 @@ typecheck t = case structure t of
       s2' <- normalizeToSort s2 newb (text "in product type") (text "as codomain")
 
       pts <- asks optInstance
-      case relations pts s1' s2' of
-        Just s -> return (MkTypedTerm (Pi newx a' newb') s)
-        Nothing -> prettyFail $ text "no relation" <+> pretty 0 s1' <+> text ":" <+> pretty 0 s2'
+      s3 <- prettyRelations pts s1' s2'
+      return (MkTypedTerm (Pi newx a' newb') s3)
 
   -- application
   App t1 t2 -> debug "TypeApp" t $ do
@@ -237,7 +242,7 @@ typecheck t = case structure t of
       s2' <- normalizeToSort s2 tb' (text "in lambda abstraction") (text "as type of body")
 
       pts <- asks optInstance
-      s3 <- maybe (fail $ "no relation " ++ show s1 ++ " : " ++ show s2) return (relations pts s1' s2')
+      s3 <- prettyRelations pts s1' s2'
 
       return (MkTypedTerm (Lam newx a' newb') (MkTypedTerm (Pi newx a' tb'') s3))
 
