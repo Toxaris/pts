@@ -46,7 +46,8 @@ Library
                        PTS.Parser,
                        Tools.Errors,
                        Control.Monad.Log,
-                       Control.Monad.Environment
+                       Control.Monad.Environment,
+                       PTS.Module
 
 Executable pts
   Hs-source-dirs:      src-exec
