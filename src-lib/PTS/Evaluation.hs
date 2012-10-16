@@ -14,7 +14,7 @@ type Env m = [(Name, Value m)]
 envToNames :: Env m -> Names
 envToNames env = Set.fromList (map fst env)
 
-dropTypes :: Env' m -> Env m
+dropTypes :: Bindings m -> Env m
 dropTypes = map (\(x, (y, z)) -> (x, y))
 
 newtype M a = M (State Names a)
@@ -23,7 +23,7 @@ newtype M a = M (State Names a)
 runM :: Names -> M a -> a
 runM names (M p) = evalState p names
 
-equivTerm :: Env' M -> Term -> Term -> Bool
+equivTerm :: Bindings M -> Term -> Term -> Bool
 equivTerm env' t1 t2 = runM (envToNames env) $ do
   v1 <- eval t1 env
   v2 <- eval t2 env
@@ -68,7 +68,7 @@ equiv (ResidualApp v1 v2) (ResidualApp v1' v2') = do
 equiv _ _ = do
   return False
 
-nbe :: Env' M -> Term -> Term
+nbe :: Bindings M -> Term -> Term
 nbe env' e = runM (envToNames env) $ do
   v   <- eval e env
   e'  <- reify v
@@ -115,7 +115,7 @@ reify (ResidualApp v1 v2) = do
   e2 <- reify v2
   return (mkApp e1 e2)
 
-evalTerm :: Env' M -> Term -> Value M
+evalTerm :: Bindings M -> Term -> Value M
 evalTerm env' t = runM (envToNames env) $ do
   eval t env
  where env = dropTypes env'
