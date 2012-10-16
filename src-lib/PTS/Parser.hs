@@ -73,6 +73,8 @@ args = many (parens argGroup)
 
 argGroup = (,) <$> names <* colon1 <*> expr
 
+mod = keyword "module" *> ident <* semi <*> stmts
+
 names = many ident
 
      ----------------
@@ -93,7 +95,7 @@ pragma = lexem $ do
     -- LEXER --
      ---------
 
-keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div"]
+keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div", "module", "import"]
 
 identChar x = not (isSpace x) && x `notElem` ".:=;/()[]$"
 
