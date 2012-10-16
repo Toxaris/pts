@@ -25,6 +25,7 @@ import PTS.Parser
 import PTS.Substitution
 import PTS.Evaluation
 import PTS.Algebra
+import PTS.Binding
 
 import qualified Data.Set as Set
 
@@ -60,12 +61,12 @@ processJobs jobs = do
     then exitSuccess
     else exitFailure
 
-processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, (Value, TypedTerm))] m) => (Options, FilePath) -> m ()
+processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, Binding M)] m) => (Options, FilePath) -> m ()
 processJob (opt, file) = do
   liftIO $ putStrLn $ "process file " ++ file
   runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt
 
-processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, (Value, TypedTerm))] m, MonadIO m, MonadLog m) => FilePath -> m ()
+processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Binding M)] m, MonadIO m, MonadLog m) => FilePath -> m ()
 processFile file = do
   text <- liftIO (readFile file)
   text <- deliterate text

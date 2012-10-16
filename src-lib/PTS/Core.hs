@@ -33,6 +33,8 @@ import PTS.Pretty
 import PTS.Substitution
 import PTS.Evaluation
 import PTS.Constants
+import PTS.Binding
+import PTS.Value
 
 import Text.Show (Show (show))
 
@@ -85,7 +87,7 @@ lookupType x = do
 --   trace ((show d) ++ (ndots d) ++ (show ctx) ++ " |- "++(show t) ++ " : ???") False
 
 -- safe bind
-safebind :: MonadEnvironment Name (Value, TypedTerm) m => Name -> TypedTerm -> Term -> (Name -> Term -> m a) -> m a
+safebind :: MonadEnvironment Name (Binding M) m => Name -> TypedTerm -> Term -> (Name -> Term -> m a) -> m a
 safebind x t b f = do
   result <- lookupType x
   case result of
@@ -96,7 +98,7 @@ safebind x t b f = do
       let nx = freshvarl (freevars b `Set.union` vars) x
       bind nx (ResidualVar nx, t) (f nx (subst b x (mkVar nx)))
 
-debug :: (MonadEnvironment Name (Value, TypedTerm) m, MonadLog m) => String -> Term -> m TypedTerm -> m TypedTerm
+debug :: (MonadEnvironment Name (Binding M) m, MonadLog m) => String -> Term -> m TypedTerm -> m TypedTerm
 debug n t result = do
   enter n
   ctx <- getEnvironment
@@ -142,7 +144,7 @@ msgNotSame context info1 info2 s t s' t'
         sep [text "Type of" <+> info1 <> text ":", nest 2 (text s'')] $$
         sep [text "Type of" <+> info2 <> text ":", nest 2 (text t'')])
 
-normalizeToNat :: (MonadLog m, Functor m, MonadEnvironment Name (Value, TypedTerm) m, MonadReader Options m, MonadErrors Errors m) => TypedTerm -> TypedTerm -> Doc -> Doc -> m TypedTerm
+normalizeToNat :: (MonadLog m, Functor m, MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m) => TypedTerm -> TypedTerm -> Doc -> Doc -> m TypedTerm
 normalizeToNat t' t context info = do
   let stripT' = stripT'
   env <- getEnvironment
@@ -171,7 +173,7 @@ msgNotPi context info t t'
     sep [info <> text ":", nest 2 (pretty 0 t)] $$
     sep [text "Type of" <+> info <> text ":", nest 2 (pretty 0 t')])
 
-typecheck :: (MonadEnvironment Name (Value, TypedTerm) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m TypedTerm
+typecheck :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m TypedTerm
 --typecheck p d ctx t | mytrace d ctx t = undefined
 --
 prettyRelations pts s1 s2 =

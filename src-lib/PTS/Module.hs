@@ -1,8 +1,8 @@
 module PTS.Module where
 
 import Control.Monad.Environment (Env)
-import PTS.AST
-import PTS.Evaluation (Value (..))
+import PTS.AST (Name)
+import PTS.Binding (Binding, Env')
 
-data Module t
-  =  Module Name (Env Name (Value, TypedTerm))
+data Module m
+  =  Module Name (Env' m)

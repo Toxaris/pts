@@ -47,7 +47,9 @@ Library
                        Tools.Errors,
                        Control.Monad.Log,
                        Control.Monad.Environment,
-                       PTS.Module
+                       PTS.Module,
+                       PTS.Binding,
+                       PTS.Value
 
 Executable pts
   Hs-source-dirs:      src-exec

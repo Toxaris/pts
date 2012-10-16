@@ -15,8 +15,8 @@ import Parametric.Pretty
 
 import PTS.Algebra
 import PTS.AST
-import PTS.Evaluation (Value)
 import PTS.Constants
+import PTS.Binding (Binding)
 
 -- priorities
 pAppR = 3
@@ -139,5 +139,5 @@ instance Show Term where
 instance Show TypedTerm where
   show t = singleLine t
 
-showCtx :: [(Name, (Value, TypedTerm))] -> String
+showCtx :: [(Name, Binding m)] -> String
 showCtx = concat . intersperse ", " . map (\(n, (v, t)) -> show n ++ " : " ++ show t)

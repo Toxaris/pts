@@ -2,29 +2,20 @@
 module PTS.Evaluation where
 
 import PTS.AST
+import PTS.Value
+import PTS.Binding
 
 import qualified Data.Set as Set
 
 import Control.Monad.State
 
-type Env = [(Name, Value)]
-type Env' = [(Name, (Value, TypedTerm))]
+type Env m = [(Name, Value m)]
 
-envToNames :: Env -> Names
+envToNames :: Env m -> Names
 envToNames env = Set.fromList (map fst env)
 
-dropTypes :: Env' -> Env
+dropTypes :: Env' m -> Env m
 dropTypes = map (\(x, (y, z)) -> (x, y))
-
-data Value
-  = Function  Name Value (Value -> M Value)
-  | Number    Integer
-  | Constant  C
-  | PiType    Name Value (Value -> M Value)
-  | ResidualNatOp  Name BinOp Value Value
-  | ResidualIfZero Value Value Value
-  | ResidualVar    Name
-  | ResidualApp    Value Value
 
 newtype M a = M (State Names a)
   deriving (Functor, Monad, MonadState Names)
@@ -32,14 +23,14 @@ newtype M a = M (State Names a)
 runM :: Names -> M a -> a
 runM names (M p) = evalState p names
 
-equivTerm :: Env' -> Term -> Term -> Bool
+equivTerm :: Env' M -> Term -> Term -> Bool
 equivTerm env' t1 t2 = runM (envToNames env) $ do
   v1 <- eval t1 env
   v2 <- eval t2 env
   equiv v1 v2
  where env = dropTypes env'
 
-equiv :: Value -> Value -> M Bool
+equiv :: Value M -> Value M -> M Bool
 equiv (Function n v1 f) (Function _ v1' f') = do
   r1 <- equiv v1 v1'
   n'   <- fresh n
@@ -77,7 +68,7 @@ equiv (ResidualApp v1 v2) (ResidualApp v1' v2') = do
 equiv _ _ = do
   return False
 
-nbe :: Env' -> Term -> Term
+nbe :: Env' M -> Term -> Term
 nbe env' e = runM (envToNames env) $ do
   v   <- eval e env
   e'  <- reify v
@@ -91,7 +82,7 @@ fresh n = do
   put (Set.insert n' ns)
   return n'
 
-reify :: Value -> M Term
+reify :: Value M -> M Term
 reify (Function n v1 f) = do
   e1 <- reify v1
   n' <- fresh n
@@ -124,13 +115,13 @@ reify (ResidualApp v1 v2) = do
   e2 <- reify v2
   return (mkApp e1 e2)
 
-evalTerm :: Env' -> Term -> Value
+evalTerm :: Env' M -> Term -> Value M
 evalTerm env' t = runM (envToNames env) $ do
   eval t env
  where env = dropTypes env'
 
 
-eval :: Term -> Env -> M Value
+eval :: Term -> Env M -> M (Value M)
 eval t env = case structure t of
   Nat n -> do
     return (Number n)
