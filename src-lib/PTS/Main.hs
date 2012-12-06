@@ -9,7 +9,7 @@ import Control.Monad.Trans
 import Control.Monad.Log
 
 import System.Environment
-import System.IO (hPutStrLn, stderr)
+import System.IO (hPutStrLn, stderr, hFlush, stdout)
 import System.Exit (exitSuccess, exitFailure)
 
 import Parametric.Error
@@ -48,6 +48,7 @@ runMainErrors act = do
   result <- runErrorsT act
   case result of
     Left errors -> do
+      liftIO $ hFlush stdout
       liftIO $ hPutStrLn stderr $ showErrors $ errors
       return False
     Right result -> do
