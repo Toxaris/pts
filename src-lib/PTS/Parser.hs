@@ -38,7 +38,7 @@ natop n f x = mkNatOp n f <$> (keyword (show n) *> x) <*> (x <?> "second argumen
 
 expr = term simple rec mkPos "expression" where
   simple = withPos mkPos $ asum
-    [ parens expr
+    [ termParens expr
     , brackets expr
     , abs mkLam lambda identOrMeta colon1 expr dot expr
     , abs mkPi  pi     identOrMeta colon1 expr dot expr
@@ -152,9 +152,11 @@ assign = lexem (char '=')
 semi   = lexem (char ';')
 arrow  = lexem (string "->")
 
+termParens p = parens p <|> underscore_lparen *> p <* rparen
 parens p   = lparen *> p <* rparen
 brackets p = lbracket *> p <* rbracket
 
+underscore_lparen = lexem(keyword "_(")
 lparen = lexem(char '(')
 rparen = lexem(char ')')
 lbracket = lexem(char '[')
