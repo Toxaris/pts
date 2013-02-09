@@ -8,6 +8,7 @@ import Test.HUnit (assertBool)
 import PTS.AST
 import PTS.Instances
 import qualified PTS.Core.Properties as Prop
+import PTS.Core.Properties(equivClosedTerm)
 
 import Test.Property (test)
 
@@ -47,12 +48,12 @@ ndotsContainsDots
 alphaEquivalent t1 t2
   =  testCase (show t1 ++ " alpha-equiv. to " ++ show t2) $
        assertBool "False negative: terms should be considered alpha-equiv." $
-       t1 == t2
+       equivClosedTerm t1 t2
 
 alphaInequivalent t1 t2
   =  testCase (show t1 ++ " not alpha-equiv. to " ++ show t2) $
        assertBool "False positive: terms should not be considered alpha-equiv." $
-       t1 /= t2
+       not (equivClosedTerm t1 t2)
 
 tests
   =  testGroup "PTS.Core"
@@ -61,7 +62,7 @@ tests
         ,  alphaEquivalenceSymmetric
         ,  alphaEquivalenceTransitive
         ,  alphaEquivalenceShareFreevars
-        ,  alphaEquivalent x x
+        ,  alphaEquivalent (mkVar x) (mkVar x)
         ,  alphaEquivalent (mkLam x (mkVar x) (mkVar x)) (mkLam y (mkVar x) (mkVar y))
         ,  alphaEquivalent (mkLam y (mkVar x) (mkVar y)) (mkLam x (mkVar x) (mkVar x))
         ,  alphaEquivalent (mkPi y (mkVar x) (mkVar y)) (mkPi x (mkVar x) (mkVar x))
