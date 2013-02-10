@@ -9,6 +9,7 @@ import PTS.AST
 import PTS.Instances
 import qualified PTS.Core.Properties as Prop
 import PTS.Core.Properties(equivClosedTerm)
+import PTS.Constants
 
 import Test.Property (test)
 
@@ -55,6 +56,8 @@ alphaInequivalent t1 t2
        assertBool "False positive: terms should not be considered alpha-equiv." $
        not (equivClosedTerm t1 t2)
 
+alphaEquivalentRefl x = alphaEquivalent x x
+
 tests
   =  testGroup "PTS.Core"
      [  testGroup "alpha equivalence"
@@ -62,6 +65,7 @@ tests
         ,  alphaEquivalenceSymmetric
         ,  alphaEquivalenceTransitive
         ,  alphaEquivalenceShareFreevars
+        ,  alphaEquivalentRefl (mkNatOp (read "div") Div (mkNat 11) (mkNat 0))
         ,  alphaEquivalent (mkVar x) (mkVar x)
         ,  alphaEquivalent (mkLam x (mkVar x) (mkVar x)) (mkLam y (mkVar x) (mkVar y))
         ,  alphaEquivalent (mkLam y (mkVar x) (mkVar y)) (mkLam x (mkVar x) (mkVar x))
