@@ -17,8 +17,8 @@ Library
   Build-depends:       base < 5,
                        containers == 0.4.*,
                        pretty >= 1.0 && < 1.2,
-                       mtl == 2.0.*,
-                       transformers ==0.2.*,
+                       mtl >= 2.0 && < 2.2,
+                       transformers >= 0.2 && <0.4,
                        parsec == 3.1.*,
                        template-haskell,
                        syb
@@ -57,8 +57,8 @@ Executable pts
   Build-depends:       base < 5,
                        containers == 0.4.*,
                        pretty >= 1.0 && < 1.2,
-                       mtl == 2.0.*,
-                       transformers ==0.2.*,
+                       mtl >= 2.0 && < 2.2,
+                       transformers >= 0.2 && <0.4,
                        parsec == 3.1.*,
                        pts
 
@@ -85,8 +85,8 @@ Test-suite tests
                        PTS.Substitution.Tests,
                        Test.Property
   Build-depends:       base >= 4.0 && < 5,
-                       mtl == 2.0.*,
-                       transformers == 0.2.*,
+                       mtl >= 2.0 && < 2.2,
+                       transformers >= 0.2 && <0.4,
                        containers == 0.4.*,
                        pretty >= 1.0 && < 1.2,
                        test-framework,
