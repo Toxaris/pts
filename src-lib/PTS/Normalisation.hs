@@ -1,6 +1,8 @@
 {-# LANGUAGE NoMonomorphismRestriction, BangPatterns #-}
 module PTS.Normalisation  where
 
+import Control.Applicative hiding (Const)
+import Data.Maybe (fromMaybe)
 import Data.List (nub)
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -121,7 +123,9 @@ normalize term = decompose emptyEnv Top term where
          Nothing         ->  continueTerm env (mkVar n) ctx
 
   reduceNatOp !env !n !f !i !j !ctx
-    =  continueNat env (evalOp f i j) ctx
+    =  fromMaybe
+       (continueTerm env (mkNatOp n f (mkNat i) (mkNat j)) ctx)
+       $ (\res -> continueNat env res ctx) <$> evalOp f i j
 
   reduceIfZero !env !i !t2 !t3 !ctx
     =  if i == 0
