@@ -7,6 +7,8 @@ import PTS.Binding
 
 import qualified Data.Set as Set
 
+import Control.Applicative hiding (Const)
+import Data.Maybe(fromMaybe,)
 import Control.Monad.State
 
 type Env m = [(Name, Value m)]
@@ -128,11 +130,12 @@ eval t env = case structure t of
   NatOp n op e1 e2 -> do
     v1 <- eval e1 env
     v2 <- eval e2 env
-    case (v1, v2) of
-      (Number n1, Number n2) -> do
-        return (Number (evalOp op n1 n2))
-      _ -> do
-        return (ResidualNatOp n op v1 v2)
+    return $
+      fromMaybe (ResidualNatOp n op v1 v2)
+        (case (v1, v2) of
+            (Number n1, Number n2) -> do
+              Number <$> evalOp op n1 n2
+            _ -> Nothing)
   IfZero e1 e2 e3 -> do
     v1 <- eval e1 env
     case v1 of

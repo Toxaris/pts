@@ -1,6 +1,8 @@
 {-# LANGUAGE NoMonomorphismRestriction, BangPatterns #-}
 module PTS.Normalisation  where
 
+import Control.Applicative hiding (Const)
+import Data.Maybe (fromMaybe)
 import Data.List (nub)
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -17,73 +19,7 @@ import PTS.Evaluation (nbe)
 normalform = nbe
 
 -- normalization and equivalence of terms
---
--- this is the original, rather slow code
---
--- benchmark: 54s
-normalform1 :: Term -> Term
-normalform1 t = case structure t of
-  App t1 t2        ->  case structure (normalform1 t1) of
-                         Lam x _ t1  ->  normalform1 $ subst t1 x t2
-                         _           ->  mkApp (normalform1 t1) (normalform1 t2)
-  Lam x t1 t2      ->  mkLam x (normalform1 t1) (normalform1 t2)
-  Pi x t1 t2       ->  mkPi x (normalform1 t1) (normalform1 t2)
-  NatOp i f t1 t2  ->  case (structure (normalform1 t1), structure (normalform1 t2)) of
-                         (Nat i, Nat j)  ->  mkNat (evalOp f i j)
-                         _               ->  mkNatOp i f (normalform1 t1) (normalform1 t2)
-  IfZero t1 t2 t3  ->  case structure (normalform1 t1) of
-                          Nat 0  ->  normalform1 t2
-                          Nat _  ->  normalform1 t3
-                          _      ->  mkIfZero (normalform1 t1) (normalform1 t2) (normalform1 t3)
-  Pos p t          ->  normalform1 t
-  _                ->  t
-
--- sligthly more sharing: 52s
-normalform2 :: Term -> Term
-normalform2 t = case structure t of
-  App t1 t2
-    ->  case structure t1' of
-         Lam x _ body  ->  normalform2 $ subst body x t2
-         _             ->  mkApp t1' t2'
-    where
-      t1'  =  normalform2 t1
-      t2'  =  normalform2 t2
-
-  Lam x t1 t2
-    ->  mkLam x t1' t2'
-    where
-      t1'  =  normalform2 t1
-      t2'  =  normalform2 t2
-
-  Pi x t1 t2
-    ->  mkPi x t1' t2'
-    where
-      t1'  =  normalform2 t1
-      t2'  =  normalform2 t2
-
-  NatOp i f t1 t2
-    ->  case (structure t1', structure t2') of
-         (Nat i, Nat j)  ->  mkNat (evalOp f i j)
-         _               ->  mkNatOp i f t1' t2'
-    where
-      t1'  =  normalform2 t1
-      t2'  =  normalform2 t2
-
-  IfZero t1 t2 t3
-    ->  case structure t1' of
-         Nat j  ->  if (j==0) then t2' else t3'
-         _      ->  mkIfZero t1' t2' t3'
-    where
-      t1'  =  normalform2 t1
-      t2'  =  normalform2 t2
-      t3'  =  normalform2 t3
-
-  Pos p t
-    ->  normalform2 t
-
-  _
-    ->  t
-
+-- slow versions removed
 
 -- cool version: does not work yet :(
 data Context
@@ -187,7 +123,9 @@ normalize term = decompose emptyEnv Top term where
          Nothing         ->  continueTerm env (mkVar n) ctx
 
   reduceNatOp !env !n !f !i !j !ctx
-    =  continueNat env (evalOp f i j) ctx
+    =  fromMaybe
+       (continueTerm env (mkNatOp n f (mkNat i) (mkNat j)) ctx)
+       $ (\res -> continueNat env res ctx) <$> evalOp f i j
 
   reduceIfZero !env !i !t2 !t3 !ctx
     =  if i == 0

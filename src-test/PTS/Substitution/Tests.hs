@@ -6,6 +6,7 @@ import Test.Framework.Providers.HUnit
 import Test.HUnit (assertBool)
 
 import PTS.AST
+import PTS.Constants
 import PTS.Instances
 import qualified PTS.Substitution.Properties as Prop
 
