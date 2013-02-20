@@ -144,4 +144,12 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   let v = evalTerm env t
   modify ((n, (v, q)) :)
 
-output doc = asks (flip multiLine doc . optColumns) >>= liftIO . putStrLn
+-- Haskell's version of Scala's _ for anonymous functions. From lens.
+-- I'd say more readable than point-free programming.
+(??) = flip
+infixl 1 ??
+
+output doc =
+  asks optQuiet >>=
+    (unless ??
+      (asks (flip multiLine doc . optColumns) >>= liftIO . putStrLn))
