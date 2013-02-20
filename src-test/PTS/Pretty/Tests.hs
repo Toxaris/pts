@@ -6,6 +6,7 @@ import Test.Framework.Providers.HUnit
 import Test.HUnit (assertEqual)
 
 import PTS.AST
+import PTS.Constants
 import PTS.Instances
 import PTS.Pretty
 

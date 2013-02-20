@@ -77,11 +77,17 @@ data BinOp
   | Div
   deriving (Eq, Data, Typeable)
 
-evalOp :: BinOp -> (Integer -> Integer -> Integer)
-evalOp Add = (+)
-evalOp Sub = (-)
-evalOp Mul = (*)
-evalOp Div = div
+returnLift2 :: (a -> b -> c) -> a -> b -> Maybe c
+returnLift2 = ((Just .) .)
+
+evalOp :: BinOp -> (Integer -> Integer -> Maybe Integer)
+evalOp Add = returnLift2 (+)
+evalOp Sub = returnLift2 (-)
+evalOp Mul = returnLift2 (*)
+evalOp Div = safeDiv
+  where
+    safeDiv x 0 = Nothing
+    safeDiv x y = Just $ div x y
 
 data TermStructure alpha
   = Nat     Integer
