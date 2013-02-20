@@ -149,6 +149,7 @@ processStmt (Bind n args (Just body') body) = recover () $ do
 (??) = flip
 infixl 1 ??
 
+output :: (Pretty b, MonadIO m, MonadReader Options m) => b -> m ()
 output doc =
   asks (flip multiLine doc . optColumns) >>= outputLine
 
