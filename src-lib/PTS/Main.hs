@@ -63,12 +63,12 @@ processJobs jobs = do
     else exitFailure
 
 processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, Binding M)] m) => (Options, FilePath) -> m ()
-processJob (opt, file) = do
-  liftIO $ putStrLn $ "process file " ++ file
+processJob (opt, file) =
   runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt
 
 processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Binding M)] m, MonadIO m, MonadLog m) => FilePath -> m ()
 processFile file = do
+  outputLine $ "process file " ++ file
   text <- liftIO (readFile file)
   text <- deliterate text
   stmts <- parseStmts file text
@@ -150,6 +150,10 @@ processStmt (Bind n args (Just body') body) = recover () $ do
 infixl 1 ??
 
 output doc =
+  asks (flip multiLine doc . optColumns) >>= outputLine
+
+-- Output doc unless --quiet was passed.
+outputLine :: (MonadIO m, MonadReader Options m) => String -> m ()
+outputLine doc =
   asks optQuiet >>=
-    (unless ??
-      (asks (flip multiLine doc . optColumns) >>= liftIO . putStrLn))
+    (unless ?? (liftIO . putStrLn) doc)
