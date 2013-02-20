@@ -63,8 +63,8 @@ unquote = char '$' *> asum
   , parens expr]
 
 stmt = withPos StmtPos $ asum
-  [ try (Bind <$> ident <*> args <*> optionMaybe (colon1 *> expr) <* assign <*> expr <* semi)
-  , Term <$> expr <* semi]
+  [ try (Term <$> expr <* semi)
+  , Bind <$> ident <*> args <*> optionMaybe (colon1 *> expr) <* assign <*> expr <* semi]
 
 stmts = many (optional pragma *> stmt)
 
