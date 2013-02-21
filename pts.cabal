@@ -4,7 +4,7 @@ Synopsis:            Interpreter for functional pure type systems.
 -- Description:
 License:             AllRightsReserved
 -- License-file:        LICENSE
-Author:              Tillmann Rendel, Klaus Ostermann
+Author:              Tillmann Rendel, Klaus Ostermann, Paolo G. Giarrusso
 Maintainer:          rendel@informatik.uni-marburg.de
 -- Copyright:
 Category:            Language
