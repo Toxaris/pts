@@ -23,6 +23,7 @@ data Options = Options
   , optShowFullTerms :: Bool
   , optDebugQuote :: Bool
   , optDebugType :: Bool
+  , optQuiet :: Bool
   }
 
 -- monadic option combinators
@@ -40,14 +41,16 @@ defaultOptions = Options
   , optShowFullTerms = False
   , optDebugQuote = False
   , optDebugType = False
+  , optQuiet = False
   }
 
-setColumns    f1 (Options _  f2 f3 f4 f5 f6) = Options f1 f2 f3 f4 f5 f6
-setInstance   f2 (Options f1 _  f3 f4 f5 f6) = Options f1 f2 f3 f4 f5 f6
-setLiterate   f3 (Options f1 f2 _  f4 f5 f6) = Options f1 f2 f3 f4 f5 f6
-setDebugTerms f4 (Options f1 f2 f3 _  f5 f6) = Options f1 f2 f3 f4 f5 f6
-setDebugQuote f5 (Options f1 f2 f3 f4 _  f6) = Options f1 f2 f3 f4 f5 f6
-setDebugType  f6 (Options f1 f2 f3 f4 f5 _ ) = Options f1 f2 f3 f4 f5 f6
+setColumns    f1 (Options _  f2 f3 f4 f5 f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
+setInstance   f2 (Options f1 _  f3 f4 f5 f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
+setLiterate   f3 (Options f1 f2 _  f4 f5 f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
+setDebugTerms f4 (Options f1 f2 f3 _  f5 f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
+setDebugQuote f5 (Options f1 f2 f3 f4 _  f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
+setDebugType  f6 (Options f1 f2 f3 f4 f5 _  f7) = Options f1 f2 f3 f4 f5 f6 f7
+setQuiet      f7 (Options f1 f2 f3 f4 f5 f6 _ ) = Options f1 f2 f3 f4 f5 f6 f7
 
 data Flag
   = Error String
@@ -62,6 +65,7 @@ options =
   , Option ['p'] ["pts", "instance"] (ReqArg handlePTS      "i"     ) "implement specified pure type systems instance"
   , Option ['l'] ["literate"]        (OptArg handleLiterate "b"     ) "treat input as literate source files"
   , Option ['d'] ["debug"]           (ReqArg handleDebug   "option" ) "activate specified debug options"
+  , Option ['q'] ["quiet"]           (NoArg  handleQuiet            ) "don't print so much"
   , Option "?h"  ["help"]            (NoArg  handleHelp             ) "display this help"
   ]
 
@@ -95,6 +99,8 @@ handleDebug arg    = case map toLower arg of
                        "typing"      -> Local  (setDebugType  True       )
                        "quoting"     -> Local  (setDebugQuote True       )
                        _             -> Error  ("Error: debug option expects 'toplevel', 'typing' or 'quoting' instead of " ++ arg)
+
+handleQuiet        = Global (setQuiet True)
 
 -- order requirements
 argOrder = ReturnInOrder FilePath
