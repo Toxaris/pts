@@ -13,12 +13,12 @@ Build-type:          Simple
 Cabal-version:       >= 1.8
 
 Library
-  Hs-source-dirs:      src-lib
+  Hs-source-dirs:      src/core
   Build-depends:       base < 5,
-                       containers == 0.4.*,
+                       containers >= 0.4 && < 0.6,
                        pretty >= 1.0 && < 1.2,
                        mtl >= 2.0 && < 2.2,
-                       transformers >= 0.2 && <0.4,
+                       transformers >= 0.2 && < 0.4,
                        parsec == 3.1.*,
                        template-haskell,
                        syb
@@ -52,26 +52,26 @@ Library
                        PTS.Value
 
 Executable pts
-  Hs-source-dirs:      src-exec
+  Hs-source-dirs:      src/exec
   Main-is:             pts.hs
   Build-depends:       base < 5,
-                       containers == 0.4.*,
+                       containers >= 0.4 && < 0.6,
                        pretty >= 1.0 && < 1.2,
                        mtl >= 2.0 && < 2.2,
-                       transformers >= 0.2 && <0.4,
+                       transformers >= 0.2 && < 0.4,
                        parsec == 3.1.*,
                        pts
 
   -- Build-tools:
 
 Executable pts-nbe
-  Hs-source-dirs:      src-exec
+  Hs-source-dirs:      src/exec
   Main-is:             pts-nbe.hs
   Build-depends:       base < 5,
                        pts
 
 Executable pts-quote
-  Hs-source-dirs:      src-exec
+  Hs-source-dirs:      src/exec
   Main-is:             pts-quote.hs
   Build-depends:       base < 5,
                        pts
@@ -86,8 +86,8 @@ Test-suite tests
                        Test.Property
   Build-depends:       base >= 4.0 && < 5,
                        mtl >= 2.0 && < 2.2,
-                       transformers >= 0.2 && <0.4,
-                       containers == 0.4.*,
+                       transformers >= 0.2 && < 0.4,
+                       containers >= 0.4 && < 0.6,
                        pretty >= 1.0 && < 1.2,
                        test-framework,
                        test-framework-quickcheck2,
