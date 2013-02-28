@@ -7,6 +7,7 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Trans
 import Control.Monad.Log
+import Control.Monad.Writer
 
 import System.Environment
 import System.IO (hPutStrLn, stderr, hFlush, stdout)
@@ -26,6 +27,7 @@ import PTS.Substitution
 import PTS.Evaluation
 import PTS.Algebra
 import PTS.Binding
+import PTS.Module
 
 import qualified Data.Set as Set
 
@@ -63,16 +65,20 @@ processJobs jobs = do
     else exitFailure
 
 processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, Binding M)] m) => (Options, FilePath) -> m ()
-processJob (opt, file) =
-  runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt
+processJob (opt, file) = do
+  mod <- runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt
+  return ()
 
-processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Binding M)] m, MonadIO m, MonadLog m) => FilePath -> m ()
+processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Binding M)] m, MonadIO m, MonadLog m) => FilePath -> m (Module M)
 processFile file = do
   outputLine $ "process file " ++ file
   text <- liftIO (readFile file)
   text <- deliterate text
   stmts <- parseStmts file text
-  processStmts (lines text, stmts)
+  let imports = error "imports not parsed yet"
+  let name = error "module names not parsed yet"
+  contents <- execWriterT (processStmts (lines text, stmts))
+  return (Module imports name contents)
 
 processStmts (text, stmts) = do
   annotateCode text $ mapM_ processStmt stmts
