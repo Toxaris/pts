@@ -144,6 +144,25 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   let v = evalTerm env t
   modify ((n, (v, q)) :)
 
+processStmt (Export n) = recover () $ do
+  output (text "")
+  output (text "process export of" <+> pretty 0 n)
+
+  -- construct term
+  let t = mkVar n
+
+  -- figure out type
+  env <- get
+  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
+  output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
+
+  -- figure out value
+  let v = evalTerm env t
+
+  -- add to generated module (TODO)
+  -- tell [(n, (v, q))]
+  return ()
+
 -- Haskell's version of Scala's _ for anonymous functions. From lens.
 -- I'd say more readable than point-free programming.
 (??) = flip
