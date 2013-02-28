@@ -13,7 +13,7 @@ Build-type:          Simple
 Cabal-version:       >= 1.8
 
 Library
-  Hs-source-dirs:      src/core
+  Hs-source-dirs:      src-lib
   Build-depends:       base < 5,
                        containers >= 0.4 && < 0.6,
                        pretty >= 1.0 && < 1.2,
@@ -52,7 +52,7 @@ Library
                        PTS.Value
 
 Executable pts
-  Hs-source-dirs:      src/exec
+  Hs-source-dirs:      src-exec
   Main-is:             pts.hs
   Build-depends:       base < 5,
                        containers >= 0.4 && < 0.6,
@@ -65,13 +65,13 @@ Executable pts
   -- Build-tools:
 
 Executable pts-nbe
-  Hs-source-dirs:      src/exec
+  Hs-source-dirs:      src-exec
   Main-is:             pts-nbe.hs
   Build-depends:       base < 5,
                        pts
 
 Executable pts-quote
-  Hs-source-dirs:      src/exec
+  Hs-source-dirs:      src-exec
   Main-is:             pts-quote.hs
   Build-depends:       base < 5,
                        pts
