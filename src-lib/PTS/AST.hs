@@ -105,6 +105,7 @@ data TermStructure alpha
 data Stmt
   = Bind Name [([Name], Term)] (Maybe Term) Term
   | Term Term
+  | Export Name
   | StmtPos Position Stmt
 
 desugarArgs :: (Name -> Term -> Term -> Term) -> [([Name], Term)] -> Term -> Term
