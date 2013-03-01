@@ -165,9 +165,8 @@ processStmt (Export n) = recover () $ do
   -- figure out value
   let v = evalTerm env t
 
-  -- add to generated module (TODO)
-  -- tell [(n, (v, q))]
-  return ()
+  -- add to generated module
+  tell [(n, (v, q))]
 
 -- Haskell's version of Scala's _ for anonymous functions. From lens.
 -- I'd say more readable than point-free programming.
