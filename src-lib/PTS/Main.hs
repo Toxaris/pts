@@ -69,16 +69,16 @@ processJob (opt, file) = do
   mod <- runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt
   return ()
 
-processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Binding M)] m, MonadIO m, MonadLog m) => FilePath -> m (Module M)
+processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Binding M)] m, MonadIO m, MonadLog m) => FilePath -> m (Maybe (Module M))
 processFile file = do
   outputLine $ "process file " ++ file
   text <- liftIO (readFile file)
   text <- deliterate text
-  stmts <- parseStmts file text
-  let imports = error "imports not parsed yet"
-  let name = error "module names not parsed yet"
-  contents <- execWriterT (processStmts (lines text, stmts))
-  return (Module imports name contents)
+  File maybeName stmts <- parseFile file text
+  (imports, contents) <- execWriterT (processStmts (lines text, stmts))
+  return (do
+    name <- maybeName
+    return (Module imports name contents))
 
 processStmts (text, stmts) = do
   annotateCode text $ mapM_ processStmt stmts
@@ -166,7 +166,7 @@ processStmt (Export n) = recover () $ do
   let v = evalTerm env t
 
   -- add to generated module
-  tell [(n, (v, q))]
+  tell (mempty, [(n, (v, q))])
 
 -- Haskell's version of Scala's _ for anonymous functions. From lens.
 -- I'd say more readable than point-free programming.

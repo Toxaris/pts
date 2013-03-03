@@ -1,7 +1,7 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
-module PTS.Parser ( parseStmt, parseStmts, parseTerm, parseTermAtPos ) where
+module PTS.Parser ( parseFile, parseStmt, parseStmts, parseTerm, parseTermAtPos ) where
 
-import Prelude hiding (abs, pi, elem, notElem, const)
+import Prelude hiding (abs, pi, elem, notElem, const, mod)
 
 import Control.Applicative hiding (many, Const, optional)
 import Control.Monad
@@ -29,6 +29,7 @@ import PTS.AST
 import PTS.Instances
 import PTS.Options
 import PTS.Constants
+import PTS.Module
 
      -----------------
     -- PTS PARSER --
@@ -63,7 +64,8 @@ unquote = char '$' *> asum
   , parens expr]
 
 stmt = withPos StmtPos $ asum
-  [ try (Term <$> expr <* semi)
+  [ Export <$> (keyword "export" *> ident <* semi)
+  , try (Term <$> expr <* semi)
   , Bind <$> ident <*> args <*> optionMaybe (colon1 *> expr) <* assign <*> expr <* semi]
 
 stmts = many (optional pragma *> stmt)
@@ -72,7 +74,7 @@ args = many (parens argGroup)
 
 argGroup = (,) <$> names <* colon1 <*> expr
 
-mod = keyword "module" *> ident <* semi <*> stmts
+file = File <$> optionMaybe (keyword "module" *> modname <* semi) <*> stmts
 
 names = many ident
 
@@ -94,7 +96,7 @@ pragma = lexem $ do
     -- LEXER --
      ---------
 
-keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div", "module", "import"]
+keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div", "module", "import", "export"]
 
 identChar x = not (isSpace x) && x `notElem` ".:=;/()[]$"
 
@@ -106,16 +108,7 @@ meta = lexem (do char '$'
                  return (read ('$' : first : rest)))
          <?> "meta variable name"
 
-ident = lexem (do name <- many1 (satisfy identChar)
-                  when (name `elem` keywords) $
-                    unexpected ("keyword " ++ name)
-
-                  when (Prelude.all (`elem` ['0'..'9']) name) $
-                    unexpected ("numeric literal " ++ name)
-
-                  when (isDigit (head name)) $
-                    pzero
-
+ident = lexem (do name <- namepart
                   when (Prelude.all (== '*') name) $
                     unexpected ("constant")
 
@@ -124,6 +117,20 @@ ident = lexem (do name <- many1 (satisfy identChar)
 
                   return (read name))
           <?> "variable name"
+
+namepart = lexem (do
+  name <- many1 (satisfy identChar)
+  when (name `elem` keywords) $
+    unexpected ("keyword " ++ name)
+  when (Prelude.all (`elem` ['0'..'9']) name) $
+    unexpected ("numeric literal " ++ name)
+  when (isDigit (head name)) $
+    pzero
+  return name)
+
+modname = lexem (do
+  names <- namepart `sepBy` dot
+  return (ModuleName names)) <?> "module name"
 
 number = read <$> lexem (many1 (satisfy isDigit) <* notFollowedBy (satisfy identChar))
 
@@ -172,6 +179,7 @@ parseStmt = parseInternal stmt
 
 parseStmts = parseInternal stmts
 parseTerm = parseInternal expr
+parseFile = parseInternal file
 
 parseTermAtPos :: Monad m => String -> Int -> Int -> String -> m Term
 parseTermAtPos file line col text =
