@@ -35,6 +35,7 @@ Library
                        PTS.Pretty,
                        PTS.Diff,
                        PTS.Evaluation,
+                       PTS.File,
                        PTS.Core,
                        PTS.Main,
                        PTS.Substitution,
