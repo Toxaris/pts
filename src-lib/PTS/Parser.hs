@@ -29,7 +29,6 @@ import PTS.AST
 import PTS.Instances
 import PTS.Options
 import PTS.Constants
-import PTS.Module
 
      -----------------
     -- PTS PARSER --
