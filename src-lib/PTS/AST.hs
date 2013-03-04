@@ -114,6 +114,7 @@ data Stmt
 
 data ModuleName
   =  ModuleName [String]
+  deriving (Eq)
 
 parts :: ModuleName -> [String]
 parts (ModuleName xs) = xs
