@@ -140,6 +140,10 @@ processStmt (Export n) = recover () $ do
   -- add to generated module
   tell (mempty, [(n, (v, q))])
 
+processStmt (Import mod) = recover () $ do
+  output (text "")
+  output (text "process import of" <+> pretty 0 mod)
+
 -- Haskell's version of Scala's _ for anonymous functions. From lens.
 -- I'd say more readable than point-free programming.
 (??) = flip
