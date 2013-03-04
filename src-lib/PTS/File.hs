@@ -48,8 +48,8 @@ processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, M
 processFile file = do
   outputLine $ "process file " ++ file
   path <- asks optPath
-  fild <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
-  text <- liftIO (readFile fild)
+  file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
+  text <- liftIO (readFile file)
   text <- deliterate text
   File maybeName stmts <- parseFile file text
   (imports, contents) <- execWriterT (processStmts (lines text, stmts))
