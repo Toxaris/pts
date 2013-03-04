@@ -144,5 +144,8 @@ instance Show Term where
 instance Show TypedTerm where
   show t = singleLine t
 
+instance Show ModuleName where
+  show t = singleLine t
+
 showCtx :: [(Name, Binding m)] -> String
 showCtx = concat . intersperse ", " . map (\(n, (v, t)) -> show n ++ " : " ++ show t)
