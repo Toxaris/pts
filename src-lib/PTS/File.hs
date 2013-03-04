@@ -14,7 +14,6 @@ import Data.Maybe (fromMaybe)
 import System.Environment
 import System.IO (hPutStrLn, stderr, hFlush, stdout)
 import System.Exit (exitSuccess, exitFailure)
-import System.Directory (findFile)
 
 import Parametric.Error
 import Parametric.Pretty hiding (when)
@@ -47,8 +46,6 @@ deliterate text = do
 processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Binding M)] m, MonadIO m, MonadLog m) => FilePath -> m (Maybe (Module M))
 processFile file = do
   outputLine $ "process file " ++ file
-  path <- asks optPath
-  file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
   text <- liftIO (readFile file)
   text <- deliterate text
   File maybeName stmts <- parseFile file text

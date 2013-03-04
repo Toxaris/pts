@@ -12,6 +12,7 @@ import Control.Monad.Writer
 import System.Environment
 import System.IO (hPutStrLn, stderr, hFlush, stdout)
 import System.Exit (exitSuccess, exitFailure)
+import System.Directory (findFile)
 
 import Parametric.Error
 import Parametric.Pretty hiding (when)
@@ -59,5 +60,7 @@ processJobs jobs = do
 
 processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, Binding M)] m) => (Options, FilePath) -> m ()
 processJob (opt, file) = do
+  let path = optPath opt
+  file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
   mod <- runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt
   return ()
