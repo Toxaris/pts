@@ -8,6 +8,7 @@ module PTS.AST
   , Structure (structure)
   , Stmt (..)
   , ModuleName (..)
+  , parts
   , File (..)
   , typeOf
   , mkNat
@@ -113,6 +114,9 @@ data Stmt
 
 data ModuleName
   =  ModuleName [String]
+
+parts :: ModuleName -> [String]
+parts (ModuleName xs) = xs
 
 data File m
   =  File (Maybe ModuleName) [Stmt]
