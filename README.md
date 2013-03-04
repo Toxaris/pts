@@ -10,7 +10,6 @@ System](http://ncatlab.org/nlab/show/pure+type+system)
 Run the following commands at the top:
 
 ```
-cabal configure
 cabal install
 ```
 
