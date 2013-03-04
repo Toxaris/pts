@@ -8,7 +8,6 @@ module PTS.AST
   , Structure (structure)
   , Stmt (..)
   , ModuleName (..)
-  , Import (..)
   , File (..)
   , typeOf
   , mkNat
@@ -109,13 +108,11 @@ data Stmt
   = Bind Name [([Name], Term)] (Maybe Term) Term
   | Term Term
   | Export Name
+  | Import ModuleName
   | StmtPos Position Stmt
 
 data ModuleName
   =  ModuleName [String]
-
-data Import
-  =  Import ModuleName
 
 data File m
   =  File (Maybe ModuleName) [Stmt]
