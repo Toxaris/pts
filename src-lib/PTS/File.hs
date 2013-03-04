@@ -14,6 +14,8 @@ import Data.Maybe (fromMaybe)
 import System.Environment
 import System.IO (hPutStrLn, stderr, hFlush, stdout)
 import System.Exit (exitSuccess, exitFailure)
+import System.FilePath ((</>), (<.>), joinPath)
+import System.Directory (doesFileExist)
 
 import Parametric.Error
 import Parametric.Pretty hiding (when)
@@ -145,6 +147,32 @@ processStmt (Export n) = recover () $ do
 processStmt (Import mod) = recover () $ do
   output (text "")
   output (text "process import of" <+> pretty 0 mod)
+
+  -- find file
+  path <- asks optPath
+  file <- findModule path mod
+
+  result <- processFile file
+  case result of
+    Nothing ->
+      fail $ "expected module " ++ show mod ++ " in file " ++ file ++ " but found no module statement."
+    Just (Module _ name _) | name /= mod ->
+      fail $ "expected module " ++ show mod ++ " inf file " ++ file ++ " but found module " ++ show name ++ "."
+    Just (Module imports name bindings) ->
+      modify (bindings ++)
+
+findModule path mod = find path where
+  base  =  joinPath (parts mod)
+
+  find [] = fail ("source file for module " ++ show mod ++ " not found.")
+  find (dir : path) = do
+    let pts   = dir </> base <.> "lpts"
+    let lpts  = dir </> base <.> "pts"
+    ptsExists <- liftIO (doesFileExist pts)
+    if ptsExists then return pts else do
+      lptsExists <- liftIO (doesFileExist lpts)
+      if lptsExists then return lpts else do
+        find path
 
 -- Haskell's version of Scala's _ for anonymous functions. From lens.
 -- I'd say more readable than point-free programming.
