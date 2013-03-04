@@ -44,13 +44,14 @@ defaultOptions = Options
   , optQuiet = False
   }
 
-setColumns    f1 (Options _  f2 f3 f4 f5 f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
-setInstance   f2 (Options f1 _  f3 f4 f5 f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
-setLiterate   f3 (Options f1 f2 _  f4 f5 f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
-setDebugTerms f4 (Options f1 f2 f3 _  f5 f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
-setDebugQuote f5 (Options f1 f2 f3 f4 _  f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
-setDebugType  f6 (Options f1 f2 f3 f4 f5 _  f7) = Options f1 f2 f3 f4 f5 f6 f7
-setQuiet      f7 (Options f1 f2 f3 f4 f5 f6 _ ) = Options f1 f2 f3 f4 f5 f6 f7
+setColumns    x options = options {optColumns = x}
+setInstance   x options = options {optInstance = x}
+setLiterate   x options = options {optLiterate = x}
+setDebugTerms x options = options {optShowFullTerms = x}
+setDebugQuote x options = options {optDebugQuote = x}
+setDebugType  x options = options {optDebugType = x}
+setQuiet      x options = options {optQuiet = x}
+
 
 data Flag
   = Error String
