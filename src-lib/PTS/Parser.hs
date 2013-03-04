@@ -64,6 +64,7 @@ unquote = char '$' *> asum
 
 stmt = withPos StmtPos $ asum
   [ Export <$> (keyword "export" *> ident <* semi)
+  , Import <$> (keyword "import" *> modname <* semi)
   , try (Term <$> expr <* semi)
   , Bind <$> ident <*> args <*> optionMaybe (colon1 *> expr) <* assign <*> expr <* semi]
 
