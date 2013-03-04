@@ -21,7 +21,9 @@ Library
                        transformers >= 0.2 && <0.4,
                        parsec == 3.1.*,
                        template-haskell,
-                       syb
+                       syb,
+                       filepath,
+                       directory
   Exposed-modules:     Tools.Instances,
                        Tools.Errors.Class,
                        Parametric.Pretty,
