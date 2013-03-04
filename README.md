@@ -2,7 +2,7 @@
 
 ## Description
 
-An Haskell implementation of the [Pure Type
+A Haskell implementation of the [Pure Type
 System](http://ncatlab.org/nlab/show/pure+type+system)
 
 ##Installation
