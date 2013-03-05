@@ -78,7 +78,11 @@ handleColumns  arg = case reads arg of
 handlePTS      arg = case map toLower arg of
                        "stlc"        -> Global (setInstance simplytyped )
                        "simplytyped" -> Global (setInstance simplytyped )
+                       "pi"          -> Global (setInstance pi          )
+                       "lomega"      -> Global (setInstance lomega      )
+                       "fpi"         -> Global (setInstance fpi         )
                        "fomega"      -> Global (setInstance fomega      )
+                       "pilomega"    -> Global (setInstance pilomega    )
                        "coc"         -> Global (setInstance coc         )
                        "lambdastar"  -> Global (setInstance lambdastar  )
                        "fomegastar"  -> Global (setInstance fomegastar  )
