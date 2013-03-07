@@ -46,4 +46,7 @@ tests
      ,  testPretty "x -> Pi x : y . x" (mkPi x (mkVar x) (mkPi x (mkVar y) (mkVar x)))
      ,  testPretty "Pi x : y . x -> z" (mkPi x (mkVar y) (mkPi y (mkVar x) (mkVar z)))
      ,  testPretty "(Pi x : y . x) -> z" (mkPi x (mkPi x (mkVar y) (mkVar x)) (mkVar z))
+     ,  testPretty "lambda x : x . x" (mkLam x (mkVar x) (mkVar x))
+     ,  testPretty "lambda x : y . x" (mkLam x (mkVar y) (mkVar x))
+     ,  testPretty "lambda x : y . lambda y : x . y" (mkLam x (mkVar y) (mkLam y (mkVar x) (mkVar y)))
      ]

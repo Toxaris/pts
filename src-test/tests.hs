@@ -8,12 +8,14 @@ import Test.QuickCheck hiding ((.&.))
 
 import PTS.Core.Tests
 import PTS.Substitution.Tests
+import PTS.Parser.Tests
 import PTS.Pretty.Tests
 
 main = defaultMain Main.tests
 
 tests =
   [  PTS.Core.Tests.tests
+  ,  PTS.Parser.Tests.tests
   ,  PTS.Pretty.Tests.tests
   ,  PTS.Substitution.Tests.tests
   ]
