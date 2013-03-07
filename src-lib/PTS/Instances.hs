@@ -65,6 +65,8 @@ f = PTS axioms sorts relations where
   typedBox  = MkTypedTerm (Const box) notExpressible
 
 
+{-
+
 pi :: PTS
 pi = PTS axioms sorts relations where
   sorts (C 1) = True
@@ -83,7 +85,7 @@ pi = PTS axioms sorts relations where
 
   typedStar = MkTypedTerm (Const star) typedBox
   typedBox  = MkTypedTerm (Const box) notExpressible
-
+-}
 
 -- lower omega
 lomega :: PTS
