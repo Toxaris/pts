@@ -7,6 +7,9 @@ module PTS.AST
   , TermStructure (..)
   , Structure (structure)
   , Stmt (..)
+  , ModuleName (..)
+  , parts
+  , File (..)
   , typeOf
   , mkNat
   , mkNatOp
@@ -105,7 +108,19 @@ data TermStructure alpha
 data Stmt
   = Bind Name [([Name], Term)] (Maybe Term) Term
   | Term Term
+  | Export Name
+  | Import ModuleName
   | StmtPos Position Stmt
+
+data ModuleName
+  =  ModuleName [String]
+  deriving (Eq)
+
+parts :: ModuleName -> [String]
+parts (ModuleName xs) = xs
+
+data File m
+  =  File (Maybe ModuleName) [Stmt]
 
 desugarArgs :: (Name -> Term -> Term -> Term) -> [([Name], Term)] -> Term -> Term
 desugarArgs mk [] body = body

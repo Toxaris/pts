@@ -7,10 +7,12 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Trans
 import Control.Monad.Log
+import Control.Monad.Writer
 
 import System.Environment
 import System.IO (hPutStrLn, stderr, hFlush, stdout)
 import System.Exit (exitSuccess, exitFailure)
+import System.Directory (findFile)
 
 import Parametric.Error
 import Parametric.Pretty hiding (when)
@@ -26,18 +28,12 @@ import PTS.Substitution
 import PTS.Evaluation
 import PTS.Algebra
 import PTS.Binding
+import PTS.Module
+import PTS.File
 
 import qualified Data.Set as Set
 
 import Tools.Errors
-
-deliterateLine ('>' : ' ' : line) = ' ' : ' ' : line
-deliterateLine _                  = ""
-
-deliterate text = do
-  flag <- asks optLiterate
-  if flag then return . unlines . map deliterateLine . lines $ text
-          else return text
 
 infixl 2 >>>
 (>>>) = flip (.)
@@ -63,98 +59,8 @@ processJobs jobs = do
     else exitFailure
 
 processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, Binding M)] m) => (Options, FilePath) -> m ()
-processJob (opt, file) =
-  runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt
-
-processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Binding M)] m, MonadIO m, MonadLog m) => FilePath -> m ()
-processFile file = do
-  outputLine $ "process file " ++ file
-  text <- liftIO (readFile file)
-  text <- deliterate text
-  stmts <- parseStmts file text
-  processStmts (lines text, stmts)
-
-processStmts (text, stmts) = do
-  annotateCode text $ mapM_ processStmt stmts
-
-processStmt (StmtPos p s) = annotatePos p $ processStmt s
-
-processStmt (Term t) = recover () $ do
-  pts <- asks (optInstance)
-  output (text "")
-  output (text "process expression")
-  output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
-  whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
-  env <- get
-  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
-  output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
-  let x = nbe env t
-  output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
-
-processStmt (Bind n args Nothing body) = recover () $ do
-  let t = desugarArgs mkLam args body
-  pts <- asks (optInstance)
-  output (text "")
-  output (text "process binding of" <+> pretty 0 n)
-  output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
-  env <- get
-  whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
-  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
-  output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
-  let v = evalTerm env t
-  modify ((n, (v, q)) :)
-
-processStmt (Bind n args (Just body') body) = recover () $ do
-  let t   =  desugarArgs mkLam args body
-  let t'  =  desugarArgs mkPi args body'
-  pts <- asks (optInstance)
-  output (text "")
-  output (text "process binding of" <+> pretty 0 n)
-
-  -- preprocess body
-  output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
-  whenOption optShowFullTerms $ output (nest 2 (sep [text "full term", nest 2 (pretty 0 t)]))
-
-  -- preprocess type
-  output (nest 2 (sep [text "specified type:", nest 2 (pretty 0 t')]))
-  let t'' = t'
-  whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t'' )]))
-  env <- get
-
-  -- typecheck type
-  MkTypedTerm _ q' <- runEnvironmentT (typecheck t'') env
-  case structure (nbe env (strip q')) of
-    Const _ -> return ()
-    _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
-                         $$ text "  expected:" <+> text "constant"
-                         $$ text "     found:" <+> pretty 0 q'
-
-  -- typecheck body
-  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
-
-  -- compare specified and actual type
-  if equivTerm env (strip q) t''
-    then output (nest 2 (sep [text "type:", nest 2 (pretty 0 (strip t') )]))
-    else let (expected, given) = showDiff 0 (diff (nbe env t'' ) (nbe env (strip q))) in
-           prettyFail $ text "Type mismatch in top-level binding of" <+> pretty 0 n
-                     $$ text "  specified type:" <+> pretty 0 t'
-                     $$ text "     normal form:" <+> text expected
-                     $$ text "     actual type:" <+> text given
-
-  let v = evalTerm env t
-  modify ((n, (v, q)) :)
-
--- Haskell's version of Scala's _ for anonymous functions. From lens.
--- I'd say more readable than point-free programming.
-(??) = flip
-infixl 1 ??
-
-output :: (Pretty b, MonadIO m, MonadReader Options m) => b -> m ()
-output doc =
-  asks (flip multiLine doc . optColumns) >>= outputLine
-
--- Output doc unless --quiet was passed.
-outputLine :: (MonadIO m, MonadReader Options m) => String -> m ()
-outputLine doc =
-  asks optQuiet >>=
-    (unless ?? (liftIO . putStrLn) doc)
+processJob (opt, file) = do
+  let path = optPath opt
+  file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
+  mod <- runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt
+  return ()

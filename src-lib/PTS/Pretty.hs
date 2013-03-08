@@ -7,7 +7,7 @@ module PTS.Pretty
 
 import Control.Arrow(first)
 
-import Data.List(intersperse)
+import Data.List(intersperse, intercalate)
 import Data.Set (Set)
 import qualified Data.Set as Set
 
@@ -132,11 +132,19 @@ instance Pretty Stmt where
   pretty p (Bind n args Nothing t)   = pretty 0 n <+> prettyArgs args <+> text "=" <+> pretty 0 t
   pretty p (Bind n args (Just t') t) = pretty 0 n <+> prettyArgs args <+> text ":" <+> pretty 0 t' <+> text "=" <+> pretty 0 t
   pretty p (Term t) = pretty 0 t
+  pretty p (Import n) = text "import" <+> pretty 0 n
+  pretty p (Export mod) = text "export" <+> pretty 0 mod
+
+instance Pretty ModuleName where
+  pretty p (ModuleName parts) = text (intercalate "." parts)
 
 instance Show Term where
   show t = singleLine t
 
 instance Show TypedTerm where
+  show t = singleLine t
+
+instance Show ModuleName where
   show t = singleLine t
 
 showCtx :: [(Name, Binding m)] -> String

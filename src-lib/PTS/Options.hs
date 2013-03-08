@@ -10,6 +10,7 @@ import Data.List (mapAccumL)
 
 import System.Console.GetOpt
 import System.Environment (getArgs)
+import System.FilePath (splitSearchPath)
 
 import Parametric.Pretty (Pretty, Doc, multiLine)
 
@@ -24,6 +25,7 @@ data Options = Options
   , optDebugQuote :: Bool
   , optDebugType :: Bool
   , optQuiet :: Bool
+  , optPath :: [FilePath]
   }
 
 -- monadic option combinators
@@ -42,15 +44,20 @@ defaultOptions = Options
   , optDebugQuote = False
   , optDebugType = False
   , optQuiet = False
+  , optPath = ["."]
   }
 
-setColumns    f1 (Options _  f2 f3 f4 f5 f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
-setInstance   f2 (Options f1 _  f3 f4 f5 f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
-setLiterate   f3 (Options f1 f2 _  f4 f5 f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
-setDebugTerms f4 (Options f1 f2 f3 _  f5 f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
-setDebugQuote f5 (Options f1 f2 f3 f4 _  f6 f7) = Options f1 f2 f3 f4 f5 f6 f7
-setDebugType  f6 (Options f1 f2 f3 f4 f5 _  f7) = Options f1 f2 f3 f4 f5 f6 f7
-setQuiet      f7 (Options f1 f2 f3 f4 f5 f6 _ ) = Options f1 f2 f3 f4 f5 f6 f7
+setColumns    x options = options {optColumns = x}
+setInstance   x options = options {optInstance = x}
+setLiterate   x options = options {optLiterate = x}
+setDebugTerms x options = options {optShowFullTerms = x}
+setDebugQuote x options = options {optDebugQuote = x}
+setDebugType  x options = options {optDebugType = x}
+setQuiet      x options = options {optQuiet = x}
+setPath       x options = options {optPath = x}
+
+extendPath p options
+  =  options {optPath = optPath options ++ splitSearchPath p}
 
 data Flag
   = Error String
@@ -66,6 +73,7 @@ options =
   , Option ['l'] ["literate"]        (OptArg handleLiterate "b"     ) "treat input as literate source files"
   , Option ['d'] ["debug"]           (ReqArg handleDebug   "option" ) "activate specified debug options"
   , Option ['q'] ["quiet"]           (NoArg  handleQuiet            ) "don't print so much"
+  , Option ['i'] []                  (OptArg handlePath "paths"     ) "add paths to search path, or reset search path" 
   , Option "?h"  ["help"]            (NoArg  handleHelp             ) "display this help"
   ]
 
@@ -105,6 +113,9 @@ handleDebug arg    = case map toLower arg of
                        _             -> Error  ("Error: debug option expects 'toplevel', 'typing' or 'quoting' instead of " ++ arg)
 
 handleQuiet        = Global (setQuiet True)
+
+handlePath Nothing = Local (setPath [])
+handlePath (Just p) = Local (extendPath p)
 
 -- order requirements
 argOrder = ReturnInOrder FilePath

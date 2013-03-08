@@ -13,11 +13,13 @@ import Control.Monad.State (StateT, evalStateT)
 import Control.Monad.State.Class (MonadState (get, put))
 import Control.Monad.Trans.Class (MonadTrans (lift))
 import Control.Monad.Writer.Class (MonadWriter)
+import Control.Monad.Writer (WriterT)
 
 import Data.Bool (Bool (True, False))
 import Data.Function (($))
 import Data.Int (Int)
 import Data.List (replicate, length, (++))
+import Data.Monoid (Monoid)
 import Prelude (String)
 
 import System.IO (putStrLn)
@@ -82,3 +84,12 @@ instance MonadIO m => MonadLog (ConsoleLogT m) where
   disableLogging = ConsoleLogT $ do
     (_, trace) <- get
     put (False, trace)
+
+instance (Monoid w, MonadLog m) => MonadLog (WriterT w m) where
+  enter text = lift (enter text)
+  exit = lift exit
+  log text = lift (log text)
+  stacktrace = lift stacktrace
+  enableLogging = lift enableLogging
+  disableLogging = lift disableLogging
+
