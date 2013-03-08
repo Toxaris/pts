@@ -126,7 +126,8 @@ instance Pretty TypedTerm where
   pretty p t = pretty p (snd (fold (depZip freevarsAlgebra prettyAlgebra) t))
 
 prettyArgs :: [([Name], Term)] -> Doc
-prettyArgs [] = empty
+prettyArgs args = sep (map f args) where
+  f (ns, q) = hsep [pretty 0 n | n <- ns] <+> text ":" <+> pretty 0 q
 
 instance Pretty Stmt where
   pretty p (Bind n args Nothing t)   = pretty 0 n <+> prettyArgs args <+> text "=" <+> pretty 0 t
