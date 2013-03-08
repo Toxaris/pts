@@ -2,15 +2,17 @@
 
 ## Description
 
-This is an implementation of the [Pure Type
-System](http://ncatlab.org/nlab/show/pure+type+system) in Haskell
+A Haskell implementation of the [Pure Type
+System](http://ncatlab.org/nlab/show/pure+type+system)
 
 ##Installation
 
-Enter the root of the repository, and run the following commands:
+Run the following commands at the top:
 
 ```
-cabal configure
 cabal install
 ```
 
+To proactively avoid dependency hell, consider using
+[cabal-dev](https://github.com/creswick/cabal-dev) or some other
+tool to sandbox builds.
