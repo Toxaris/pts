@@ -150,9 +150,9 @@ processStmt (Import mod) = recover () $ do
 
   -- find file
   path <- asks optPath
-  file <- findModule path mod
+  (literate, file) <- findModule path mod
 
-  result <- processFile file
+  result <- local (setLiterate literate) $ processFile file
   case result of
     Nothing ->
       fail $ "expected module " ++ show mod ++ " in file " ++ file ++ " but found no module statement."
@@ -166,12 +166,12 @@ findModule path mod = find path where
 
   find [] = fail ("source file for module " ++ show mod ++ " not found.")
   find (dir : path) = do
-    let pts   = dir </> base <.> "lpts"
-    let lpts  = dir </> base <.> "pts"
+    let lpts  = dir </> base <.> "lpts"
+    let pts   = dir </> base <.> "pts"
     ptsExists <- liftIO (doesFileExist pts)
-    if ptsExists then return pts else do
+    if ptsExists then return (False, pts) else do
       lptsExists <- liftIO (doesFileExist lpts)
-      if lptsExists then return lpts else do
+      if lptsExists then return (True, lpts) else do
         find path
 
 -- Haskell's version of Scala's _ for anonymous functions. From lens.
