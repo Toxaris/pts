@@ -152,7 +152,11 @@ processStmt (Import mod) = recover () $ do
   path <- asks optPath
   (literate, file) <- findModule path mod
 
+  env <- get
+  put []
   result <- local (setLiterate literate) $ processFile file
+  put env
+
   case result of
     Nothing ->
       fail $ "expected module " ++ show mod ++ " in file " ++ file ++ " but found no module statement."
