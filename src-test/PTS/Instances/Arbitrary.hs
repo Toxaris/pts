@@ -7,5 +7,5 @@ import PTS.Constants
 
 instance Arbitrary C where
   arbitrary = sized (\size -> do
-    number <- choose (1, size - 1)
+    number <- choose (0, 2 + (size `div` 20))
     return (C number))
