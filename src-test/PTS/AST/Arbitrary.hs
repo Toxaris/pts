@@ -44,15 +44,15 @@ arbitraryTerm = sized (\size -> oneof $
     ,  arbitraryPos
     ,  arbitraryConst
     ] ++
-    if size >= 2 then
+    (if size >= 2 then
     [  arbitraryApp
     ,  arbitraryNatOp
-    ] else [] ++
-    if size >= 3 then
+    ] else []) ++
+    (if size >= 3 then
     [  arbitraryIfZero
     ,  arbitraryLam
     ,  arbitraryPi
-    ] else [])
+    ] else []))
 
 arbitraryNat = do
   value <- arbitrary
