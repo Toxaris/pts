@@ -84,7 +84,7 @@ lam2 = PTS sorts axioms relations name description where
          , "solc"
          , "second-order-lambda-calculus" ]
 
-  description = "lambda-calculus with polymorphic types"
+  description = "lambda-calculus with simple and polymorphic types"
 
   typedStar = MkTypedTerm (Const star) typedBox
   typedBox  = MkTypedTerm (Const box) notExpressible
@@ -113,7 +113,7 @@ lamp = PTS sorts axioms relations name description where
          , "dtlc"
          , "dependently-typed-lambda-calculus" ]
 
-  description = "lambda-calculus with dependent types"
+  description = "lambda-calculus with simple and dependent types"
 
   typedStar = MkTypedTerm (Const star) typedBox
   typedBox  = MkTypedTerm (Const box) notExpressible
@@ -139,7 +139,7 @@ lamv = PTS sorts axioms relations name description where
   name = [ "lamv"
          , "lambda-weak-omega" ]
 
-  description = "lambda-calculus with type constructors/operators"
+  description = "lambda-calculus with simple and higher-order types"
 
   typedStar = MkTypedTerm (Const star) typedBox
   typedBox  = MkTypedTerm (Const box) notExpressible
@@ -164,7 +164,7 @@ lap2 = PTS sorts axioms relations name description where
   name = [ "lap2"
          , "lambda-pi-2" ]
 
-  description = "lambda-calculus with dependent and polymorphic types"
+  description = "lambda-calculus with simple, dependent and polymorphic types"
 
   typedStar = MkTypedTerm (Const star) typedBox
   typedBox  = MkTypedTerm (Const box) notExpressible
@@ -196,7 +196,7 @@ lamw = PTS sorts axioms relations name description where
          , "f-omega"
          , "system-f-omega" ]
 
-  description = "lambda-calculus with polymorphic types and type constructors/operators"
+  description = "lambda-calculus with simple, polymorphic and higher-order types"
 
   typedStar = MkTypedTerm (Const star) typedBox
   typedBox  = MkTypedTerm (Const box) notExpressible
@@ -221,7 +221,7 @@ lapv = PTS sorts axioms relations name description where
   name = [ "lapv"
          , "lambda-pi-weak-omega"]
 
-  description = "lambda-calculus with dependent types and type constructors/operators"
+  description = "lambda-calculus with simple, dependent and higher-order types"
 
   typedStar = MkTypedTerm (Const star) typedBox
   typedBox  = MkTypedTerm (Const box) notExpressible
@@ -253,7 +253,7 @@ lamc = PTS sorts axioms relations name description where
          , "coc"
          , "calculus-of-construction" ]
 
-  description = "lambda-calculus with dependent types, polymorphic types and type constructors/operators"
+  description = "lambda-calculus with simple, dependent, polymorphic and higher-order types"
 
   typedStar = MkTypedTerm (Const star) typedBox
   typedBox  = MkTypedTerm (Const box) notExpressible
@@ -279,7 +279,7 @@ lams = PTS sorts axioms relations name description where
          , "lambdastar"
          , "lambda-star" ]
 
-  description = "lambda* with * : *"
+  description = "lambda-calculus with impredicative types"
 
   typedStar = MkTypedTerm (Const star) typedStar
 
@@ -311,7 +311,7 @@ laws = PTS sorts axioms relations name description where
          , "fomega*"
          , "f-omega-star" ]
 
-  description = "fomega* with ** : **"
+  description = "lambda-calculus with impredicative kinds"
 
   typedStar = MkTypedTerm (Const star) typedBox
   typedBox  = MkTypedTerm (Const box) typedBox
@@ -337,7 +337,6 @@ lawu = PTS sorts axioms relations name description where
          , "fww"
          , "fomegaomega" ]
 
-  description = "fomega with an infinite hierarchy of universes"
+  description = "lambda-calculus with an infinite hierarchy of universes"
 
   typed n = MkTypedTerm (Const (C n)) (typed (succ n))
-
