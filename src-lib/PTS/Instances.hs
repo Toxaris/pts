@@ -46,10 +46,10 @@ lama = PTS sorts axioms relations name description where
   relations (C 1) (C 1) = Just typedStar
   relations (C _) (C _) = Nothing
 
-  name = [ "lama"
-         , "lambda-arrow" 
-         , "stlc"
-         , "simply-typed-lambda-calculus" ]
+  name = [ "stlc"
+         , "simply-typed-lambda-calculus"
+         , "lama"
+         , "lambda-arrow" ]
 
   description = "lambda-calculus with simple types"
 
@@ -75,14 +75,14 @@ lam2 = PTS sorts axioms relations name description where
   relations (C 2) (C 2) = Nothing
   relations (C _) (C _) = Nothing
 
-  name = [ "lam2"
-         , "lambda-2"
-         , "f"
+  name = [ "f"
          , "system-f"
          , "plc"
          , "polymorphic-lambda-calculus"
          , "solc"
-         , "second-order-lambda-calculus" ]
+         , "second-order-lambda-calculus"
+         , "lam2"
+         , "lambda-2" ]
 
   description = "lambda-calculus with simple and polymorphic types"
 
@@ -106,12 +106,12 @@ lamp = PTS sorts axioms relations name description where
   relations (C 2) (C 2) = Nothing
   relations (C _) (C _) = Nothing
 
-  name = [ "lamp"
-         , "lambda-pi"
+  name = [ "dtlc"
+         , "dependently-typed-lambda-calculus"
          , "lf"
          , "logical-framework"
-         , "dtlc"
-         , "dependently-typed-lambda-calculus" ]
+         , "lamp"
+         , "lambda-pi" ]
 
   description = "lambda-calculus with simple and dependent types"
 
@@ -136,7 +136,9 @@ lamv = PTS sorts axioms relations name description where
   relations (C 2) (C 2) = Just typedBox
   relations (C _) (C _) = Nothing
 
-  name = [ "lamv"
+  name = [ "hotlc"
+         , "higher-order-typed-lambda-calculus"
+         , "lamv"
          , "lambda-weak-omega" ]
 
   description = "lambda-calculus with simple and higher-order types"
@@ -190,11 +192,11 @@ lamw = PTS sorts axioms relations name description where
   relations (C 2) (C 2) = Just typedBox
   relations (C _) (C _) = Nothing
 
-  name = [ "lamw"
-         , "lambda-omega"
-         , "fw"
+  name = [ "fw"
          , "f-omega"
-         , "system-f-omega" ]
+         , "system-f-omega"
+         , "lamw"
+         , "lambda-omega" ]
 
   description = "lambda-calculus with simple, polymorphic and higher-order types"
 
@@ -246,12 +248,12 @@ lamc = PTS sorts axioms relations name description where
   relations (C 2) (C 2) = Just typedBox
   relations (C _) (C _) = Nothing
 
-  name = [ "lamc"
+  name = [ "coc"
+         , "calculus-of-construction"
+         , "lamc"
          , "lambda-c"
          , "lapw"
-         , "lambda-pi-omega"
-         , "coc"
-         , "calculus-of-construction" ]
+         , "lambda-pi-omega" ]
 
   description = "lambda-calculus with simple, dependent, polymorphic and higher-order types"
 
@@ -275,11 +277,12 @@ lams = PTS sorts axioms relations name description where
   relations (C _) (C _) = Nothing
 
   name = [ "lam*"
-         , "lams"
          , "lambdastar"
-         , "lambda-star" ]
+         , "lambda-*"
+         , "lambda-star"
+         , "lams" ]
 
-  description = "lambda-calculus with impredicative types"
+  description = "lambda* with the axiom * : *"
 
   typedStar = MkTypedTerm (Const star) typedStar
 
@@ -304,14 +307,15 @@ laws = PTS sorts axioms relations name description where
   relations (C 2) (C 2) = Just typedBox
   relations (C _) (C _) = Nothing
 
-  name = [ "law*"
-         , "laws"
-         , "lambda-omega-star"
-         , "fw*"
+  name = [ "fw*"
          , "fomega*"
-         , "f-omega-star" ]
+         , "fomegastar"
+         , "f-omega-star"
+         , "law*"
+         , "laws"
+         , "lambda-omega-star" ]
 
-  description = "lambda-calculus with impredicative kinds"
+  description = "fomega with the axiom ** : **"
 
   typedStar = MkTypedTerm (Const star) typedBox
   typedBox  = MkTypedTerm (Const box) typedBox
@@ -331,12 +335,12 @@ lawu = PTS sorts axioms relations name description where
   relations (C _) (C 0) = Nothing
   relations (C a) (C b) = if a >= b then Just (typed b) else Nothing
 
-  name = [ "law^"
+  name = [ "fww"
+         , "fomegaomega"
+         , "law^"
          , "lawu"
-         , "lambda-omega-universe"
-         , "fww"
-         , "fomegaomega" ]
+         , "lambda-omega-universe" ]
 
-  description = "lambda-calculus with an infinite hierarchy of universes"
+  description = "fomega with an infinite hierarchy of universes"
 
   typed n = MkTypedTerm (Const (C n)) (typed (succ n))
