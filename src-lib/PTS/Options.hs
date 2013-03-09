@@ -151,9 +151,6 @@ printInstances :: IO ()
 printInstances = putStrLn instInfo
   where instInfo = unlines $ map (\i -> intercalate ", " (name i) ++ "\n  -- " ++ description i) insts
 
-insts :: [PTS]
-insts = [lama, lam2, lamp, lamv, lap2, lapv, lamc, lams, laws, lawu]
-
 -- main entry point
 parseCommandLine :: (Functor m, MonadIO m) => ([(Options, FilePath)] -> m a) -> m ()
 parseCommandLine handler = do

@@ -344,3 +344,6 @@ lawu = PTS sorts axioms relations name description where
   description = "fomega with an infinite hierarchy of universes"
 
   typed n = MkTypedTerm (Const (C n)) (typed (succ n))
+
+instances :: [PTS]
+instances = [lama, lam2, lamp, lamv, lap2, lapv, lamc, lams, laws, lawu]
