@@ -282,7 +282,7 @@ lams = PTS sorts axioms relations name description where
          , "lambda-star"
          , "lams" ]
 
-  description = "lambda* with the axiom * : *"
+  description = "lambda-calculus with the axiom * : *"
 
   typedStar = MkTypedTerm (Const star) typedStar
 
