@@ -126,6 +126,41 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   let v = evalTerm env t
   modify ((n, (v, q)) :)
 
+processStmt (Assertion t q' t') = recover () $ do
+  output (text "")
+  output (text "process assertion")
+  output (nest 2 (sep [text "term:", nest 2 (pretty 0 t)]))
+  env <- get
+
+  -- compare specified and actual type
+  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
+  case q' of
+    Nothing ->
+      output (nest 2 (sep [text "type:", nest 2 (pretty 0 (strip q))]))
+    Just q'
+      | equivTerm env (strip q) q' ->
+          output (nest 2 (sep [text "type:", nest 2 (pretty 0 q')]))
+      | otherwise ->
+          let (expected, given) = showDiff 0 (diff (nbe env q') (nbe env (strip q))) in
+            prettyFail $ text "Type mismatch in assertion"
+                      $$ text "  specified type:" <+> pretty 0 q'
+                      $$ text "     normal form:" <+> text expected
+                      $$ text "     actual type:" <+> text given
+
+  -- compare specified and actual result
+  case t' of
+    Nothing ->
+      output (nest 2 (sep [text "value:", nest 2 (pretty 0 (nbe env t))]))
+    Just t'
+      | equivTerm env t t' ->
+          output (nest 2 (sep [text "value:", nest 2 (pretty 0 t')]))
+      | otherwise ->
+          let (expected, given) = showDiff 0 (diff (nbe env t') (nbe env t)) in
+            prettyFail $ text "Result mismatch in assertion"
+                      $$ text "  specified result:" <+> pretty 0 t'
+                      $$ text "       normal form:" <+> text expected
+                      $$ text "     actual result:" <+> text given
+
 processStmt (Export n) = recover () $ do
   output (text "")
   output (text "process export of" <+> pretty 0 n)

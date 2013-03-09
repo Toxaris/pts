@@ -111,6 +111,7 @@ data Stmt
   | Export Name
   | Import ModuleName
   | StmtPos Position Stmt
+  | Assertion Term (Maybe Term) (Maybe Term)
 
 data ModuleName
   =  ModuleName [String]

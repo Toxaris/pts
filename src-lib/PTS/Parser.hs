@@ -65,6 +65,7 @@ unquote = char '$' *> asum
 stmt = withPos StmtPos $ asum
   [ Export <$> (keyword "export" *> ident <* semi)
   , Import <$> (keyword "import" *> modname <* semi)
+  , Assertion <$> (keyword "assert" *> expr) <*> optionMaybe (colon1 *> expr) <*> optionMaybe (assign *> expr) <* semi
   , try (Term <$> expr <* semi)
   , Bind <$> ident <*> args <*> optionMaybe (colon1 *> expr) <* assign <*> expr <* semi]
 
@@ -96,7 +97,7 @@ pragma = lexem $ do
     -- LEXER --
      ---------
 
-keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div", "module", "import", "export"]
+keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div", "module", "import", "export", "assert"]
 
 identChar x = not (isSpace x) && x `notElem` ".:=;/()[]$"
 
