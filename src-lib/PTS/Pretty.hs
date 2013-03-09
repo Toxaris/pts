@@ -80,7 +80,7 @@ prettyAlgebra (NatOp n _ (_, a) (_, b)) = Composite pApp $
   pretty 0 n <+> pretty pAppR a <+> pretty pAppR b
 
 prettyAlgebra (IfZero (_, c) (_, t) (_, e)) = Composite pIf0 $
-  sep [ text "if" <+> pretty pIf0 c
+  sep [ text "if0" <+> pretty pIf0 c
       , nest 2 $ text "then" <+> pretty pIf0 t
       , nest 2 $ text "else" <+> pretty pIf0 e ]
 
