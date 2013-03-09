@@ -69,14 +69,14 @@ data Flag
 
 -- option descriptions
 options =
-  [ Option ['c'] ["columns"]         (ReqArg handleColumns  "c"     ) "wrap output at specified column"
-  , Option ['p'] ["pts", "instance"] (ReqArg handlePTS      "i"     ) "implement specified pure type systems instance"
-  , Option ['l'] ["literate"]        (OptArg handleLiterate "b"     ) "treat input as literate source files"
-  , Option ['d'] ["debug"]           (ReqArg handleDebug    "option") "activate specified debug options"
-  , Option ['q'] ["quiet"]           (NoArg  handleQuiet            ) "don't print so much"
-  , Option ['i'] []                  (OptArg handlePath     "paths" ) "add paths to search path, or reset search path"
-  , Option ['s'] ["show-instances"]  (NoArg  handleShowInsts        ) "show built-in instances"
-  , Option "?h"  ["help"]            (NoArg  handleHelp             ) "display this help"
+  [ Option ['c'] ["columns"]              (ReqArg handleColumns  "c"     ) "wrap output at specified column"
+  , Option ['p'] ["pts", "instance"]      (ReqArg handlePTS      "i"     ) "implement specified pure type systems instance"
+  , Option ['l'] ["literate"]             (OptArg handleLiterate "b"     ) "treat input as literate source files"
+  , Option ['d'] ["debug"]                (ReqArg handleDebug    "option") "activate specified debug options"
+  , Option ['q'] ["quiet"]                (NoArg  handleQuiet            ) "don't print so much"
+  , Option ['i'] []                       (OptArg handlePath     "paths" ) "add paths to search path, or reset search path"
+  , Option ['e'] ["enumerate-instances"]  (NoArg  handleShowInsts        ) "enumerate built-in instances"
+  , Option "?h"  ["help"]                 (NoArg  handleHelp             ) "display this help"
   ]
 
 -- option processing
