@@ -1,21 +1,22 @@
 #!/bin/sh -x
+[ -z "$CABAL" ] && CABAL=cabal
 
 set -e
 
-cabal clean
+$CABAL clean
 
 set +e
 # Ignore failures from these tasks - for now.
-cabal check
+$CABAL check
 set -e
 
-cabal install --only-dependencies
-cabal configure --enable-tests
-cabal build
+$CABAL install --only-dependencies
+$CABAL configure --enable-tests
+$CABAL build
 
-cabal sdist
+$CABAL sdist
 
 dist/build/tests/tests --hide-successes --maximum-generated-tests=10000 --jxml=junit-log.xml
 
 nameBase=`runhaskell src-tools/package-info.hs --package`
-cabal install dist/$nameBase.tar.gz --enable-tests
+$CABAL install dist/$nameBase.tar.gz --enable-tests
