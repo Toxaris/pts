@@ -75,7 +75,7 @@ options =
   , Option ['d'] ["debug"]                (ReqArg handleDebug    "option") "activate specified debug options"
   , Option ['q'] ["quiet"]                (NoArg  handleQuiet            ) "don't print so much"
   , Option ['i'] []                       (OptArg handlePath     "paths" ) "add paths to search path, or reset search path"
-  , Option ['e'] ["enumerate-instances"]  (NoArg  handleShowInsts        ) "enumerate built-in instances"
+  , Option ['e'] ["enumerate-instances"]  (NoArg  handleShowInsts        ) "enumerate built-in pure-type-system instances"
   , Option "?h"  ["help"]                 (NoArg  handleHelp             ) "display this help"
   ]
 
