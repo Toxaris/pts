@@ -6,7 +6,7 @@ import Control.Monad.Reader.Class
 import Control.Monad.Trans
 
 import Data.Char
-import Data.List (mapAccumL)
+import Data.List (mapAccumL, intercalate)
 
 import System.Console.GetOpt
 import System.Environment (getArgs)
@@ -58,14 +58,16 @@ data Flag
   | Global (Options -> Options)
   | Local (Options -> Options)
   | FilePath FilePath
+  | ShowInsts
 
 -- option descriptions
 options =
   [ Option ['c'] ["columns"]         (ReqArg handleColumns  "c"     ) "wrap output at specified column"
   , Option ['p'] ["pts", "instance"] (ReqArg handlePTS      "i"     ) "implement specified pure type systems instance"
   , Option ['l'] ["literate"]        (OptArg handleLiterate "b"     ) "treat input as literate source files"
-  , Option ['d'] ["debug"]           (ReqArg handleDebug   "option" ) "activate specified debug options"
+  , Option ['d'] ["debug"]           (ReqArg handleDebug    "option") "activate specified debug options"
   , Option ['q'] ["quiet"]           (NoArg  handleQuiet            ) "don't print so much"
+  , Option ['s'] ["show-instances"]  (NoArg  handleShowInsts        ) "show built-in instances"
   , Option "?h"  ["help"]            (NoArg  handleHelp             ) "display this help"
   ]
 
@@ -87,7 +89,7 @@ handlePTS      arg = case map toLower arg of
                            | nameOf lams -> Global (setInstance lams)
                            | nameOf laws -> Global (setInstance laws)
                            | nameOf lawu -> Global (setInstance lawu)
-                           | otherwise        -> Error  ("Error: Unknown pure type system instance " ++ arg)
+                           | otherwise   -> Error  ("Error: Unknown pure type system instance " ++ arg)
                            where nameOf = elem str . name
 
 handleLiterate arg = case fmap (map toLower) arg of
@@ -103,6 +105,8 @@ handleDebug arg    = case map toLower arg of
                        _             -> Error  ("Error: debug option expects 'toplevel', 'typing' or 'quoting' instead of " ++ arg)
 
 handleQuiet        = Global (setQuiet True)
+
+handleShowInsts    = ShowInsts
 
 -- order requirements
 argOrder = ReturnInOrder FilePath
@@ -126,7 +130,18 @@ processFlagsLocal  opt (Local f    : flags) = processFlagsLocal (f opt) flags
 processFlagsLocal  opt (FilePath p : flags) = fmap ((opt, p) :) (processFlagsLocal opt flags)
 processFlagsLocal  opt (_          : flags) = processFlagsLocal opt flags
 
+processFlagsShowInsts []              = return ()
+processFlagsShowInsts (ShowInsts : _) = liftIO printInstances
+processFlagsShowInsts (_ : rest)      = processFlagsShowInsts rest
+
 printHelp = putStrLn (usageInfo "PTS interpreter" options)
+
+printInstances :: IO ()
+printInstances = putStrLn instInfo
+  where instInfo = unlines $ map (\i -> intercalate ", " (name i) ++ "\n  -- " ++ description i) insts
+
+insts :: [PTS]
+insts = [lama, lam2, lamp, lamv, lap2, lapv, lamc, lams, laws, lawu]
 
 -- main entry point
 parseCommandLine :: (Functor m, MonadIO m) => ([(Options, FilePath)] -> m a) -> m ()
@@ -136,6 +151,7 @@ parseCommandLine handler = do
   mapM_ (fail . ("Syntax Error in command line: " ++)) errors
   processFlagsHelp flags
   processFlagsErrors flags
+  processFlagsShowInsts flags
   global <- processFlagsGlobal defaultOptions flags
   jobs <- processFlagsLocal global flags
   handler jobs
