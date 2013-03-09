@@ -77,18 +77,18 @@ handleColumns  arg = case reads arg of
                        _             -> Error  ("Error: columns option expects integer instead of " ++ arg)
 
 handlePTS      arg = case map toLower arg of
-                       str | inname $ name lama -> Global (setInstance lama)
-                           | inname $ name lam2 -> Global (setInstance lam2)
-                           | inname $ name lamp -> Global (setInstance lamp)
-                           | inname $ name lamv -> Global (setInstance lamv)
-                           | inname $ name lap2 -> Global (setInstance lap2)
-                           | inname $ name lapv -> Global (setInstance lapv)
-                           | inname $ name lamc -> Global (setInstance lamc)
-                           | inname $ name lams -> Global (setInstance lams)
-                           | inname $ name laws -> Global (setInstance laws)
-                           | inname $ name lawu -> Global (setInstance lawu)
+                       str | nameOf lama -> Global (setInstance lama)
+                           | nameOf lam2 -> Global (setInstance lam2)
+                           | nameOf lamp -> Global (setInstance lamp)
+                           | nameOf lamv -> Global (setInstance lamv)
+                           | nameOf lap2 -> Global (setInstance lap2)
+                           | nameOf lapv -> Global (setInstance lapv)
+                           | nameOf lamc -> Global (setInstance lamc)
+                           | nameOf lams -> Global (setInstance lams)
+                           | nameOf laws -> Global (setInstance laws)
+                           | nameOf lawu -> Global (setInstance lawu)
                            | otherwise        -> Error  ("Error: Unknown pure type system instance " ++ arg)
-                           where inname = elem str
+                           where nameOf = elem str . name
 
 handleLiterate arg = case fmap (map toLower) arg of
                        Nothing       -> Local  (setLiterate   True      )
