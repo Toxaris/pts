@@ -6,7 +6,7 @@ import Control.Monad.Reader.Class
 import Control.Monad.Trans
 
 import Data.Char
-import Data.List (mapAccumL, intercalate)
+import Data.List (mapAccumL, intercalate, find)
 
 import System.Console.GetOpt
 import System.Environment (getArgs)
@@ -86,19 +86,11 @@ handleColumns  arg = case reads arg of
                        [(n, "")]     -> Local  (setColumns    n         )
                        _             -> Error  ("Error: columns option expects integer instead of " ++ arg)
 
-handlePTS      arg = case map toLower arg of
-                       str | nameOf lama -> Global (setInstance lama)
-                           | nameOf lam2 -> Global (setInstance lam2)
-                           | nameOf lamp -> Global (setInstance lamp)
-                           | nameOf lamv -> Global (setInstance lamv)
-                           | nameOf lap2 -> Global (setInstance lap2)
-                           | nameOf lapv -> Global (setInstance lapv)
-                           | nameOf lamc -> Global (setInstance lamc)
-                           | nameOf lams -> Global (setInstance lams)
-                           | nameOf laws -> Global (setInstance laws)
-                           | nameOf lawu -> Global (setInstance lawu)
-                           | otherwise   -> Error  ("Error: Unknown pure type system instance " ++ arg)
-                           where nameOf = elem str . name
+handlePTS      arg = case find nameIn instances of
+                       Just inst -> Global (setInstance inst)
+                       Nothing   -> Error  ("Error: Unknown pure type system instance " ++ arg)
+                     where str = map toLower arg
+                           nameIn = elem str . name
 
 handleLiterate arg = case fmap (map toLower) arg of
                        Nothing       -> Local  (setLiterate   True      )
@@ -149,7 +141,7 @@ printHelp = putStrLn (usageInfo "PTS interpreter" options)
 
 printInstances :: IO ()
 printInstances = putStrLn instInfo
-  where instInfo = unlines $ map (\i -> intercalate ", " (name i) ++ "\n  -- " ++ description i) insts
+  where instInfo = unlines $ map (\i -> intercalate ", " (name i) ++ "\n  -- " ++ description i) instances
 
 -- main entry point
 parseCommandLine :: (Functor m, MonadIO m) => ([(Options, FilePath)] -> m a) -> m ()
