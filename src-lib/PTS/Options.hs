@@ -83,22 +83,20 @@ handleHelp         = Help
 handleColumns  arg = case reads arg of
                        [(n, "")]     -> Local  (setColumns    n         )
                        _             -> Error  ("Error: columns option expects integer instead of " ++ arg)
+
 handlePTS      arg = case map toLower arg of
-                       "stlc"        -> Global (setInstance simplytyped )
-                       "simplytyped" -> Global (setInstance simplytyped )
-                       "pi"          -> Global (setInstance lambdaPi    )
-                       "lomega"      -> Global (setInstance lomega      )
-                       "fpi"         -> Global (setInstance fpi         )
-                       "fomega"      -> Global (setInstance fomega      )
-                       "pilomega"    -> Global (setInstance pilomega    )
-                       "coc"         -> Global (setInstance coc         )
-                       "lambdastar"  -> Global (setInstance lambdastar  )
-                       "fomegastar"  -> Global (setInstance fomegastar  )
-                       "fomegaomega" -> Global (setInstance fomegaomega )
-                       "f"           -> Global (setInstance f)
-                       "systemf"     -> Global (setInstance f)
-                       "system-f"    -> Global (setInstance f)
-                       other         -> Error  ("Error: Unknown pure type system instance " ++ arg)
+                       str | inname $ name lama -> Global (setInstance lama)
+                           | inname $ name lam2 -> Global (setInstance lam2)
+                           | inname $ name lamp -> Global (setInstance lamp)
+                           | inname $ name lamv -> Global (setInstance lamv)
+                           | inname $ name lap2 -> Global (setInstance lap2)
+                           | inname $ name lapv -> Global (setInstance lapv)
+                           | inname $ name lamc -> Global (setInstance lamc)
+                           | inname $ name lams -> Global (setInstance lams)
+                           | inname $ name laws -> Global (setInstance laws)
+                           | inname $ name lawu -> Global (setInstance lawu)
+                           | otherwise        -> Error  ("Error: Unknown pure type system instance " ++ arg)
+                           where inname = elem str
 
 handleLiterate arg = case fmap (map toLower) arg of
                        Nothing       -> Local  (setLiterate   True      )
