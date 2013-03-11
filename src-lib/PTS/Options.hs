@@ -6,7 +6,7 @@ import Control.Monad.Reader.Class
 import Control.Monad.Trans
 
 import Data.Char
-import Data.List (mapAccumL)
+import Data.List (mapAccumL, intercalate, find)
 
 import System.Console.GetOpt
 import System.Environment (getArgs)
@@ -65,16 +65,18 @@ data Flag
   | Global (Options -> Options)
   | Local (Options -> Options)
   | FilePath FilePath
+  | ShowInsts
 
 -- option descriptions
 options =
-  [ Option ['c'] ["columns"]         (ReqArg handleColumns  "c"     ) "wrap output at specified column"
-  , Option ['p'] ["pts", "instance"] (ReqArg handlePTS      "i"     ) "implement specified pure type systems instance"
-  , Option ['l'] ["literate"]        (OptArg handleLiterate "b"     ) "treat input as literate source files"
-  , Option ['d'] ["debug"]           (ReqArg handleDebug   "option" ) "activate specified debug options"
-  , Option ['q'] ["quiet"]           (NoArg  handleQuiet            ) "don't print so much"
-  , Option ['i'] []                  (OptArg handlePath "paths"     ) "add paths to search path, or reset search path" 
-  , Option "?h"  ["help"]            (NoArg  handleHelp             ) "display this help"
+  [ Option ['c'] ["columns"]              (ReqArg handleColumns  "c"     ) "wrap output at specified column"
+  , Option ['p'] ["pts", "instance"]      (ReqArg handlePTS      "i"     ) "implement specified pure type systems instance"
+  , Option ['l'] ["literate"]             (OptArg handleLiterate "b"     ) "treat input as literate source files"
+  , Option ['d'] ["debug"]                (ReqArg handleDebug    "option") "activate specified debug options"
+  , Option ['q'] ["quiet"]                (NoArg  handleQuiet            ) "don't print so much"
+  , Option ['i'] []                       (OptArg handlePath     "paths" ) "add paths to search path, or reset search path"
+  , Option ['e'] ["enumerate-instances"]  (NoArg  handleShowInsts        ) "enumerate built-in pure-type-system instances"
+  , Option "?h"  ["help"]                 (NoArg  handleHelp             ) "display this help"
   ]
 
 -- option processing
@@ -83,22 +85,12 @@ handleHelp         = Help
 handleColumns  arg = case reads arg of
                        [(n, "")]     -> Local  (setColumns    n         )
                        _             -> Error  ("Error: columns option expects integer instead of " ++ arg)
-handlePTS      arg = case map toLower arg of
-                       "stlc"        -> Global (setInstance simplytyped )
-                       "simplytyped" -> Global (setInstance simplytyped )
-                       "pi"          -> Global (setInstance lambdaPi    )
-                       "lomega"      -> Global (setInstance lomega      )
-                       "fpi"         -> Global (setInstance fpi         )
-                       "fomega"      -> Global (setInstance fomega      )
-                       "pilomega"    -> Global (setInstance pilomega    )
-                       "coc"         -> Global (setInstance coc         )
-                       "lambdastar"  -> Global (setInstance lambdastar  )
-                       "fomegastar"  -> Global (setInstance fomegastar  )
-                       "fomegaomega" -> Global (setInstance fomegaomega )
-                       "f"           -> Global (setInstance f)
-                       "systemf"     -> Global (setInstance f)
-                       "system-f"    -> Global (setInstance f)
-                       other         -> Error  ("Error: Unknown pure type system instance " ++ arg)
+
+handlePTS      arg = case find nameIn instances of
+                       Just inst -> Global (setInstance inst)
+                       Nothing   -> Error  ("Error: Unknown pure type system instance " ++ arg)
+                     where str = map toLower arg
+                           nameIn = elem str . name
 
 handleLiterate arg = case fmap (map toLower) arg of
                        Nothing       -> Local  (setLiterate   True      )
@@ -116,6 +108,8 @@ handleQuiet        = Global (setQuiet True)
 
 handlePath Nothing = Local (setPath [])
 handlePath (Just p) = Local (extendPath p)
+
+handleShowInsts    = ShowInsts
 
 -- order requirements
 argOrder = ReturnInOrder FilePath
@@ -139,7 +133,15 @@ processFlagsLocal  opt (Local f    : flags) = processFlagsLocal (f opt) flags
 processFlagsLocal  opt (FilePath p : flags) = fmap ((opt, p) :) (processFlagsLocal opt flags)
 processFlagsLocal  opt (_          : flags) = processFlagsLocal opt flags
 
+processFlagsShowInsts []              = return ()
+processFlagsShowInsts (ShowInsts : _) = liftIO printInstances
+processFlagsShowInsts (_ : rest)      = processFlagsShowInsts rest
+
 printHelp = putStrLn (usageInfo "PTS interpreter" options)
+
+printInstances :: IO ()
+printInstances = putStrLn instInfo
+  where instInfo = unlines $ map (\i -> intercalate ", " (name i) ++ "\n  -- " ++ description i) instances
 
 -- main entry point
 parseCommandLine :: (Functor m, MonadIO m) => ([(Options, FilePath)] -> m a) -> m ()
@@ -149,6 +151,7 @@ parseCommandLine handler = do
   mapM_ (fail . ("Syntax Error in command line: " ++)) errors
   processFlagsHelp flags
   processFlagsErrors flags
+  processFlagsShowInsts flags
   global <- processFlagsGlobal defaultOptions flags
   jobs <- processFlagsLocal global flags
   handler jobs
