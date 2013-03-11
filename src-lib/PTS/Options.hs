@@ -12,7 +12,7 @@ import System.Console.GetOpt
 import System.Environment (getArgs)
 import System.FilePath (splitSearchPath)
 
-import Parametric.Pretty (Pretty, Doc, multiLine)
+import Parametric.Pretty (Pretty, Doc, multiLine, text)
 
 import PTS.Instances
 
@@ -137,7 +137,8 @@ processFlagsShowInsts []              = return ()
 processFlagsShowInsts (ShowInsts : _) = liftIO printInstances
 processFlagsShowInsts (_ : rest)      = processFlagsShowInsts rest
 
-printHelp = putStrLn (usageInfo "PTS interpreter" options)
+printHelp = putStrLn (usageInfo (multiLine 80 header) options) where
+  header = text "PTS interpreter"
 
 printInstances :: IO ()
 printInstances = putStrLn instInfo
