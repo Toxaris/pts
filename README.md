@@ -16,3 +16,9 @@ cabal install
 To proactively avoid dependency hell, consider using
 [cabal-dev](https://github.com/creswick/cabal-dev) or some other
 tool to sandbox builds.
+
+## Contributing
+
+I am happy to receive pull requests. Note that I assume that I
+can publish the code in pull requests under a three-clause BSD
+license.
