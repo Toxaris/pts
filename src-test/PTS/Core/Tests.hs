@@ -58,8 +58,8 @@ tests
   =  testGroup "PTS.Core"
      [  testGroup "alpha equivalence"
         [  alphaEquivalenceReflexive
-        ,  alphaEquivalenceSymmetric
-        ,  alphaEquivalenceTransitive
+        -- ,  alphaEquivalenceSymmetric
+        -- ,  alphaEquivalenceTransitive
         ,  alphaEquivalentRefl (mkNatOp (read "div") Div (mkNat 11) (mkNat 0))
         ,  alphaEquivalent (mkVar x) (mkVar x)
         ,  alphaEquivalent (mkLam x (mkVar x) (mkVar x)) (mkLam y (mkVar x) (mkVar y))
