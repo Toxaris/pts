@@ -35,10 +35,6 @@ alphaEquivalenceSymmetric = symmetric equivClosedTerm
 alphaEquivalenceTransitive :: Property (Term -> Term -> Term -> Bool)
 alphaEquivalenceTransitive = transitive equivClosedTerm
 
-alphaEquivalenceShareFreevars :: Property (Term -> Term -> Bool)
-alphaEquivalenceShareFreevars = property $
-  \a b -> equivClosedTerm a b ==> freevars a == freevars b
-
 ndotsLength :: Property (Int -> Bool)
 ndotsLength = property $
   \n -> n >= 0 && n < 200 ==> length (ndots n) == n

@@ -34,10 +34,6 @@ alphaEquivalenceTransitive
   =  testProperty "transitivity"
        Prop.alphaEquivalenceTransitive
 
-alphaEquivalenceShareFreevars
-  =  testProperty "same free variables" $
-       Prop.alphaEquivalenceShareFreevars
-
 ndotsLength
   =  testProperty "n characters long" $
        Prop.ndotsLength
@@ -64,7 +60,6 @@ tests
         [  alphaEquivalenceReflexive
         ,  alphaEquivalenceSymmetric
         ,  alphaEquivalenceTransitive
-        ,  alphaEquivalenceShareFreevars
         ,  alphaEquivalentRefl (mkNatOp (read "div") Div (mkNat 11) (mkNat 0))
         ,  alphaEquivalent (mkVar x) (mkVar x)
         ,  alphaEquivalent (mkLam x (mkVar x) (mkVar x)) (mkLam y (mkVar x) (mkVar y))
