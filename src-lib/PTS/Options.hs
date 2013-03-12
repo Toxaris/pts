@@ -12,7 +12,7 @@ import System.Console.GetOpt
 import System.Environment (getArgs)
 import System.FilePath (splitSearchPath)
 
-import Parametric.Pretty (Pretty, Doc, multiLine, text)
+import Parametric.Pretty hiding (when)
 
 import PTS.Instances
 
@@ -138,7 +138,19 @@ processFlagsShowInsts (ShowInsts : _) = liftIO printInstances
 processFlagsShowInsts (_ : rest)      = processFlagsShowInsts rest
 
 printHelp = putStrLn (usageInfo (multiLine 80 header) options) where
-  header = text "PTS interpreter"
+  header =
+    programName $$ supported $$ optionsText
+  programName =
+    text "PTS interpreter."
+  supported = fsep $ concat
+    [  [ text "Supported instances:"]
+    ,  punctuate (text ",")
+         [text (head (name i)) | i <- instances]
+    ,  map text $ words
+         "(and synonyms)"
+    ]
+  optionsText =
+    text "Options:"
 
 printInstances :: IO ()
 printInstances = putStrLn instInfo
