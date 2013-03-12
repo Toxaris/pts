@@ -4,11 +4,7 @@
 set -e
 
 $CABAL clean
-
-set +e
-# Ignore failures from these tasks - for now.
 $CABAL check
-set -e
 
 $CABAL install --only-dependencies
 $CABAL configure --enable-tests
