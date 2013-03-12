@@ -2,8 +2,8 @@ Name:                pts
 Version:             0.1
 Synopsis:            Interpreter for functional pure type systems.
 Description:         Interpreter for functional pure type systems.
-License:             AllRightsReserved
--- License-file:        LICENSE
+License:             BSD3
+License-file:        LICENSE
 Author:              Tillmann Rendel, Klaus Ostermann, Paolo G. Giarrusso
 Maintainer:          rendel@informatik.uni-marburg.de
 -- Copyright:
