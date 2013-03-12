@@ -153,8 +153,15 @@ printHelp = putStrLn (usageInfo (multiLine 80 header) options) where
     text "Options:"
 
 printInstances :: IO ()
-printInstances = putStrLn instInfo
-  where instInfo = unlines $ map (\i -> intercalate ", " (name i) ++ "\n  -- " ++ description i) instances
+printInstances = putStrLn (multiLine 80 info) where
+  info = text "Available instances:" $$ text "" $$
+         (vcat $ punctuate (text "" $+$ text "")
+           [ (text $ head $ name i) $$
+                (nest 8 $
+                   (fsep $ map text $ words $ description i) $$
+                   (fsep $
+                     text "Synonyms:" : (punctuate (text ",") $ map text $ tail $ name i)))
+           | i <- instances ])
 
 -- main entry point
 parseCommandLine :: (Functor m, MonadIO m) => ([(Options, FilePath)] -> m a) -> m ()
