@@ -184,14 +184,14 @@ prettyRelations pts s1 s2 =
 
 typecheck t = case structure t of
   -- constant
-  Const c -> debug "TypeConst" t $ do
+  Const c -> debug "typecheck Const" t $ do
     pts <- asks optInstance
     case axioms pts c of
       Just t  ->  return (MkTypedTerm (Const c) t)
       _       ->  prettyFail $ text "Unknown constant:" <+> pretty 0 c
 
   -- start
-  Var x -> debug "TypeVar" t $ do
+  Var x -> debug "typecheck Var" t $ do
     xt <- lookupType x
     case xt of
       Just xt -> do
@@ -203,7 +203,7 @@ typecheck t = case structure t of
         fail $ "Unbound identifier: " ++ show x
 
   -- product
-  Pi x a b -> debug "TypeFun" t $ do
+  Pi x a b -> debug "typecheck Fun" t $ do
     a'@(MkTypedTerm _ s1) <- typecheck a
     s1' <- normalizeToSort s1 a (text "in product type") (text "as domain")
 
@@ -216,7 +216,7 @@ typecheck t = case structure t of
       return (MkTypedTerm (Pi newx a' newb') s3)
 
   -- application
-  App t1 t2 -> debug "TypeApp" t $ do
+  App t1 t2 -> debug "typecheck App" t $ do
     t1'@(MkTypedTerm _ tt1) <- typecheck t1
     Pi x a b <- normalizeToPi tt1 t1 (text "in application") (text "operator")
 
@@ -232,7 +232,7 @@ typecheck t = case structure t of
     return (MkTypedTerm (App t1' t2') (typedSubst b' x t2'))
 
   -- abstraction
-  Lam x a b -> debug "TypeAbs" t $ do
+  Lam x a b -> debug "typecheck Abs" t $ do
     a'@(MkTypedTerm _ s1)  <- typecheck a
     s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
 
@@ -249,12 +249,12 @@ typecheck t = case structure t of
       return (MkTypedTerm (Lam newx a' newb') (MkTypedTerm (Pi newx a' tb'') s3))
 
   -- Nat
-  Nat i -> debug "TypeNat" t $ do
+  Nat i -> debug "typecheck Nat" t $ do
     nat' <- typecheck (mkConst nat)
     return (MkTypedTerm (Nat i) nat')
 
   -- NatOp
-  NatOp i f t1 t2 -> debug "TypeNatOp" t $ do
+  NatOp i f t1 t2 -> debug "typecheck NatOp" t $ do
     t1'@(MkTypedTerm _ tt1) <- typecheck t1
     normalizeToNat tt1 t1' (text "in" <+> pretty 0 i) (text "first argument of" <+> pretty 0 i)
     t2'@(MkTypedTerm _ tt2) <- typecheck t2
@@ -262,7 +262,7 @@ typecheck t = case structure t of
     return (MkTypedTerm (NatOp i f t1' t2') result)
 
   -- IfZero
-  IfZero t1 t2 t3 -> debug "TypeIfZero" t $ do
+  IfZero t1 t2 t3 -> debug "typecheck IfZero" t $ do
     t1'@(MkTypedTerm _ tt1) <- typecheck t1
     normalizeToNat tt1 t1' (text "in if0") (text "condition")
     t2'@(MkTypedTerm _ tt2) <- typecheck t2
