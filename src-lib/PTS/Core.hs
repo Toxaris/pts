@@ -146,7 +146,7 @@ msgNotSame context info1 info2 s t s' t'
 
 normalizeToNat :: (MonadLog m, Functor m, MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m) => TypedTerm -> TypedTerm -> Doc -> Doc -> m TypedTerm
 normalizeToNat t' t context info = do
-  let stripT' = stripT'
+  let stripT' = strip t'
   env <- getEnvironment
   if equivTerm env stripT' (mkConst nat)
     then typecheck (mkConst nat)
