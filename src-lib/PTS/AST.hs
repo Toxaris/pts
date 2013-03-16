@@ -11,8 +11,8 @@ module PTS.AST
   , parts
   , File (..)
   , typeOf
-  , mkNat
-  , mkNatOp
+  , mkInt
+  , mkIntOp
   , mkIfZero
   , mkVar
   , mkConst
@@ -50,7 +50,7 @@ import PTS.Constants (C)
 
 -- Syntax
 
--- the string in NatOp is an identifier for the function. It is necessary
+-- the string in IntOp is an identifier for the function. It is necessary
 -- to check equivalence of terms (the functions cannot be directly compared)
 
 -- type Tag = Int
@@ -93,8 +93,8 @@ evalOp Div = safeDiv
     safeDiv x y = Just $ div x y
 
 data TermStructure alpha
-  = Nat     Integer
-  | NatOp   Name BinOp alpha alpha
+  = Int     Integer
+  | IntOp   Name BinOp alpha alpha
   | IfZero  alpha alpha alpha
   | Var     Name
   | Const   C
@@ -145,8 +145,8 @@ mkTerm t = result where
 --   return (MkTerm old t)
 
 -- smart constructors
-mkNat i            =  mkTerm (Nat i)
-mkNatOp n f t1 t2  =  mkTerm (NatOp n f t1 t2)
+mkInt i            =  mkTerm (Int i)
+mkIntOp n f t1 t2  =  mkTerm (IntOp n f t1 t2)
 mkIfZero t1 t2 t3  =  mkTerm (IfZero t1 t2 t3)
 mkVar n            =  mkTerm (Var n)
 mkConst c          =  mkTerm (Const c)

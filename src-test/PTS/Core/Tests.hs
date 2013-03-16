@@ -60,7 +60,7 @@ tests
         [  alphaEquivalenceReflexive
         -- ,  alphaEquivalenceSymmetric
         -- ,  alphaEquivalenceTransitive
-        ,  alphaEquivalentRefl (mkNatOp (read "div") Div (mkNat 11) (mkNat 0))
+        ,  alphaEquivalentRefl (mkIntOp (read "div") Div (mkInt 11) (mkInt 0))
         ,  alphaEquivalent (mkVar x) (mkVar x)
         ,  alphaEquivalent (mkLam x (mkVar x) (mkVar x)) (mkLam y (mkVar x) (mkVar y))
         ,  alphaEquivalent (mkLam y (mkVar x) (mkVar y)) (mkLam x (mkVar x) (mkVar x))

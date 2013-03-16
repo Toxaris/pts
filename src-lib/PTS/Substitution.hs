@@ -38,8 +38,8 @@ avoidCapture s x y t = (x', s') where
 
 subst :: Term -> Name -> Term -> Term
 subst t x t' = case structure t of
-  Nat i                 ->  mkNat i
-  NatOp i f t1 t2       ->  mkNatOp i f (subst t1 x t') (subst t2 x t')
+  Int i                 ->  mkInt i
+  IntOp i f t1 t2       ->  mkIntOp i f (subst t1 x t') (subst t2 x t')
   IfZero t1 t2 t3       ->  mkIfZero (subst t1 x t') (subst t2 x t')  (subst t3 x t')
   Var y | y == x        ->  t'
   Var y | otherwise     ->  mkVar y
@@ -57,8 +57,8 @@ subst t x t' = case structure t of
 
 typedSubst :: TypedTerm -> Name -> TypedTerm -> TypedTerm
 typedSubst t x t' = case structure t of
-  Nat i                 ->  MkTypedTerm (Nat i) (typeOf t)
-  NatOp i f t1 t2       ->  MkTypedTerm (NatOp i f (typedSubst t1 x t') (typedSubst t2 x t')) (typeOf t)
+  Int i                 ->  MkTypedTerm (Int i) (typeOf t)
+  IntOp i f t1 t2       ->  MkTypedTerm (IntOp i f (typedSubst t1 x t') (typedSubst t2 x t')) (typeOf t)
   IfZero t1 t2 t3       ->  MkTypedTerm (IfZero (typedSubst t1 x t') (typedSubst t2 x t')  (typedSubst t3 x t')) (typeOf t)
   Var y | y == x        ->  t'
   Var y | otherwise     ->  MkTypedTerm (Var y) (typeOf t)
