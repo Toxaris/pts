@@ -34,7 +34,7 @@ import PTS.Constants
     -- PTS PARSER --
      -----------------
 
-natop n f x = mkNatOp n f <$> (keyword (show n) *> x) <*> (x <?> "second argument of '" ++ show n ++ "'")
+intop n f x = mkIntOp n f <$> (keyword (show n) *> x) <*> (x <?> "second argument of '" ++ show n ++ "'")
 
 expr = term simple rec mkPos "expression" where
   simple = withPos mkPos $ asum
@@ -45,14 +45,14 @@ expr = term simple rec mkPos "expression" where
     , mkIfZero <$> (keyword "if0" *> expr)
              <*> (keyword "then" *> expr)
              <*> (keyword "else" *> expr)
-    , natop (read "add") Add simple
-    , natop (read "sub") Sub simple
-    , natop (read "mul") Mul simple
-    , natop (read "div") Div simple
+    , intop (read "add") Add simple
+    , intop (read "sub") Sub simple
+    , intop (read "mul") Mul simple
+    , intop (read "div") Div simple
     , mkConst <$> const
     , mkUnquote <$> unquote
     , var mkVar ident
-    , mkNat <$> number ]
+    , mkInt <$> number ]
 
   rec = asum
     [ app mkApp simple
@@ -113,7 +113,7 @@ ident = lexem (do name <- namepart
                   when (Prelude.all (== '*') name) $
                     unexpected ("constant")
 
-                  when (name == "Nat") $
+                  when (name == "Int") $
                     unexpected ("constant")
 
                   return (read name))
@@ -136,7 +136,7 @@ modname = lexem (do
 number = read <$> lexem (many1 (satisfy isDigit) <* notFollowedBy (satisfy identChar))
 
 const = lexem (do name <- many1 (satisfy identChar)
-                  if name == "Nat"
+                  if name == "Int"
                     then return (C 0)
                     else if (Prelude.all ('*' ==) name)
                       then return (C (length name))
