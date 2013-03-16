@@ -13,7 +13,7 @@ import PTS.Substitution (freshCommonVar)
 data Diff
   = DEqual Term
   | DDifferent Term Term
-  | DNatOp Name Diff Diff
+  | DIntOp Name Diff Diff
   | DIfZero Diff Diff Diff
   | DApp Diff Diff
   | DLam Name Diff Diff
@@ -26,13 +26,13 @@ allEqual = all isEqual where
 
 diff :: Term -> Term -> Diff
 diff t1 t2 = case (structure t1, structure t2) of
-  (Nat n1, Nat n2)
+  (Int n1, Int n2)
     |   n1 == n2   ->  DEqual t1
     |   otherwise  ->  DDifferent t1 t2
 
-  (NatOp n1 _ x1 y1, NatOp n2 _ x2 y2)
+  (IntOp n1 _ x1 y1, IntOp n2 _ x2 y2)
     |   n1 == n2   ->  let x = diff x1 x2; y = diff y1 y2 in
-                         if allEqual [x, y] then DEqual t1 else DNatOp n1 x y
+                         if allEqual [x, y] then DEqual t1 else DIntOp n1 x y
     |   otherwise  ->  DDifferent t1 t2
 
   (IfZero n1 x1 y1, IfZero n2 x2 y2)
@@ -98,7 +98,7 @@ showDiff p (DDifferent t1 t2) = (t1' ++ spaces1,
   t1' = showToplevel p t1
   t2' = showToplevel p t2
 
-showDiff p (DNatOp n x y) = prio 2 p
+showDiff p (DIntOp n x y) = prio 2 p
                             (show n ++ " " ++ x1 ++ " " ++ y1,
                              show n ++ " " ++ x2 ++ " " ++ y2) where
   (x1, x2) = showDiff 3 x
