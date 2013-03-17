@@ -32,7 +32,7 @@ instance Pretty Name where
   pretty _ name = text (show name)
 
 instance Pretty C where
-  pretty _ (C 0) = text "Nat"
+  pretty _ (C 0) = text "Int"
   pretty _ (C n) = text (replicate n '*')
 
 data PrettyChain
@@ -73,10 +73,10 @@ instance Pretty PrettyChain where
       t
 
 prettyAlgebra :: PreAlgebra (Names, PrettyChain) PrettyChain
-prettyAlgebra (Nat n) = Atomic $
+prettyAlgebra (Int n) = Atomic $
   integer n
 
-prettyAlgebra (NatOp n _ (_, a) (_, b)) = Composite pApp $
+prettyAlgebra (IntOp n _ (_, a) (_, b)) = Composite pApp $
   pretty 0 n <+> pretty pAppR a <+> pretty pAppR b
 
 prettyAlgebra (IfZero (_, c) (_, t) (_, e)) = Composite pIf0 $

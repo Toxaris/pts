@@ -35,7 +35,7 @@ f = read "f"
 
 tests
   =  testGroup "PTS.Parser"
-     [  testParser "Nat" (mkConst nat)
+     [  testParser "Int" (mkConst int)
      ,  testParser "*" (mkConst star)
      ,  testParser "**" (mkConst box)
      ,  testParser "x" x

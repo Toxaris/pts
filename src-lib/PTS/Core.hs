@@ -60,7 +60,7 @@ isVal t = case structure t of
   Const _    ->  True
   Lam _ _ _  ->  True
   Pi _ _ _   ->  True
-  Nat _      ->  True
+  Int _      ->  True
   _          ->  False
 
 check :: Monad m => Bool -> String -> m ()
@@ -144,21 +144,21 @@ msgNotSame context info1 info2 s t s' t'
         sep [text "Type of" <+> info1 <> text ":", nest 2 (text s'')] $$
         sep [text "Type of" <+> info2 <> text ":", nest 2 (text t'')])
 
-normalizeToNat :: (MonadLog m, Functor m, MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m) => TypedTerm -> TypedTerm -> Doc -> Doc -> m TypedTerm
-normalizeToNat t' t context info = do
+normalizeToInt :: (MonadLog m, Functor m, MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m) => TypedTerm -> TypedTerm -> Doc -> Doc -> m TypedTerm
+normalizeToInt t' t context info = do
   let stripT' = strip t'
   env <- getEnvironment
-  if equivTerm env stripT' (mkConst nat)
-    then typecheck (mkConst nat)
+  if equivTerm env stripT' (mkConst int)
+    then typecheck (mkConst int)
     else let t'' = nbe env stripT'
-          in prettyFail $ msgNotNat context info t t'' nat
+          in prettyFail $ msgNotInt context info t t'' int
 
-msgNotNat context info t t' nat
+msgNotInt context info t t' int
   = text "Type Error" <+> context <> text ": Types do not match." $$ nest 2 (
-    sep [text "Explanation:", nest 2 (text "The type of the" <+> info <+> text "should be beta-equivalent to" <+> pretty 0 (mkConst nat) <> text ".")] $$
+    sep [text "Explanation:", nest 2 (text "The type of the" <+> info <+> text "should be beta-equivalent to" <+> pretty 0 (mkConst int) <> text ".")] $$
     sep [info <> text ":", nest 2 (pretty 0 t)] $$
     sep [text "Type of" <+> info <> text ":", nest 2 (pretty 0 t')] $$
-    sep [text "Expected Type:" <+> nest 2 (pretty 0 (mkConst nat))])
+    sep [text "Expected Type:" <+> nest 2 (pretty 0 (mkConst int))])
 
 normalizeToPi t' t context info = do
   env <- getEnvironment
@@ -248,23 +248,23 @@ typecheck t = case structure t of
 
       return (MkTypedTerm (Lam newx a' newb') (MkTypedTerm (Pi newx a' tb'') s3))
 
-  -- Nat
-  Nat i -> debug "typecheck Nat" t $ do
-    nat' <- typecheck (mkConst nat)
-    return (MkTypedTerm (Nat i) nat')
+  -- Int
+  Int i -> debug "typecheck Int" t $ do
+    int' <- typecheck (mkConst int)
+    return (MkTypedTerm (Int i) int')
 
-  -- NatOp
-  NatOp i f t1 t2 -> debug "typecheck NatOp" t $ do
+  -- IntOp
+  IntOp i f t1 t2 -> debug "typecheck IntOp" t $ do
     t1'@(MkTypedTerm _ tt1) <- typecheck t1
-    normalizeToNat tt1 t1' (text "in" <+> pretty 0 i) (text "first argument of" <+> pretty 0 i)
+    normalizeToInt tt1 t1' (text "in" <+> pretty 0 i) (text "first argument of" <+> pretty 0 i)
     t2'@(MkTypedTerm _ tt2) <- typecheck t2
-    result <- normalizeToNat tt2 t2' (text "in" <+> pretty 0 i) (text "second argument of" <+> pretty 0 i)
-    return (MkTypedTerm (NatOp i f t1' t2') result)
+    result <- normalizeToInt tt2 t2' (text "in" <+> pretty 0 i) (text "second argument of" <+> pretty 0 i)
+    return (MkTypedTerm (IntOp i f t1' t2') result)
 
   -- IfZero
   IfZero t1 t2 t3 -> debug "typecheck IfZero" t $ do
     t1'@(MkTypedTerm _ tt1) <- typecheck t1
-    normalizeToNat tt1 t1' (text "in if0") (text "condition")
+    normalizeToInt tt1 t1' (text "in if0") (text "condition")
     t2'@(MkTypedTerm _ tt2) <- typecheck t2
     t3'@(MkTypedTerm _ tt3) <- typecheck t3
     normalizeToSame tt2 tt3 t2' t3' (text "in if0") (text "then branch") (text "else branch")

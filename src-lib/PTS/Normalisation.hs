@@ -24,9 +24,9 @@ normalform = nbe
 -- cool version: does not work yet :(
 data Context
   = Top
-  | NatOp1 !Name !BinOp !Context !Term
-  | NatOp2V !Name !BinOp !Integer !Context
-  | NatOp2T !Name !BinOp !Term !Context
+  | IntOp1 !Name !BinOp !Context !Term
+  | IntOp2V !Name !BinOp !Integer !Context
+  | IntOp2T !Name !BinOp !Term !Context
   | IfZero1 !Context !Term !Term
   | IfZero2 !Term !Context !Term
   | IfZero3 !Term !Term !Context
@@ -67,8 +67,8 @@ fresh n ns
 normalize :: Term -> Term
 normalize term = decompose emptyEnv Top term where
   decompose !env !ctx !t = case structure t of
-    Nat i            ->  continueNat env i ctx
-    NatOp n f t1 t2  ->  decompose env (NatOp1 n f ctx t2) t1
+    Int i            ->  continueInt env i ctx
+    IntOp n f t1 t2  ->  decompose env (IntOp1 n f ctx t2) t1
     IfZero t1 t2 t3  ->  decompose env (IfZero1 ctx t2 t3) t1
     Var n            ->  reduceVar env n ctx
     Const c          ->  continueTerm env (mkConst c) ctx
@@ -79,9 +79,9 @@ normalize term = decompose emptyEnv Top term where
 
   continueTerm !env !t  !Top                   =  t
   continueTerm !_   !t  !(Local env ctx)       =  continueTerm env t ctx
-  continueTerm !env !t1 !(NatOp1 n f ctx t2)   =  decompose env (NatOp2T n f t1 ctx) t2
-  continueTerm !env !t2 !(NatOp2V n f i ctx)   =  continueTerm env (mkNatOp n f (mkNat i) t2) ctx
-  continueTerm !env !t2 !(NatOp2T n f t1 ctx)  =  continueTerm env (mkNatOp n f t1 t2) ctx
+  continueTerm !env !t1 !(IntOp1 n f ctx t2)   =  decompose env (IntOp2T n f t1 ctx) t2
+  continueTerm !env !t2 !(IntOp2V n f i ctx)   =  continueTerm env (mkIntOp n f (mkInt i) t2) ctx
+  continueTerm !env !t2 !(IntOp2T n f t1 ctx)  =  continueTerm env (mkIntOp n f t1 t2) ctx
   continueTerm !env !t1 !(IfZero1 ctx t2 t3)   =  decompose env (IfZero2 t1 ctx t3) t2
   continueTerm !env !t2 !(IfZero2 t1 ctx t3)   =  decompose env (IfZero3 t1 t2 ctx) t3
   continueTerm !env !t3 !(IfZero3 t1 t2 ctx)   =  continueTerm env (mkIfZero t1 t2 t3) ctx
@@ -92,11 +92,11 @@ normalize term = decompose emptyEnv Top term where
   continueTerm !env !t1 !(Pi1 n ctx t2)        =  avoidCapturePi env t1 n ctx t2
   continueTerm !_   !t2 !(Pi2 env n t1 ctx)    =  continueTerm env (mkPi n t1 t2) ctx
 
-  continueNat !_   !j !(Local env ctx)       =  continueNat env j ctx
-  continueNat !env !j !(NatOp1 n f ctx t2)   =  decompose env (NatOp2V n f j ctx) t2
-  continueNat !env !j !(NatOp2V n f i ctx)   =  reduceNatOp env n f i j ctx
-  continueNat !env !j !(IfZero1 ctx t2 t3)   =  reduceIfZero env j t2 t3 ctx
-  continueNat !env !j !ctx                   =  continueTerm env (mkNat j) ctx
+  continueInt !_   !j !(Local env ctx)       =  continueInt env j ctx
+  continueInt !env !j !(IntOp1 n f ctx t2)   =  decompose env (IntOp2V n f j ctx) t2
+  continueInt !env !j !(IntOp2V n f i ctx)   =  reduceIntOp env n f i j ctx
+  continueInt !env !j !(IfZero1 ctx t2 t3)   =  reduceIfZero env j t2 t3 ctx
+  continueInt !env !j !ctx                   =  continueTerm env (mkInt j) ctx
 
   continueLam !_   !env' !n !t1 !t2 !(Local env ctx)  =  continueLam env env' n t1 t2 ctx
   continueLam !env !env' !n !t1 !t2 !(App1 ctx t3)    =  reduceBeta env env' n t1 t2 t3 ctx
@@ -122,10 +122,10 @@ normalize term = decompose emptyEnv Top term where
          Just (t, env')  ->  decompose env' (Local env ctx) t
          Nothing         ->  continueTerm env (mkVar n) ctx
 
-  reduceNatOp !env !n !f !i !j !ctx
+  reduceIntOp !env !n !f !i !j !ctx
     =  fromMaybe
-       (continueTerm env (mkNatOp n f (mkNat i) (mkNat j)) ctx)
-       $ (\res -> continueNat env res ctx) <$> evalOp f i j
+       (continueTerm env (mkIntOp n f (mkInt i) (mkInt j)) ctx)
+       $ (\res -> continueInt env res ctx) <$> evalOp f i j
 
   reduceIfZero !env !i !t2 !t3 !ctx
     =  if i == 0
@@ -133,16 +133,16 @@ normalize term = decompose emptyEnv Top term where
          else decompose env ctx t3
 
   {-
-  continueNat env i (NatOp1 n f ctx t2)
-  continueNat env i (NatOp2 n f t1 ctx)
-  continueNat env i (IfZero1 ctx t2 t3)
-  continueNat env i (IfZero2 t1 ctx t3)
-  continueNat env i (IfZero3 t1 t2 ctx)
-  continueNat env i (App1 ctx t2)
-  continueNat env i (App2 t1 ctx)
-  continueNat env i (Lam1 n ctx t2)
-  continueNat env i (Lam2 n t1 ctx)
-  continueNat env i (Pi1 n ctx t2)
-  continueNat env i (Pi2 n t1 ctx)
+  continueInt env i (IntOp1 n f ctx t2)
+  continueInt env i (IntOp2 n f t1 ctx)
+  continueInt env i (IfZero1 ctx t2 t3)
+  continueInt env i (IfZero2 t1 ctx t3)
+  continueInt env i (IfZero3 t1 t2 ctx)
+  continueInt env i (App1 ctx t2)
+  continueInt env i (App2 t1 ctx)
+  continueInt env i (Lam1 n ctx t2)
+  continueInt env i (Lam2 n t1 ctx)
+  continueInt env i (Pi1 n ctx t2)
+  continueInt env i (Pi2 n t1 ctx)
   -}
 
