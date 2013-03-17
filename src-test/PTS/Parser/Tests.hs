@@ -26,6 +26,13 @@ y = read "y"
 z :: Name
 z = read "z"
 
+e :: Name
+e = read "e"
+
+f :: Name
+f = read "f"
+
+
 tests
   =  testGroup "PTS.Parser"
      [  testParser "Nat" (mkConst nat)
@@ -50,4 +57,7 @@ tests
      ,  testParser "lambda x : x . x" (mkLam x (mkVar x) (mkVar x))
      ,  testParser "lambda x : y . x" (mkLam x (mkVar y) (mkVar x))
      ,  testParser "lambda x : y . lambda y : x . y" (mkLam x (mkVar y) (mkLam y (mkVar x) (mkVar y)))
+     ,  testParser "Pi (x : y) (y : x) . y" (mkPi x (mkVar y) (mkPi y (mkVar x) (mkVar y)))
+     ,  testParser "lambda (x : y) (y : x) . y" (mkLam x (mkVar y) (mkLam y (mkVar x) (mkVar y)))
+     ,  testParser "lambda (x : e) (y z : f) . x" (mkLam x (mkVar e) (mkLam y (mkVar f) (mkLam z (mkVar f) (mkVar x))))
      ]
