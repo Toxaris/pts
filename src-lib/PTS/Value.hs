@@ -8,7 +8,7 @@ data Value m
   | Number    Integer
   | Constant  C
   | PiType    Name (Value m) (Value m -> m (Value m))
-  | ResidualNatOp  Name BinOp (Value m) (Value m)
+  | ResidualIntOp  Name BinOp (Value m) (Value m)
   | ResidualIfZero (Value m) (Value m) (Value m)
   | ResidualVar    Name
   | ResidualApp    (Value m) (Value m)

@@ -89,8 +89,8 @@ instance Lift Name where
   lift (MetaName s)      = var (TH.mkName s)
 
 instance Lift Term where
-  lift (MkTerm (Nat     n))              =  con 'MkTerm  [con 'Nat     [lift n]]
-  lift (MkTerm (NatOp   v  op  e1  e2))  =  con 'MkTerm  [con 'NatOp   [lift v,  lift op,  lift e1,  lift e2]]
+  lift (MkTerm (Int     n))              =  con 'MkTerm  [con 'Int     [lift n]]
+  lift (MkTerm (IntOp   v  op  e1  e2))  =  con 'MkTerm  [con 'IntOp   [lift v,  lift op,  lift e1,  lift e2]]
   lift (MkTerm (IfZero  c  t   e))       =  con 'MkTerm  [con 'IfZero  [lift c,  lift t,   lift e]]
   lift (MkTerm (Var     v))              =  con 'MkTerm  [con 'Var     [lift v]]
   lift (MkTerm (Const   c))              =  con 'MkTerm  [con 'Const   [lift c]]

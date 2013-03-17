@@ -34,14 +34,14 @@ app = (!! 2)
 tlam = (!! 3)
 tapp = (!! 4)
 ifzero = (!! 5)
-nat = (!! 6)
+int = (!! 6)
 add = (!! 7)
 sub = (!! 8)
 mul = (!! 9)
 div = (!! 10)
 
 varnames :: [Name]
-varnames = map read ["R", "lam", "app", "tlam", "tapp", "ifzero", "nat", "add", "sub", "mul", "div"]
+varnames = map read ["R", "lam", "app", "tlam", "tapp", "ifzero", "int", "add", "sub", "mul", "div"]
 
 unsafeParse :: String -> Term
 unsafeParse text =
@@ -55,12 +55,12 @@ interface r =
   , p "Pi S : * . Pi T : * . R (S -> T) -> R S -> R T"
   , p "Pi S : ** . Pi T : S -> * . (Pi X : S . R (T X)) -> R (Pi X : S . T X)"
   , p "Pi S : ** . Pi T : S -> * . R (Pi X : S . T X) -> (Pi X : S . R (T X))"
-  , p "Pi T : * . R Nat -> R T -> R T -> R T"
-  , p "Nat -> R Nat"
-  , p "R Nat -> R Nat -> R Nat"
-  , p "R Nat -> R Nat -> R Nat"
-  , p "R Nat -> R Nat -> R Nat"
-  , p "R Nat -> R Nat -> R Nat"
+  , p "Pi T : * . R Int -> R T -> R T -> R T"
+  , p "Int -> R Int"
+  , p "R Int -> R Int -> R Int"
+  , p "R Int -> R Int -> R Int"
+  , p "R Int -> R Int -> R Int"
+  , p "R Int -> R Int -> R Int"
   ] where
 
   p text = unsafeParse $ text >>= \x -> if x == 'R' then show r else return x
@@ -88,8 +88,8 @@ quotequote t = do
 quote :: (MonadEnvironment Name Term m, MonadErrors Errors m, Functor m, MonadReader Options m, MonadLog m) => [Term] -> Term -> m Term
 
 quote vars q = case structure q of
-  Nat n -> debug "QuoteNat" q $ do
-    return $ nat vars `mkApp` mkNat n
+  Int n -> debug "QuoteInt" q $ do
+    return $ int vars `mkApp` mkInt n
 
   Var x -> debug "QuoteVar" q $ do
     return q
@@ -121,7 +121,7 @@ quote vars q = case structure q of
         (C 2, C 1) -> return $ tapp vars `mkApp` a `mkApp` mkLam v a b `mkApp` f' `mkApp` x
         _ -> fail $ "cannot quote non-value-level term" ++ show q
 
-  NatOp n f x y -> debug "QuoteNatOp" q $ do
+  IntOp n f x y -> debug "QuoteIntOp" q $ do
     x' <- quote vars x
     y' <- quote vars y
     case show n of
