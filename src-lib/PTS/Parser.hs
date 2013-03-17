@@ -42,8 +42,8 @@ expr = term simple rec mkPos "expression" where
     , brackets expr
     , abs mkLam lambda identOrMeta colon1 expr dot expr
     , abs mkPi  pi     identOrMeta colon1 expr dot expr
-    , multLambda
-    , multPi
+    , multAbs mkLam lambda
+    , multAbs mkPi pi
     , mkIfZero <$> (keyword "if0" *> expr)
              <*> (keyword "then" *> expr)
              <*> (keyword "else" *> expr)
@@ -62,20 +62,7 @@ expr = term simple rec mkPos "expression" where
 
 -- parse abstractions with multiple parameters, like this:
 -- lambda (x1 : e1) (x2 x3 : e2) . e
-multAbs cons lambda = do
-  lambda  
-  params <- many $ parens $ do n <- names
-                               colon1
-                               t <- expr
-                               return $ (n, t)
-  body <- (dot *> expr)
-  return $ constructTerm params body
-    where constructTerm [] body = body
-          constructTerm (([], _):rest) body = constructTerm rest body
-          constructTerm ((name:names, typ):rest) body = cons name typ (constructTerm ((names,typ):rest) body)
-
-multLambda = multAbs mkLam lambda
-multPi = multAbs mkPi pi
+multAbs constructor parser = desugarArgs constructor <$> (parser *> args) <*> (dot *> expr)
 
 unquote = char '$' *> asum
   [ var mkVar ident
