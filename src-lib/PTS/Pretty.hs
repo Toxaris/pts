@@ -3,7 +3,9 @@ module PTS.Pretty
   ( singleLine
   , multiLine
   , showCtx
-  , prettyAlgebra) where
+  , prettyAlgebra
+  , showAssertion
+  ) where
 
 import Control.Arrow(first)
 
@@ -133,15 +135,20 @@ instance Pretty Stmt where
   pretty p (Bind n args Nothing t)   = pretty 0 n <+> prettyArgs args <+> text "=" <+> pretty 0 t
   pretty p (Bind n args (Just t') t) = pretty 0 n <+> prettyArgs args <+> text ":" <+> pretty 0 t' <+> text "=" <+> pretty 0 t
   pretty p (Term t) = pretty 0 t
-  pretty p (Assertion t q' t') = text "assert" <+> pretty 0 t <+> pq' <+> pt' where
+  pretty p (Assertion t q' t') = text "assert" <+> prettyAssertion t q' t'
+  pretty p (Import n) = text "import" <+> pretty 0 n
+  pretty p (Export mod) = text "export" <+> pretty 0 mod
+
+prettyAssertion t q' t' =
+  pretty 0 t <+> pq' <+> pt' where
     pq' = case q' of
       Nothing -> empty
       Just q' -> text ":" <+> pretty 0 q'
     pt' = case t' of
       Nothing -> empty
       Just t' -> text "=" <+> pretty 0 t'
-  pretty p (Import n) = text "import" <+> pretty 0 n
-  pretty p (Export mod) = text "export" <+> pretty 0 mod
+
+showAssertion t q' t' = singleLine (prettyAssertion t q' t')
 
 instance Pretty ModuleName where
   pretty p (ModuleName parts) = text (intercalate "." parts)
