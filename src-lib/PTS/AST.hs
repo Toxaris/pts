@@ -123,8 +123,13 @@ parts (ModuleName xs) = xs
 data File m
   =  File (Maybe ModuleName) [Stmt]
 
--- Desugar a binder with multiple arguments like this: lambda (x1 : e1) (x2 x3 : e2) . e
--- to a series of nested single argument binders: lambda x1 : e1 . lambda x2 : e2 . lambda x3 : e2 . e
+-- | Desugar a binder with multiple arguments like this:
+--
+-- > lambda (x1 : e1) (x2 x3 : e2) . e
+--
+-- to a series of nested single argument binders:
+--
+-- > lambda x1 : e1 . lambda x2 : e2 . lambda x3 : e2 . e
 desugarArgs :: (Name -> Term -> Term -> Term) -> [([Name], Term)] -> Term -> Term
 desugarArgs mk [] body = body
 desugarArgs mk (([], _) : args) body = desugarArgs mk args body
