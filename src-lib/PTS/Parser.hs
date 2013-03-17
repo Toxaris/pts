@@ -42,6 +42,8 @@ expr = term simple rec mkPos "expression" where
     , brackets expr
     , abs mkLam lambda identOrMeta colon1 expr dot expr
     , abs mkPi  pi     identOrMeta colon1 expr dot expr
+    , multAbs mkLam lambda
+    , multAbs mkPi pi
     , mkIfZero <$> (keyword "if0" *> expr)
              <*> (keyword "then" *> expr)
              <*> (keyword "else" *> expr)
@@ -57,6 +59,10 @@ expr = term simple rec mkPos "expression" where
   rec = asum
     [ app mkApp simple
     , arr (\a b -> mkPi (freshvar b (read "unused")) a b) arrow (expr )]
+
+-- parse abstractions with multiple parameters, like this:
+-- lambda (x1 : e1) (x2 x3 : e2) . e
+multAbs constructor parser = desugarArgs constructor <$> (parser *> args) <*> (dot *> expr)
 
 unquote = char '$' *> asum
   [ var mkVar ident
