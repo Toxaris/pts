@@ -55,6 +55,7 @@ Library
                        Tools.Errors,
                        Control.Monad.Log,
                        Control.Monad.Environment,
+                       Control.Monad.Assertions,
                        PTS.Module,
                        PTS.Binding,
                        PTS.Value
