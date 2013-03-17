@@ -10,6 +10,7 @@ import PTS.Core.Tests
 import PTS.Substitution.Tests
 import PTS.Parser.Tests
 import PTS.Pretty.Tests
+import PTS.File.Tests (testFile)
 
 main = defaultMain Main.tests
 
@@ -18,4 +19,5 @@ tests =
   ,  PTS.Parser.Tests.tests
   ,  PTS.Pretty.Tests.tests
   ,  PTS.Substitution.Tests.tests
+  ,  testFile True ["examples"] "Arithmetics.lpts"
   ]

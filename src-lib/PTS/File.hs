@@ -2,6 +2,7 @@
 module PTS.File where
 
 import Control.Monad
+import Control.Monad.Assertions (MonadAssertions (assert))
 import Control.Monad.Environment
 import Control.Monad.Reader
 import Control.Monad.State
@@ -32,6 +33,7 @@ import PTS.Evaluation
 import PTS.Algebra
 import PTS.Binding
 import PTS.Module
+import PTS.Pretty (showAssertion)
 
 import qualified Data.Set as Set
 
@@ -45,7 +47,10 @@ deliterate text = do
   if flag then return . unlines . map deliterateLine . lines $ text
           else return text
 
-processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Binding M)] m, MonadIO m, MonadLog m) => FilePath -> m (Maybe (Module M))
+runProcessFile action state opt =
+  evalStateT (runErrorsT (runReaderT (runConsoleLogT action (optDebugType opt)) opt)) state 
+
+processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Binding M)] m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module M))
 processFile file = do
   outputLine $ "process file " ++ file
   text <- liftIO (readFile file)
@@ -126,7 +131,7 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   let v = evalTerm env t
   modify ((n, (v, q)) :)
 
-processStmt (Assertion t q' t') = recover () $ do
+processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ do
   output (text "")
   output (text "process assertion")
   output (nest 2 (sep [text "term:", nest 2 (pretty 0 t)]))
