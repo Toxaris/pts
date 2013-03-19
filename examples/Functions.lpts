@@ -1,0 +1,58 @@
+The identity function on integers
+
+> intId = lambda x : Int . x;
+
+has type Int -> Int
+
+> assert intId: Int -> Int;
+
+and works for at least one number
+
+> assert intId 42 = 42;
+
+
+Polymorphic identity function
+
+> id = lambda X : * . lambda x : X . x;
+
+The polymorphic identity function instantiated for Int is the same as intId
+
+> assert id Int: Int -> Int = intId;
+
+> assert id Int 42 = 42;
+
+Identity of identity is identity
+
+> assert id (Pi X : * . X -> X) id = id;
+
+
+Function composition
+
+> comp (A B C : *) (f : B -> C) (g : A -> B) = lambda x : A . f (g x);
+
+> add1 (x : Int) = add 1 x;
+
+> add2 = comp Int Int Int add1 add1;
+
+> assert add2 40 = 42;
+
+The composition of add1 and add1 is not how you would actually define add2 by hand
+
+> add2byHand = lambda x : Int . add 2 x;
+
+> assert add2 = lambda x : Int . add 1 (add 1 x);
+
+
+Polymorphic doubling function
+
+> double (X : *) (f : X -> X) (x : X) = f (f x);
+
+> add1Twice = double Int add1;
+
+> assert add1Twice 40 = 42;
+
+Doubling as function composition
+
+> compositionDouble (X : *) (f : X -> X) = comp X X X f f;
+
+> assert double = compositionDouble;
