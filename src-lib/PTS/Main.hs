@@ -2,6 +2,7 @@
 module PTS.Main where
 
 import Control.Monad
+import Control.Monad.Assertions (checkAssertions)
 import Control.Monad.Environment
 import Control.Monad.Reader
 import Control.Monad.State
@@ -62,5 +63,5 @@ processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(N
 processJob (opt, file) = do
   let path = optPath opt
   file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
-  mod <- runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt
+  mod <- checkAssertions (runReaderT (runConsoleLogT (processFile file) (optDebugType opt)) opt)
   return ()
