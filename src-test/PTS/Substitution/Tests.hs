@@ -5,8 +5,7 @@ import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.Framework.Providers.HUnit
 import Test.HUnit (assertBool)
 
-import PTS.AST
-import PTS.Constants
+import PTS.Syntax
 import PTS.Instances
 import qualified PTS.Substitution.Properties as Prop
 

@@ -1,4 +1,4 @@
-module PTS.Algebra
+module PTS.Syntax.Algebra
   ( PreAlgebra
   , Algebra
   , fold
@@ -14,7 +14,7 @@ module PTS.Algebra
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import PTS.AST
+import PTS.Syntax.AST
 
 -- algebras
 type PreAlgebra alpha beta

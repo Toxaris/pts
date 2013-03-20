@@ -3,7 +3,7 @@ module PTS.AST.Arbitrary where
 
 import Test.QuickCheck
 
-import PTS.AST
+import PTS.Syntax
 import PTS.Instances
 import PTS.Instances.Arbitrary
 

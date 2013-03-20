@@ -11,8 +11,7 @@ import Data.List
 
 import Parametric.Pretty
 
-import PTS.AST
-import PTS.Constants
+import PTS.Syntax
 
 -- This type defines a specific pure type system, see Barendregt
 --

@@ -1,5 +1,10 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-module PTS.Constants where
+module PTS.Syntax.Constants
+  ( C (C)
+  , int
+  , star
+  , box
+  ) where
 
 import Data.Typeable
 import Data.Data

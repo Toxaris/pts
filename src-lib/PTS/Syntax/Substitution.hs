@@ -1,4 +1,4 @@
-module PTS.Substitution
+module PTS.Syntax.Substitution
   ( subst
   , typedSubst
   , freshCommonVar
@@ -7,8 +7,8 @@ module PTS.Substitution
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import PTS.Algebra
-import PTS.AST
+import PTS.Syntax.Algebra
+import PTS.Syntax.AST
 
 -- substitution (generates fresh variables if needed to prevent accidental capture)
 

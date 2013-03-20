@@ -1,6 +1,6 @@
 module PTS.Module where
 
-import PTS.AST (ModuleName)
+import PTS.Syntax (ModuleName)
 import PTS.Binding (Bindings)
 
 data Module m

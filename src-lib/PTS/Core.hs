@@ -23,16 +23,11 @@ import Data.Tuple (fst)
 import Parametric.Error
 import Parametric.Pretty
 
-import PTS.Algebra
-import PTS.AST
-import PTS.Diff
+import PTS.Syntax
 import PTS.Instances
 import PTS.Normalisation
 import PTS.Options
-import PTS.Pretty
-import PTS.Substitution
 import PTS.Evaluation
-import PTS.Constants
 import PTS.Binding
 import PTS.Value
 

@@ -2,8 +2,7 @@ module PTS.Instances.Arbitrary where
 
 import Test.QuickCheck
 
-import PTS.Instances
-import PTS.Constants
+import PTS.Syntax
 
 instance Arbitrary C where
   arbitrary = sized (\size -> do

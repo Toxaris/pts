@@ -1,5 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
-module PTS.Parser ( parseFile, parseStmt, parseStmts, parseTerm, parseTermAtPos ) where
+module PTS.Syntax.Parser ( parseFile, parseStmt, parseStmts, parseTerm, parseTermAtPos ) where
 
 import Prelude hiding (abs, pi, elem, notElem, const, mod)
 
@@ -24,11 +24,9 @@ import Parametric.Error
 import Parametric.Parser
 import Parametric.Parser.Error
 
-import PTS.Algebra
-import PTS.AST
-import PTS.Instances
-import PTS.Options
-import PTS.Constants
+import PTS.Syntax.Algebra
+import PTS.Syntax.AST
+import PTS.Syntax.Constants
 
      -----------------
     -- PTS PARSER --

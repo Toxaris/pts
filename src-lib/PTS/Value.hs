@@ -1,7 +1,6 @@
 module PTS.Value where
 
-import PTS.AST (Name, BinOp)
-import PTS.Constants (C)
+import PTS.Syntax (Name, BinOp, C)
 
 data Value m
   = Function  Name (Value m) (Value m -> m (Value m))

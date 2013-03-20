@@ -4,7 +4,7 @@ module PTS.Binding
   )  where
 
 import PTS.Value (Value)
-import PTS.AST (Name, TypedTerm)
+import PTS.Syntax (Name, TypedTerm)
 
 type Bindings m = [(Name, Binding m)]
 

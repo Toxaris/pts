@@ -1,7 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module PTS.Evaluation where
 
-import PTS.AST
+import PTS.Syntax
 import PTS.Value
 import PTS.Binding
 

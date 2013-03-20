@@ -18,16 +18,12 @@ import System.Directory (findFile)
 import Parametric.Error
 import Parametric.Pretty hiding (when)
 
-import PTS.AST
+import PTS.Syntax
 import PTS.Core
-import PTS.Diff
 import PTS.Instances
 import PTS.Normalisation
 import PTS.Options
-import PTS.Parser
-import PTS.Substitution
 import PTS.Evaluation
-import PTS.Algebra
 import PTS.Binding
 import PTS.Module
 import PTS.File

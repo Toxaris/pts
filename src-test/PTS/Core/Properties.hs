@@ -4,8 +4,7 @@ import Data.Set
 
 import Test.Property
 
-import PTS.Algebra
-import PTS.AST
+import PTS.Syntax
 import PTS.AST.Arbitrary
 import PTS.Core
 import PTS.Evaluation

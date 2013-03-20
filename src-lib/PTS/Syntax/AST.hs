@@ -1,5 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction, DeriveFunctor, DeriveDataTypeable #-}
-module PTS.AST
+module PTS.Syntax.AST
   ( Name
   , Names
   , Term (..)
@@ -45,7 +45,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 import Parametric.AST (Name, Names, freshvarl)
 import Parametric.Error
-import PTS.Constants (C)
+import PTS.Syntax.Constants (C)
 
 
 -- Syntax

@@ -1,5 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
-module PTS.Pretty
+module PTS.Syntax.Pretty
   ( singleLine
   , multiLine
   , showCtx
@@ -15,10 +15,9 @@ import qualified Data.Set as Set
 
 import Parametric.Pretty
 
-import PTS.Algebra
-import PTS.AST
-import PTS.Constants
-import PTS.Binding (Binding)
+import PTS.Syntax.Algebra
+import PTS.Syntax.AST
+import PTS.Syntax.Constants
 
 -- priorities
 pAppR = 3
@@ -162,5 +161,5 @@ instance Show TypedTerm where
 instance Show ModuleName where
   show t = singleLine t
 
-showCtx :: [(Name, Binding m)] -> String
+showCtx :: [(Name, (a, TypedTerm))] -> String
 showCtx = concat . intersperse ", " . map (\(n, (v, t)) -> show n ++ " : " ++ show t)

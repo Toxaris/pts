@@ -4,11 +4,8 @@ import Data.Set
 
 import Test.Property
 
-import PTS.Algebra
-import PTS.AST
+import PTS.Syntax
 import PTS.AST.Arbitrary
-import PTS.Pretty
-import PTS.Substitution
 
 substAvoidsCapture t x t' =
   x `member` freevars t ==>

@@ -3,7 +3,7 @@ module Main where
 
 import PTS.Transform
 import PTS.QuasiQuote
-import PTS.Constants (C (C))
+import PTS.Syntax (C (C))
 
 main = transform quote
 

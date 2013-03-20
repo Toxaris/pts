@@ -1,14 +1,14 @@
-module PTS.Diff where
+module PTS.Syntax.Diff where
 
 import Data.Set (Set)
 import qualified Data.Set as Set
 
 import Parametric.Pretty
 
-import PTS.Algebra
-import PTS.AST
-import PTS.Pretty
-import PTS.Substitution (freshCommonVar)
+import PTS.Syntax.Algebra
+import PTS.Syntax.AST
+import PTS.Syntax.Pretty
+import PTS.Syntax.Substitution (freshCommonVar)
 
 data Diff
   = DEqual Term

@@ -4,9 +4,7 @@ module PTS.QuasiQuote (pts) where
 import Parametric.Error (Position (..))
 import Parametric.AST
 import PTS.Instances
-import PTS.AST
-import PTS.Parser (parseTermAtPos)
-import PTS.Constants
+import PTS.Syntax
 
 import Data.Char
 

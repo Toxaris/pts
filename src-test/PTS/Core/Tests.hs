@@ -5,11 +5,10 @@ import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.Framework.Providers.HUnit
 import Test.HUnit (assertBool)
 
-import PTS.AST
+import PTS.Syntax
 import PTS.Instances
 import qualified PTS.Core.Properties as Prop
 import PTS.Core.Properties(equivClosedTerm)
-import PTS.Constants
 
 import Test.Property (test)
 
