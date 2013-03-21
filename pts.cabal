@@ -95,15 +95,14 @@ Test-suite tests
   Type: exitcode-stdio-1.0
   Hs-source-dirs:      src-test
   Main-is:             tests.hs
-  Other-modules:       PTS.AST.Arbitrary
-                       PTS.Core.Properties
+  Other-modules:       PTS.Core.Properties
                        PTS.Core.Tests
                        PTS.File.Tests
-                       PTS.Instances.Arbitrary
-                       PTS.Parser.Tests
-                       PTS.Pretty.Tests
-                       PTS.Substitution.Properties
-                       PTS.Substitution.Tests
+                       PTS.Syntax.Arbitrary
+                       PTS.Syntax.Parser.Tests
+                       PTS.Syntax.Pretty.Tests
+                       PTS.Syntax.Substitution.Properties
+                       PTS.Syntax.Substitution.Tests
                        Test.Property
   Build-depends:       base >= 4.0 && < 5,
                        mtl >= 2.0 && < 2.2,

@@ -1,11 +1,11 @@
-module PTS.Substitution.Properties where
+module PTS.Syntax.Substitution.Properties where
 
 import Data.Set
 
 import Test.Property
 
 import PTS.Syntax
-import PTS.AST.Arbitrary
+import PTS.Syntax.Arbitrary
 
 substAvoidsCapture t x t' =
   x `member` freevars t ==>

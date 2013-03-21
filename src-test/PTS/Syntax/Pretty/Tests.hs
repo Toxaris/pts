@@ -1,4 +1,4 @@
-module PTS.Pretty.Tests where
+module PTS.Syntax.Pretty.Tests where
 
 import Test.Framework (testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)

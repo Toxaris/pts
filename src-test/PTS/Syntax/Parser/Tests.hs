@@ -1,4 +1,4 @@
-module PTS.Parser.Tests where
+module PTS.Syntax.Parser.Tests where
 
 import Test.Framework (testGroup)
 import Test.Framework.Providers.HUnit
@@ -8,7 +8,7 @@ import PTS.Syntax
 
 import Parametric.Error
 
-parse text = parseTerm "PTS.Parser.Tests" text :: Either [FOmegaError] PTS.Syntax.Term
+parse text = parseTerm "PTS.Syntax.Parser.Tests" text :: Either [FOmegaError] PTS.Syntax.Term
 
 testParser text term = testCase text $ case parse text of
   Right parsedTerm ->  assertEqual "Unexpected parse result." (show term) (show parsedTerm)

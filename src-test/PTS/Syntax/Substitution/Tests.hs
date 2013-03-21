@@ -1,4 +1,4 @@
-module PTS.Substitution.Tests where
+module PTS.Syntax.Substitution.Tests where
 
 import Test.Framework (testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
@@ -7,7 +7,7 @@ import Test.HUnit (assertBool)
 
 import PTS.Syntax
 import PTS.Instances
-import qualified PTS.Substitution.Properties as Prop
+import qualified PTS.Syntax.Substitution.Properties as Prop
 
 import Test.Property (test)
 

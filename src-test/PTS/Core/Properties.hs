@@ -5,7 +5,7 @@ import Data.Set
 import Test.Property
 
 import PTS.Syntax
-import PTS.AST.Arbitrary
+import PTS.Syntax.Arbitrary
 import PTS.Statics
 import PTS.Dynamics
 
