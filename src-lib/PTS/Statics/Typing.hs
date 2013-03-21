@@ -1,5 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts, PatternGuards, FlexibleInstances #-}
-module PTS.Core where
+module PTS.Statics.Typing where
 
 import Prelude (fst, snd, String)
 

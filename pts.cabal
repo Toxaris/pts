@@ -37,7 +37,6 @@ Library
                        Parametric.Parser
                        Parametric.Parser.Error
                        Parametric.Pretty
-                       PTS.Core
                        PTS.Dynamics
                        PTS.Dynamics.Binding
                        PTS.Dynamics.Evaluation
@@ -49,6 +48,8 @@ Library
                        PTS.Main
                        PTS.Options
                        PTS.QuasiQuote
+                       PTS.Statics
+                       PTS.Statics.Typing
                        PTS.Syntax
                        PTS.Syntax.Algebra
                        PTS.Syntax.Constants

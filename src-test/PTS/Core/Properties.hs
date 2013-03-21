@@ -6,7 +6,7 @@ import Test.Property
 
 import PTS.Syntax
 import PTS.AST.Arbitrary
-import PTS.Core
+import PTS.Statics
 import PTS.Dynamics
 
 type Relation a = a -> a -> Bool

@@ -26,7 +26,7 @@ import Parametric.Error (showErrors)
 import Parametric.AST (Name, Names, freshvarl)
 
 import PTS.Syntax (TypedTerm, typeOf, structure, Term, TermStructure (..), mkVar, strip, parseTerm, multiLine, C (C))
-import PTS.Core (typecheck)
+import PTS.Statics (typecheck)
 import PTS.Options (defaultOptions)
 
 import System.IO (hPutStrLn, stderr)

@@ -22,7 +22,7 @@ import Parametric.Error
 import Parametric.Pretty hiding (when)
 
 import PTS.Syntax
-import PTS.Core
+import PTS.Statics
 import PTS.Instances
 import PTS.Options
 import PTS.Dynamics
