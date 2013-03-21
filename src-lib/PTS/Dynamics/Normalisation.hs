@@ -1,5 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction, BangPatterns #-}
-module PTS.Normalisation  where
+module PTS.Dynamics.Normalisation  where
 
 import Control.Applicative hiding (Const)
 import Data.Maybe (fromMaybe)
@@ -11,7 +11,7 @@ import qualified Data.Set as Set
 
 import PTS.Syntax
 
-import PTS.Evaluation (nbe)
+import PTS.Dynamics.Evaluation (nbe)
 
 -- select a version
 normalform = nbe

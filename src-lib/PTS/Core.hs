@@ -25,11 +25,8 @@ import Parametric.Pretty
 
 import PTS.Syntax
 import PTS.Instances
-import PTS.Normalisation
 import PTS.Options
-import PTS.Evaluation
-import PTS.Binding
-import PTS.Value
+import PTS.Dynamics
 
 import Text.Show (Show (show))
 

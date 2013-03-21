@@ -1,9 +1,9 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module PTS.Evaluation where
+module PTS.Dynamics.Evaluation where
 
 import PTS.Syntax
-import PTS.Value
-import PTS.Binding
+import PTS.Dynamics.Value
+import PTS.Dynamics.Binding
 
 import qualified Data.Set as Set
 

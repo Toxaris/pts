@@ -1,4 +1,4 @@
-module PTS.Value where
+module PTS.Dynamics.Value where
 
 import PTS.Syntax (Name, BinOp, C)
 

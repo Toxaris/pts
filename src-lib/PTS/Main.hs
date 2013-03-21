@@ -21,11 +21,8 @@ import Parametric.Pretty hiding (when)
 import PTS.Syntax
 import PTS.Core
 import PTS.Instances
-import PTS.Normalisation
 import PTS.Options
-import PTS.Evaluation
-import PTS.Binding
-import PTS.Module
+import PTS.Dynamics
 import PTS.File
 
 import qualified Data.Set as Set

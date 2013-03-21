@@ -37,14 +37,16 @@ Library
                        Parametric.Parser
                        Parametric.Parser.Error
                        Parametric.Pretty
-                       PTS.Binding
                        PTS.Core
-                       PTS.Evaluation
+                       PTS.Dynamics
+                       PTS.Dynamics.Binding
+                       PTS.Dynamics.Evaluation
+                       PTS.Dynamics.Module
+                       PTS.Dynamics.Normalisation
+                       PTS.Dynamics.Value
                        PTS.File
                        PTS.Instances
                        PTS.Main
-                       PTS.Module
-                       PTS.Normalisation
                        PTS.Options
                        PTS.QuasiQuote
                        PTS.Syntax
@@ -59,7 +61,6 @@ Library
                        PTS.Syntax.Substitution
                        PTS.Syntax.Term
                        PTS.Transform
-                       PTS.Value
                        Tools.Errors
                        Tools.Errors.Class
                        Tools.Instances

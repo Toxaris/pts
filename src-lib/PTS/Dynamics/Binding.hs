@@ -1,9 +1,9 @@
-module PTS.Binding
+module PTS.Dynamics.Binding
   (  Binding
   ,  Bindings
   )  where
 
-import PTS.Value (Value)
+import PTS.Dynamics.Value (Value)
 import PTS.Syntax (Name, TypedTerm)
 
 type Bindings m = [(Name, Binding m)]
