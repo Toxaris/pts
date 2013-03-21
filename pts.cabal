@@ -29,40 +29,40 @@ Library
                        syb,
                        filepath,
                        directory >= 1.2.0.1 && < 1.3
-  Exposed-modules:     Tools.Instances,
-                       Tools.Errors.Class,
-                       Parametric.Pretty,
-                       PTS.Instances,
-                       PTS.Options,
-                       Parametric.Error,
-                       Parametric.AST,
-                       PTS.Syntax.Algebra,
-                       PTS.Syntax.Term,
-                       PTS.Syntax.Statement,
-                       PTS.Normalisation,
-                       PTS.Syntax.Pretty,
-                       PTS.Syntax.Diff,
-                       PTS.Syntax.File,
-                       PTS.Syntax.Names,
-                       PTS.Evaluation,
-                       PTS.File,
-                       PTS.Core,
-                       PTS.Main,
-                       PTS.Syntax.Substitution,
-                       PTS.QuasiQuote,
-                       PTS.Syntax.Constants,
-                       PTS.Transform,
-                       Parametric.Parser.Error,
-                       Parametric.Parser,
-                       PTS.Syntax.Parser,
-                       Tools.Errors,
-                       Control.Monad.Log,
-                       Control.Monad.Environment,
-                       Control.Monad.Assertions,
-                       PTS.Module,
-                       PTS.Binding,
-                       PTS.Value,
+  Exposed-modules:     Control.Monad.Assertions
+                       Control.Monad.Environment
+                       Control.Monad.Log
+                       Parametric.AST
+                       Parametric.Error
+                       Parametric.Parser
+                       Parametric.Parser.Error
+                       Parametric.Pretty
+                       PTS.Binding
+                       PTS.Core
+                       PTS.Evaluation
+                       PTS.File
+                       PTS.Instances
+                       PTS.Main
+                       PTS.Module
+                       PTS.Normalisation
+                       PTS.Options
+                       PTS.QuasiQuote
                        PTS.Syntax
+                       PTS.Syntax.Algebra
+                       PTS.Syntax.Constants
+                       PTS.Syntax.Diff
+                       PTS.Syntax.File
+                       PTS.Syntax.Names
+                       PTS.Syntax.Parser
+                       PTS.Syntax.Pretty
+                       PTS.Syntax.Statement
+                       PTS.Syntax.Substitution
+                       PTS.Syntax.Term
+                       PTS.Transform
+                       PTS.Value
+                       Tools.Errors
+                       Tools.Errors.Class
+                       Tools.Instances
 
 Executable pts
   Hs-source-dirs:      src-exec
