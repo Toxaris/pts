@@ -15,8 +15,10 @@ import qualified Data.Set as Set
 
 import Parametric.Pretty
 
+import PTS.Syntax.Names
 import PTS.Syntax.Algebra
-import PTS.Syntax.AST
+import PTS.Syntax.Term
+import PTS.Syntax.Statement
 import PTS.Syntax.Constants
 
 -- priorities
@@ -150,7 +152,7 @@ prettyAssertion t q' t' =
 showAssertion t q' t' = singleLine (prettyAssertion t q' t')
 
 instance Pretty ModuleName where
-  pretty p (ModuleName parts) = text (intercalate "." parts)
+  pretty p m = text (intercalate "." (parts m))
 
 instance Show Term where
   show t = singleLine t

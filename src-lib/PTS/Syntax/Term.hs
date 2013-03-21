@@ -1,15 +1,9 @@
 {-# LANGUAGE NoMonomorphismRestriction, DeriveFunctor, DeriveDataTypeable #-}
-module PTS.Syntax.AST
-  ( Name
-  , Names
-  , Term (..)
+module PTS.Syntax.Term
+  ( Term (..)
   , TypedTerm (..)
   , TermStructure (..)
   , Structure (structure)
-  , Stmt (..)
-  , ModuleName (..)
-  , parts
-  , File (..)
   , typeOf
   , mkInt
   , mkIntOp
@@ -24,7 +18,6 @@ module PTS.Syntax.AST
   , freshvarl
   , handlePos
   , typedHandlePos
-  , C ()
   , evalOp
   , BinOp (..)
   , desugarArgs
@@ -104,24 +97,6 @@ data TermStructure alpha
   | Pos     Position alpha
   | Unquote alpha
   deriving (Functor, Data, Typeable)
-
-data Stmt
-  = Bind Name [([Name], Term)] (Maybe Term) Term
-  | Term Term
-  | Export Name
-  | Import ModuleName
-  | StmtPos Position Stmt
-  | Assertion Term (Maybe Term) (Maybe Term)
-
-data ModuleName
-  =  ModuleName [String]
-  deriving (Eq)
-
-parts :: ModuleName -> [String]
-parts (ModuleName xs) = xs
-
-data File m
-  =  File (Maybe ModuleName) [Stmt]
 
 -- | Desugar a binder with multiple arguments like this:
 --

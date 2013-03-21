@@ -14,7 +14,8 @@ module PTS.Syntax.Algebra
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import PTS.Syntax.AST
+import PTS.Syntax.Names
+import PTS.Syntax.Term
 
 -- algebras
 type PreAlgebra alpha beta

@@ -24,8 +24,11 @@ import Parametric.Error
 import Parametric.Parser
 import Parametric.Parser.Error
 
+import PTS.Syntax.Names
 import PTS.Syntax.Algebra
-import PTS.Syntax.AST
+import PTS.Syntax.Term
+import PTS.Syntax.Statement
+import PTS.Syntax.File
 import PTS.Syntax.Constants
 
      -----------------
