@@ -12,6 +12,7 @@ import Data.List
 import Parametric.Pretty
 
 import PTS.Syntax
+import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 
 -- This type defines a specific pure type system, see Barendregt
 --

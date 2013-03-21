@@ -5,6 +5,7 @@ import Parametric.Error (Position (..))
 import Parametric.AST
 import PTS.Instances
 import PTS.Syntax
+import PTS.Syntax.Term (Term (MkTerm))
 
 import Data.Char
 

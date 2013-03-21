@@ -22,6 +22,7 @@ import Parametric.Error
 import Parametric.Pretty hiding (when)
 
 import PTS.Syntax
+import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 import PTS.Statics
 import PTS.Instances
 import PTS.Options

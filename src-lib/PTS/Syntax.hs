@@ -1,17 +1,76 @@
 module PTS.Syntax
   ( -- * Abstract syntax
-    module PTS.Syntax.Names
-  , module PTS.Syntax.Constants
-  , module PTS.Syntax.Term
-  , module PTS.Syntax.Statement
-  , module PTS.Syntax.Algebra
-  , module PTS.Syntax.File
+    -- ** Names
+    Name
+  , Names
+  , freshvarl
+  , ModuleName (..)
+  , parts
+    -- ** Constants
+  , C (C)
+  , int
+  , star
+  , box
+    -- ** Arithmetic operators
+  , BinOp (Add, Sub, Mul, Div)
+  , evalOp
+    -- ** Term structure
+  , TermStructure (..)
+  , Structure (structure)
+    -- ** Folding
+  , PreAlgebra
+  , Algebra
+  , fold
+  , depZip
+    -- ** Plain terms
+  , Term
+  , strip
+  , mkInt
+  , mkIntOp
+  , mkIfZero
+  , mkVar
+  , mkConst
+  , mkApp
+  , mkLam
+  , mkPi
+  , mkPos
+  , mkUnquote
+  , handlePos
+    -- ** Typed terms
+  , TypedTerm
+  , typeOf
+  , typedHandlePos
+    -- ** Multiple arguments
+  , desugarArgs
+    -- ** Statements
+  , Stmt (..)
+    -- ** Files
+  , File (..)
     -- * Concrete syntax
-  , module PTS.Syntax.Pretty
-  , module PTS.Syntax.Parser
+    -- ** Parser
+  , parseFile
+  , parseStmt
+  , parseStmts
+  , parseTerm
+  , parseTermAtPos
+    -- ** Printer
+  , singleLine
+  , multiLine
+  , showCtx
+  , showAssertion
     -- * Operations
-  , module PTS.Syntax.Diff
-  , module PTS.Syntax.Substitution
+  , allvars
+  , freevars
+  , freshvar
+  , Diff
+  , diff
+  , showDiff
+  , subst
+  , typedSubst
+    -- * Algebras
+  , allvarsAlgebra
+  , freevarsAlgebra
+  , prettyAlgebra
   ) where
 
 import PTS.Syntax.Names

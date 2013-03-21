@@ -24,6 +24,7 @@ import Parametric.Error
 import Parametric.Pretty
 
 import PTS.Syntax
+import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 import PTS.Instances
 import PTS.Options
 import PTS.Dynamics
