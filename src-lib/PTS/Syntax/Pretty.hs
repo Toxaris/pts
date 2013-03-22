@@ -7,19 +7,19 @@ module PTS.Syntax.Pretty
   , showAssertion
   ) where
 
-import Control.Arrow(first)
+import Control.Arrow (first)
 
-import Data.List(intersperse, intercalate)
+import Data.List (intersperse, intercalate)
 import Data.Set (Set)
 import qualified Data.Set as Set
 
 import Parametric.Pretty
 
-import PTS.Syntax.Names
 import PTS.Syntax.Algebra
-import PTS.Syntax.Term
-import PTS.Syntax.Statement
 import PTS.Syntax.Constants
+import PTS.Syntax.Names
+import PTS.Syntax.Statement
+import PTS.Syntax.Term
 
 -- priorities
 pAppR = 3

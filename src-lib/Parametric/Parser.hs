@@ -1,26 +1,17 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
 module Parametric.Parser where
 
-import Prelude (String, (++), flip, ($), undefined, Show(..), Either (..), print, (.), pred)
-
-import System.IO
+import Prelude (pred)
 
 import Control.Applicative hiding (many)
-import Control.Monad
 
-import Data.Either
-import Data.Eq
-import Data.Foldable
+import Data.Function (flip, ($))
+import Data.List ((++), foldl')
 
 import Text.ParserCombinators.Parsec hiding ((<|>))
 import qualified Text.ParserCombinators.Parsec as Parsec
 
-import Parametric.Error
-import Parametric.Parser.Error
-
-import Tools.Errors.Class
-import Tools.Instances
-
+import Parametric.Error (Position (Position))
 
      ---------------------
     -- PARAMETRIC PARSER --

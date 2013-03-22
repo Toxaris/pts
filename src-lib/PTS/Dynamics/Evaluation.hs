@@ -1,15 +1,15 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module PTS.Dynamics.Evaluation where
 
-import PTS.Syntax
-import PTS.Dynamics.Value
-import PTS.Dynamics.Binding
+import Control.Applicative hiding (Const)
+import Control.Monad.State
 
+import Data.Maybe (fromMaybe)
 import qualified Data.Set as Set
 
-import Control.Applicative hiding (Const)
-import Data.Maybe(fromMaybe,)
-import Control.Monad.State
+import PTS.Dynamics.Binding
+import PTS.Dynamics.Value
+import PTS.Syntax
 
 type Env m = [(Name, Value m)]
 

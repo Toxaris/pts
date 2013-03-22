@@ -5,10 +5,10 @@ import qualified Data.Set as Set
 
 import Parametric.Pretty
 
-import PTS.Syntax.Names
 import PTS.Syntax.Algebra
-import PTS.Syntax.Term
+import PTS.Syntax.Names
 import PTS.Syntax.Pretty
+import PTS.Syntax.Term
 import PTS.Syntax.Substitution (freshCommonVar)
 
 data Diff

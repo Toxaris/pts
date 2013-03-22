@@ -7,8 +7,8 @@ module PTS.Syntax.Substitution
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import PTS.Syntax.Names
 import PTS.Syntax.Algebra
+import PTS.Syntax.Names
 import PTS.Syntax.Term
 
 -- substitution (generates fresh variables if needed to prevent accidental capture)

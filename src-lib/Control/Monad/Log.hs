@@ -1,7 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, MultiParamTypeClasses, UndecidableInstances, FlexibleInstances #-}
 module Control.Monad.Log where
 
-import Prelude ()
+import Prelude (String)
 
 import Control.Applicative (Applicative)
 import Control.Arrow (left)
@@ -20,7 +20,6 @@ import Data.Function (($))
 import Data.Int (Int)
 import Data.List (replicate, length, (++))
 import Data.Monoid (Monoid)
-import Prelude (String)
 
 import System.IO (putStrLn)
 

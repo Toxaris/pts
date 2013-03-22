@@ -1,11 +1,11 @@
 {-# LANGUAGE ExistentialQuantification, FlexibleContexts, RankNTypes, ScopedTypeVariables #-}
 module PTS.Options where
 
-import Control.Monad
-import Control.Monad.Reader.Class
-import Control.Monad.Trans
+import Control.Monad (when)
+import Control.Monad.Reader (MonadReader, ask, asks)
+import Control.Monad.Trans (MonadIO, liftIO)
 
-import Data.Char
+import Data.Char (toLower)
 import Data.List (mapAccumL, intercalate, find)
 
 import System.Console.GetOpt

@@ -1,16 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 module PTS.Instances where
 
-import Control.Monad
-
-import Data.Typeable
-import Data.Data
-
-import Data.Char
-import Data.List
-
-import Parametric.Pretty
-
 import PTS.Syntax
 import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 

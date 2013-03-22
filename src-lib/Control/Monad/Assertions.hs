@@ -14,6 +14,7 @@ module Control.Monad.Assertions
   , collectAssertions) where
 
 import Control.Applicative (Applicative)
+
 import Control.Monad.Error (MonadError, catchError)
 import Control.Monad.Log (MonadLog, ConsoleLogT (ConsoleLogT))
 import Control.Monad.Reader (MonadReader, ReaderT, mapReaderT)

@@ -73,13 +73,13 @@ module PTS.Syntax
   , prettyAlgebra
   ) where
 
-import PTS.Syntax.Names
-import PTS.Syntax.Constants
-import PTS.Syntax.Term
-import PTS.Syntax.Statement
 import PTS.Syntax.Algebra
-import PTS.Syntax.File
-import PTS.Syntax.Pretty
-import PTS.Syntax.Parser
+import PTS.Syntax.Constants
 import PTS.Syntax.Diff
+import PTS.Syntax.File
+import PTS.Syntax.Names
+import PTS.Syntax.Parser
+import PTS.Syntax.Pretty
+import PTS.Syntax.Statement
 import PTS.Syntax.Substitution
+import PTS.Syntax.Term

@@ -11,14 +11,12 @@ module Parametric.Error
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Trans.Error (ErrorList(..))
-
-
-import Data.Typeable
-import Data.Data
+import Control.Monad.Trans.Error (ErrorList (..))
 
 import Data.Char
+import Data.Data
 import Data.List (intercalate)
+import Data.Typeable
 
 import Tools.Errors.Class
 

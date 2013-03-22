@@ -6,8 +6,8 @@ module PTS.Syntax.Constants
   , box
   ) where
 
-import Data.Typeable
 import Data.Data
+import Data.Typeable
 
 -- constants
 newtype C = C Int

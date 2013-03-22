@@ -3,10 +3,11 @@ module Parametric.Parser.Error
   ( formatError
   ) where
 
+import Parametric.Error
+
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Error
 
-import Parametric.Error
 
   -- ERROR OUTPUT --
 

@@ -2,16 +2,16 @@
 module PTS.Dynamics.Normalisation  where
 
 import Control.Applicative hiding (Const)
-import Data.Maybe (fromMaybe)
+
 import Data.List (nub)
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import PTS.Syntax
-
 import PTS.Dynamics.Evaluation (nbe)
+import PTS.Syntax
 
 -- select a version
 normalform = nbe

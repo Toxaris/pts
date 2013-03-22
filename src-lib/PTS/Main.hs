@@ -1,31 +1,28 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
 module PTS.Main where
 
-import Control.Monad
 import Control.Monad.Assertions (checkAssertions)
-import Control.Monad.Environment
-import Control.Monad.Reader
-import Control.Monad.State
-import Control.Monad.Trans
-import Control.Monad.Log
-import Control.Monad.Writer
+import Control.Monad.Reader (runReaderT)
+import Control.Monad.State (MonadState, evalStateT)
+import Control.Monad.Trans (MonadIO, liftIO)
+import Control.Monad.Log (runConsoleLogT)
 
-import System.Environment
-import System.IO (hPutStrLn, stderr, hFlush, stdout)
-import System.Exit (exitSuccess, exitFailure)
-import System.Directory (findFile)
+import qualified Data.Set as Set
 
 import Parametric.Error
 import Parametric.Pretty hiding (when)
 
-import PTS.Syntax
-import PTS.Statics
-import PTS.Instances
-import PTS.Options
 import PTS.Dynamics
 import PTS.File
+import PTS.Instances
+import PTS.Options
+import PTS.Statics
+import PTS.Syntax
 
-import qualified Data.Set as Set
+import System.Directory (findFile)
+import System.Environment (getArgs)
+import System.Exit (exitSuccess, exitFailure)
+import System.IO (hPutStrLn, stderr, hFlush, stdout)
 
 import Tools.Errors
 

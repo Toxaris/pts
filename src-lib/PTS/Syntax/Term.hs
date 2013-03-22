@@ -23,21 +23,14 @@ module PTS.Syntax.Term
   , desugarArgs
   ) where
 
-import Control.Applicative hiding (Const)
-import Control.Monad.Reader
+import Control.Applicative ((<$>))
 
-import Data.Typeable (Typeable)
 import Data.Data (Data)
-
-import Data.IORef
-import Data.List (nub, (\\), intersperse)
-import Data.Set (Set)
-import qualified Data.Set as Set
-
-import System.IO.Unsafe (unsafePerformIO)
+import Data.Typeable (Typeable)
 
 import Parametric.AST (Name, Names, freshvarl)
 import Parametric.Error
+
 import PTS.Syntax.Constants (C)
 
 

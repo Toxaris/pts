@@ -1,34 +1,29 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
 module PTS.File where
 
-import Control.Monad
+import Control.Monad (unless)
 import Control.Monad.Assertions (MonadAssertions (assert))
-import Control.Monad.Environment
-import Control.Monad.Reader
-import Control.Monad.State
-import Control.Monad.Trans
-import Control.Monad.Log
-import Control.Monad.Writer
+import Control.Monad.Environment (runEnvironmentT)
+import Control.Monad.Reader (MonadReader (local), runReaderT, asks)
+import Control.Monad.State (MonadState, get, put, modify, evalStateT)
+import Control.Monad.Trans (MonadIO (liftIO))
+import Control.Monad.Log (MonadLog, runConsoleLogT)
+import Control.Monad.Writer (execWriterT, tell)
 
-import Data.Maybe (fromMaybe)
-
-import System.Environment
-import System.IO (hPutStrLn, stderr, hFlush, stdout)
-import System.Exit (exitSuccess, exitFailure)
-import System.FilePath ((</>), (<.>), joinPath)
-import System.Directory (doesFileExist)
+import Data.Monoid (mempty)
 
 import Parametric.Error
 import Parametric.Pretty hiding (when)
 
-import PTS.Syntax
-import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
-import PTS.Statics
+import PTS.Dynamics
 import PTS.Instances
 import PTS.Options
-import PTS.Dynamics
+import PTS.Statics
+import PTS.Syntax
+import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 
-import qualified Data.Set as Set
+import System.FilePath ((</>), (<.>), joinPath)
+import System.Directory (doesFileExist)
 
 import Tools.Errors
 

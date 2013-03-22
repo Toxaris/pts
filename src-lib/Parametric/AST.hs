@@ -1,12 +1,11 @@
 {-# LANGUAGE NoMonomorphismRestriction, GeneralizedNewtypeDeriving, FlexibleContexts, FlexibleInstances, KindSignatures, EmptyDataDecls, MultiParamTypeClasses, FunctionalDependencies, UndecidableInstances, RankNTypes, DeriveDataTypeable #-}
 module Parametric.AST where
 
-import Data.Typeable
-import Data.Data
-
 import Data.Char (isLetter, isDigit, isAlphaNum, isLower)
+import Data.Data
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Data.Typeable
 
 data Name
   = PlainName String

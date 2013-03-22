@@ -2,9 +2,10 @@ module PTS.Syntax.Statement
   ( Stmt (..)
   ) where
 
+import Parametric.Error (Position)
+
 import PTS.Syntax.Names (Name, ModuleName)
 import PTS.Syntax.Term (Term)
-import Parametric.Error (Position)
 
 data Stmt
   = Bind Name [([Name], Term)] (Maybe Term) Term
