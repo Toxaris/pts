@@ -264,3 +264,197 @@ typecheck t = case structure t of
     x <- typedHandlePos typecheck p t
     -- trace ("End: "++(show ctx) ++ " |- " ++ (show t) ++ " : "++(show x)) (return ())
     return x
+
+
+typecheckPull :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m TypedTerm
+typecheckPull t = case structure t of
+  -- constant
+  Const c -> debug "typecheck Const" t $ do
+    pts <- asks optInstance
+    case axioms pts c of
+      Just t  ->  return (MkTypedTerm (Const c) t)
+      _       ->  prettyFail $ text "Unknown constant:" <+> pretty 0 c
+
+  -- start
+  Var x -> debug "typecheck Var" t $ do
+    xt <- lookupType x
+    case xt of
+      Just xt -> do
+        -- s <- typecheck xt
+        -- normalizeToSort s xt (text "in variable") (text "as type of" <+> pretty 0 x)
+        return (MkTypedTerm (Var x) xt)
+
+      Nothing ->
+        fail $ "Unbound identifier: " ++ show x
+
+  -- product
+  Pi x a b -> debug "typecheck Fun" t $ do
+    a'@(MkTypedTerm _ s1) <- typecheck a
+    s1' <- normalizeToSort s1 a (text "in product type") (text "as domain")
+
+    safebind x a' b $ \newx newb -> do
+      newb'@(MkTypedTerm _ s2) <- typecheck newb
+      s2' <- normalizeToSort s2 newb (text "in product type") (text "as codomain")
+
+      pts <- asks optInstance
+      s3 <- prettyRelations pts s1' s2'
+      return (MkTypedTerm (Pi newx a' newb') s3)
+
+  -- application
+  App t1 t2 -> debug "typecheck App" t $ do
+    t1'@(MkTypedTerm _ tt1) <- typecheck t1
+    Pi x a b <- normalizeToPi tt1 t1 (text "in application") (text "operator")
+
+    -- TODO avoid rechecking
+    a' <- typecheck a
+    b' <- bind x (ResidualVar x, a') $
+            typecheck b
+
+    t2'@(MkTypedTerm _ tt2) <- typecheck t2
+    normalizeToSame a tt2 (pretty 0 x) t2 (text "in application") (text "formal parameter") (text "actual parameter")
+
+    -- TODO get rid of subst?
+    return (MkTypedTerm (App t1' t2') (typedSubst b' x t2'))
+
+  -- abstraction
+  Lam x a b -> debug "typecheck Abs" t $ do
+    a'@(MkTypedTerm _ s1)  <- typecheck a
+    s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
+
+    safebind x a' b $ \newx newb -> do
+      newb'@(MkTypedTerm _ tb)  <- typecheck newb
+      env <- getEnvironment
+      let tb' = nbe env (strip tb)
+      tb''@(MkTypedTerm _ s2)  <- typecheck tb'
+      s2' <- normalizeToSort s2 tb' (text "in lambda abstraction") (text "as type of body")
+
+      pts <- asks optInstance
+      s3 <- prettyRelations pts s1' s2'
+
+      return (MkTypedTerm (Lam newx a' newb') (MkTypedTerm (Pi newx a' tb'') s3))
+
+  -- Int
+  Int i -> debug "typecheck Int" t $ do
+    int' <- typecheck (mkConst int)
+    return (MkTypedTerm (Int i) int')
+
+  -- IntOp
+  IntOp i f t1 t2 -> debug "typecheck IntOp" t $ do
+    t1'@(MkTypedTerm _ tt1) <- typecheck t1
+    normalizeToInt tt1 t1' (text "in" <+> pretty 0 i) (text "first argument of" <+> pretty 0 i)
+    t2'@(MkTypedTerm _ tt2) <- typecheck t2
+    result <- normalizeToInt tt2 t2' (text "in" <+> pretty 0 i) (text "second argument of" <+> pretty 0 i)
+    return (MkTypedTerm (IntOp i f t1' t2') result)
+
+  -- IfZero
+  IfZero t1 t2 t3 -> debug "typecheck IfZero" t $ do
+    t1'@(MkTypedTerm _ tt1) <- typecheck t1
+    normalizeToInt tt1 t1' (text "in if0") (text "condition")
+    t2'@(MkTypedTerm _ tt2) <- typecheck t2
+    t3'@(MkTypedTerm _ tt3) <- typecheck t3
+    normalizeToSame tt2 tt3 t2' t3' (text "in if0") (text "then branch") (text "else branch")
+    return (MkTypedTerm (IfZero t1' t2' t3') tt2)
+
+  -- Position information
+  Pos p t -> do
+    -- trace ("Start: "++(show ctx) ++ " |- " ++ (show t) ++ " : ???") (return ())
+    x <- typedHandlePos typecheck p t
+    -- trace ("End: "++(show ctx) ++ " |- " ++ (show t) ++ " : "++(show x)) (return ())
+    return x
+
+
+typecheckPush :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> Term -> m TypedTerm
+typecheckPush t q = case structure t of
+  -- constant
+  Const c -> debug "typecheck Const" t $ do
+    pts <- asks optInstance
+    case axioms pts c of
+      Just t  ->  return (MkTypedTerm (Const c) t)
+      _       ->  prettyFail $ text "Unknown constant:" <+> pretty 0 c
+
+  -- start
+  Var x -> debug "typecheck Var" t $ do
+    xt <- lookupType x
+    case xt of
+      Just xt -> do
+        -- s <- typecheck xt
+        -- normalizeToSort s xt (text "in variable") (text "as type of" <+> pretty 0 x)
+        return (MkTypedTerm (Var x) xt)
+
+      Nothing ->
+        fail $ "Unbound identifier: " ++ show x
+
+  -- product
+  Pi x a b -> debug "typecheck Fun" t $ do
+    a'@(MkTypedTerm _ s1) <- typecheck a
+    s1' <- normalizeToSort s1 a (text "in product type") (text "as domain")
+
+    safebind x a' b $ \newx newb -> do
+      newb'@(MkTypedTerm _ s2) <- typecheck newb
+      s2' <- normalizeToSort s2 newb (text "in product type") (text "as codomain")
+
+      pts <- asks optInstance
+      s3 <- prettyRelations pts s1' s2'
+      return (MkTypedTerm (Pi newx a' newb') s3)
+
+  -- application
+  App t1 t2 -> debug "typecheck App" t $ do
+    t1'@(MkTypedTerm _ tt1) <- typecheck t1
+    Pi x a b <- normalizeToPi tt1 t1 (text "in application") (text "operator")
+
+    -- TODO avoid rechecking
+    a' <- typecheck a
+    b' <- bind x (ResidualVar x, a') $
+            typecheck b
+
+    t2'@(MkTypedTerm _ tt2) <- typecheck t2
+    normalizeToSame a tt2 (pretty 0 x) t2 (text "in application") (text "formal parameter") (text "actual parameter")
+
+    -- TODO get rid of subst?
+    return (MkTypedTerm (App t1' t2') (typedSubst b' x t2'))
+
+  -- abstraction
+  Lam x a b -> debug "typecheck Abs" t $ do
+    a'@(MkTypedTerm _ s1)  <- typecheck a
+    s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
+
+    safebind x a' b $ \newx newb -> do
+      newb'@(MkTypedTerm _ tb)  <- typecheck newb
+      env <- getEnvironment
+      let tb' = nbe env (strip tb)
+      tb''@(MkTypedTerm _ s2)  <- typecheck tb'
+      s2' <- normalizeToSort s2 tb' (text "in lambda abstraction") (text "as type of body")
+
+      pts <- asks optInstance
+      s3 <- prettyRelations pts s1' s2'
+
+      return (MkTypedTerm (Lam newx a' newb') (MkTypedTerm (Pi newx a' tb'') s3))
+
+  -- Int
+  Int i -> debug "typecheck Int" t $ do
+    int' <- typecheck (mkConst int)
+    return (MkTypedTerm (Int i) int')
+
+  -- IntOp
+  IntOp i f t1 t2 -> debug "typecheck IntOp" t $ do
+    t1'@(MkTypedTerm _ tt1) <- typecheck t1
+    normalizeToInt tt1 t1' (text "in" <+> pretty 0 i) (text "first argument of" <+> pretty 0 i)
+    t2'@(MkTypedTerm _ tt2) <- typecheck t2
+    result <- normalizeToInt tt2 t2' (text "in" <+> pretty 0 i) (text "second argument of" <+> pretty 0 i)
+    return (MkTypedTerm (IntOp i f t1' t2') result)
+
+  -- IfZero
+  IfZero t1 t2 t3 -> debug "typecheck IfZero" t $ do
+    t1'@(MkTypedTerm _ tt1) <- typecheck t1
+    normalizeToInt tt1 t1' (text "in if0") (text "condition")
+    t2'@(MkTypedTerm _ tt2) <- typecheck t2
+    t3'@(MkTypedTerm _ tt3) <- typecheck t3
+    normalizeToSame tt2 tt3 t2' t3' (text "in if0") (text "then branch") (text "else branch")
+    return (MkTypedTerm (IfZero t1' t2' t3') tt2)
+
+  -- Position information
+  Pos p t -> do
+    -- trace ("Start: "++(show ctx) ++ " |- " ++ (show t) ++ " : ???") (return ())
+    x <- typedHandlePos typecheck p t
+    -- trace ("End: "++(show ctx) ++ " |- " ++ (show t) ++ " : "++(show x)) (return ())
+    return x
