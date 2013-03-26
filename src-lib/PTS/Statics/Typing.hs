@@ -275,15 +275,11 @@ typecheckPull t = case structure t of
       Just t  ->  return (MkTypedTerm (Const c) t)
       _       ->  prettyFail $ text "Unknown constant:" <+> pretty 0 c
 
-  -- start
-  Var x -> debug "typecheck Var" t $ do
+  Var x -> debug "typecheckPull Var" t $ do
     xt <- lookupType x
     case xt of
       Just xt -> do
-        -- s <- typecheck xt
-        -- normalizeToSort s xt (text "in variable") (text "as type of" <+> pretty 0 x)
         return (MkTypedTerm (Var x) xt)
-
       Nothing ->
         fail $ "Unbound identifier: " ++ show x
 
@@ -363,6 +359,12 @@ typecheckPull t = case structure t of
     return x
 
 
+-- "Subtyping" relation
+-- Question: should I use `normalizeToSame` for checking whether the actual type matches the expected type?
+(<:) :: TypedTerm -> Term -> Bool
+(<:) _ _ = True
+
+
 typecheckPush :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> Term -> m TypedTerm
 typecheckPush t q = case structure t of
   -- constant
@@ -372,15 +374,12 @@ typecheckPush t q = case structure t of
       Just t  ->  return (MkTypedTerm (Const c) t)
       _       ->  prettyFail $ text "Unknown constant:" <+> pretty 0 c
 
-  -- start
-  Var x -> debug "typecheck Var" t $ do
+  Var x -> debug "typecheckPush Var" t $ do
     xt <- lookupType x
     case xt of
-      Just xt -> do
-        -- s <- typecheck xt
-        -- normalizeToSort s xt (text "in variable") (text "as type of" <+> pretty 0 x)
-        return (MkTypedTerm (Var x) xt)
-
+      Just xt -> if xt <: q
+                    then do return (MkTypedTerm (Var x) xt)
+                    else fail $ "Identifier " ++ show x ++ " has type " ++ show xt ++ " expected " ++ show q
       Nothing ->
         fail $ "Unbound identifier: " ++ show x
 
