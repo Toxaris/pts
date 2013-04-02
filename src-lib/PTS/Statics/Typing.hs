@@ -269,7 +269,7 @@ typecheck t = case structure t of
 typecheckPull :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m TypedTerm
 typecheckPull t = case structure t of
   -- constant
-  Const c -> debug "typecheck Const" t $ do
+  Const c -> debug "typecheckPull Const" t $ do
     pts <- asks optInstance
     case axioms pts c of
       Just t  ->  return (MkTypedTerm (Const c) t)
@@ -297,31 +297,37 @@ typecheckPull t = case structure t of
       return (MkTypedTerm (Pi newx a' newb') s3)
 
   -- application
-  App t1 t2 -> debug "typecheck App" t $ do
-    t1'@(MkTypedTerm _ tt1) <- typecheck t1
+  App t1 t2 -> debug "typecheckPull App" t $ do
+    t1'@(MkTypedTerm _ tt1) <- typecheckPull t1
     Pi x a b <- normalizeToPi tt1 t1 (text "in application") (text "operator")
 
+    -- What is this? Why do we do this? What do I do instead? -Stefan
     -- TODO avoid rechecking
     a' <- typecheck a
     b' <- bind x (ResidualVar x, a') $
             typecheck b
 
-    t2'@(MkTypedTerm _ tt2) <- typecheck t2
-    normalizeToSame a tt2 (pretty 0 x) t2 (text "in application") (text "formal parameter") (text "actual parameter")
+    -- in t1 t2
+    -- t1 is a function from a -> b, so
+    -- t2 better be of type a
+    -- check that the argument actually has the type we expect
+    t2'@(MkTypedTerm _ tt2) <- typecheckPush t2 a
+    -- I think we don't need this because typecheckPush should fail if it's not the case, but I'm not sure
+    -- normalizeToSame a tt2 (pretty 0 x) t2 (text "in application") (text "formal parameter") (text "actual parameter")
 
     -- TODO get rid of subst?
     return (MkTypedTerm (App t1' t2') (typedSubst b' x t2'))
 
   -- abstraction
   Lam x a b -> debug "typecheckPull Abs" t $ do
-    a'@(MkTypedTerm _ s1)  <- typecheck a
+    a'@(MkTypedTerm _ s1)  <- typecheckPull a
     s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
 
     safebind x a' b $ \newx newb -> do
-      newb'@(MkTypedTerm _ tb)  <- typecheck newb
+      newb'@(MkTypedTerm _ tb)  <- typecheckPull newb
       env <- getEnvironment
       let tb' = nbe env (strip tb)
-      tb''@(MkTypedTerm _ s2)  <- typecheck tb'
+      tb''@(MkTypedTerm _ s2)  <- typecheckPull tb'
       s2' <- normalizeToSort s2 tb' (text "in lambda abstraction") (text "as type of body")
 
       pts <- asks optInstance
@@ -368,7 +374,7 @@ typecheckPull t = case structure t of
 typecheckPush :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> Term -> m TypedTerm
 typecheckPush t q = case structure t of
   -- constant
-  Const c -> debug "typecheck Const" t $ do
+  Const c -> debug ("typecheckPush Const q=" ++ (show q)) t $ do
     pts <- asks optInstance
     case axioms pts c of
       Just t  ->  return (MkTypedTerm (Const c) t)
