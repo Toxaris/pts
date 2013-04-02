@@ -1,7 +1,7 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts, PatternGuards, FlexibleInstances #-}
 module PTS.Statics.Typing where
 
-import Prelude (String)
+import Prelude (fst, snd, String, flip)
 
 import Control.Monad
 import Control.Monad.Environment
@@ -313,7 +313,7 @@ typecheckPull t = case structure t of
     return (MkTypedTerm (App t1' t2') (typedSubst b' x t2'))
 
   -- abstraction
-  Lam x a b -> debug "typecheck Abs" t $ do
+  Lam x a b -> debug "typecheckPull Abs" t $ do
     a'@(MkTypedTerm _ s1)  <- typecheck a
     s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
 
@@ -354,7 +354,7 @@ typecheckPull t = case structure t of
   -- Position information
   Pos p t -> do
     -- trace ("Start: "++(show ctx) ++ " |- " ++ (show t) ++ " : ???") (return ())
-    x <- typedHandlePos typecheck p t
+    x <- typedHandlePos typecheckPull p t
     -- trace ("End: "++(show ctx) ++ " |- " ++ (show t) ++ " : "++(show x)) (return ())
     return x
 
@@ -454,6 +454,6 @@ typecheckPush t q = case structure t of
   -- Position information
   Pos p t -> do
     -- trace ("Start: "++(show ctx) ++ " |- " ++ (show t) ++ " : ???") (return ())
-    x <- typedHandlePos typecheck p t
+    x <- typedHandlePos ((flip typecheckPush) q) p t
     -- trace ("End: "++(show ctx) ++ " |- " ++ (show t) ++ " : "++(show x)) (return ())
     return x
