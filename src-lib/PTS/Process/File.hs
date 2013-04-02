@@ -60,7 +60,7 @@ processStmt (Term t) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
   env <- get
-  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
+  MkTypedTerm _ q <- runEnvironmentT (typecheckPull t) env
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let x = nbe env t
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
@@ -73,7 +73,7 @@ processStmt (Bind n args Nothing body) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   env <- get
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
-  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
+  MkTypedTerm _ q <- runEnvironmentT (typecheckPull t) env
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let v = evalTerm env t
   modify ((n, (v, q)) :)
@@ -96,7 +96,7 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   env <- get
 
   -- typecheck type
-  MkTypedTerm _ q' <- runEnvironmentT (typecheck t'') env
+  MkTypedTerm _ q' <- runEnvironmentT (typecheckPull t'') env
   case structure (nbe env (strip q')) of
     Const _ -> return ()
     _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
@@ -104,7 +104,7 @@ processStmt (Bind n args (Just body') body) = recover () $ do
                          $$ text "     found:" <+> pretty 0 q'
 
   -- typecheck body
-  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
+  MkTypedTerm _ q <- runEnvironmentT (typecheckPull t) env
 
   -- compare specified and actual type
   if equivTerm env (strip q) t''
@@ -125,7 +125,7 @@ processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ 
   env <- get
 
   -- compare specified and actual type
-  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
+  MkTypedTerm _ q <- runEnvironmentT (typecheckPull t) env
   case q' of
     Nothing ->
       output (nest 2 (sep [text "type:", nest 2 (pretty 0 (strip q))]))
@@ -162,7 +162,7 @@ processStmt (Export n) = recover () $ do
 
   -- figure out type
   env <- get
-  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
+  MkTypedTerm _ q <- runEnvironmentT (typecheckPull t) env
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
 
   -- figure out value
