@@ -1,5 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
-module PTS.File where
+module PTS.Process.File where
 
 import Control.Monad (unless)
 import Control.Monad.Assertions (MonadAssertions (assert))

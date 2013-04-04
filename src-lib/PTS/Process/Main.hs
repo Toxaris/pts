@@ -1,5 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
-module PTS.Main where
+module PTS.Process.Main where
 
 import Control.Monad.Assertions (checkAssertions)
 import Control.Monad.Errors
@@ -14,9 +14,9 @@ import Parametric.Error
 import Parametric.Pretty hiding (when)
 
 import PTS.Dynamics
-import PTS.File
 import PTS.Instances
 import PTS.Options
+import PTS.Process.File
 import PTS.Statics
 import PTS.Syntax
 

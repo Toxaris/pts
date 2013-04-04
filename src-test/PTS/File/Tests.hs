@@ -7,7 +7,7 @@ import Control.Monad.Assertions (collectAssertions)
 
 import Parametric.Error (showErrors)
 
-import PTS.File (processFile, runProcessFile)
+import PTS.Process (processFile, runProcessFile)
 import PTS.Options (Options, defaultOptions, optPath, optLiterate, optQuiet)
 
 import System.Directory (findFile)

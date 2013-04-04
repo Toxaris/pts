@@ -45,10 +45,11 @@ Library
                        PTS.Dynamics.Module
                        PTS.Dynamics.Normalisation
                        PTS.Dynamics.Value
-                       PTS.File
                        PTS.Instances
-                       PTS.Main
                        PTS.Options
+                       PTS.Process
+                       PTS.Process.File
+                       PTS.Process.Main
                        PTS.QuasiQuote
                        PTS.Statics
                        PTS.Statics.Typing
