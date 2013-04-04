@@ -18,7 +18,6 @@ import Text.ParserCombinators.Parsec hiding ((<|>))
 import qualified Text.ParserCombinators.Parsec as Parsec
 
 import Tools.Errors.Class
-import Tools.Instances
 
 import Parametric.Error
 import Parametric.Parser

@@ -12,7 +12,6 @@ import Control.Monad.State (StateT (StateT), mapStateT)
 import Control.Monad.State.Class
 
 import Tools.Errors.Class
-import Tools.Instances
 
 type ErrorsT = ErrorsT'
 runErrorsT = runErrorsT'

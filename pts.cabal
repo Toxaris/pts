@@ -64,7 +64,6 @@ Library
                        PTS.Transform
                        Tools.Errors
                        Tools.Errors.Class
-                       Tools.Instances
 
 Executable pts
   Hs-source-dirs:      src-exec
