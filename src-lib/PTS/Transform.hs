@@ -24,12 +24,11 @@ import Control.Monad.Trans (liftIO)
 
 import qualified Data.Set as Set (insert)
 
-import Parametric.AST (Name, Names, freshvarl)
 import Parametric.Error (showErrors)
 
 import PTS.Options (defaultOptions)
 import PTS.Statics (typecheck)
-import PTS.Syntax (TypedTerm, typeOf, structure, Term, TermStructure (..), mkVar, strip, parseTerm, multiLine, C (C))
+import PTS.Syntax (TypedTerm, typeOf, structure, Name, Term, TermStructure (..), mkVar, strip, parseTerm, multiLine, C (C))
 
 import System.Exit (exitSuccess, exitFailure)
 import System.IO (hPutStrLn, stderr)

@@ -28,10 +28,10 @@ import Control.Applicative ((<$>))
 import Data.Data (Data)
 import Data.Typeable (Typeable)
 
-import Parametric.AST (Name, Names, freshvarl)
 import Parametric.Error
 
 import PTS.Syntax.Constants (C)
+import PTS.Syntax.Names (Name, Names, freshvarl)
 
 
 -- Syntax

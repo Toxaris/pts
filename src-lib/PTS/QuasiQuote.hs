@@ -8,10 +8,10 @@ import qualified Language.Haskell.TH as TH
 import Language.Haskell.TH.Quote
 
 import Parametric.Error (Position (..))
-import Parametric.AST
 
 import PTS.Instances
 import PTS.Syntax
+import PTS.Syntax.Names (Name (PlainName, IndexName, MetaName))
 import PTS.Syntax.Term (Term (MkTerm))
 
 pts  :: QuasiQuoter
