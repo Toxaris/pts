@@ -2,6 +2,7 @@
 module PTS.Main where
 
 import Control.Monad.Assertions (checkAssertions)
+import Control.Monad.Errors
 import Control.Monad.Reader (runReaderT)
 import Control.Monad.State (MonadState, evalStateT)
 import Control.Monad.Trans (MonadIO, liftIO)
@@ -23,9 +24,6 @@ import System.Directory (findFile)
 import System.Environment (getArgs)
 import System.Exit (exitSuccess, exitFailure)
 import System.IO (hPutStrLn, stderr, hFlush, stdout)
-
-import Tools.Errors
-
 infixl 2 >>>
 (>>>) = flip (.)
 

@@ -7,6 +7,8 @@ import Control.Applicative (Applicative)
 import Control.Arrow (left)
 import Control.Monad (Monad (return), when, Functor ())
 import Control.Monad.Error.Class (MonadError)
+import Control.Monad.Errors ()
+import Control.Monad.Errors.Class (MonadErrors)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.Reader.Class (MonadReader)
 import Control.Monad.State (StateT, evalStateT)
@@ -22,9 +24,6 @@ import Data.List (replicate, length, (++))
 import Data.Monoid (Monoid)
 
 import System.IO (putStrLn)
-
-import Tools.Errors ()
-import Tools.Errors.Class (MonadErrors)
 
 type Message
   = String

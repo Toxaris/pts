@@ -4,6 +4,7 @@ module PTS.File where
 import Control.Monad (unless)
 import Control.Monad.Assertions (MonadAssertions (assert))
 import Control.Monad.Environment (runEnvironmentT)
+import Control.Monad.Errors
 import Control.Monad.Reader (MonadReader (local), runReaderT, asks)
 import Control.Monad.State (MonadState, get, put, modify, evalStateT)
 import Control.Monad.Trans (MonadIO (liftIO))
@@ -24,8 +25,6 @@ import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 
 import System.FilePath ((</>), (<.>), joinPath)
 import System.Directory (doesFileExist)
-
-import Tools.Errors
 
 deliterateLine ('>' : ' ' : line) = ' ' : ' ' : line
 deliterateLine _                  = ""

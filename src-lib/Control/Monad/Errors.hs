@@ -1,17 +1,16 @@
 {-# LANGUAGE NoMonomorphismRestriction, GeneralizedNewtypeDeriving, MultiParamTypeClasses, FlexibleInstances, UndecidableInstances, RankNTypes #-}
-module Tools.Errors
-  ( ErrorsT, runErrorsT, module Tools.Errors.Class ) where
+module Control.Monad.Errors
+  ( ErrorsT, runErrorsT, module Control.Monad.Errors.Class ) where
 
 import Control.Applicative
 import Control.Arrow (first)
 import Control.Monad.Error
+import Control.Monad.Errors.Class
 import Control.Monad.Writer
 import Control.Monad.Reader(ReaderT, mapReaderT)
 import Control.Monad.Reader.Class
 import Control.Monad.State (StateT (StateT), mapStateT)
 import Control.Monad.State.Class
-
-import Tools.Errors.Class
 
 instance (Monoid e, Error e, MonadErrors e m) => MonadErrors e (ReaderT r m) where
   annotate f = mapReaderT (annotate f)

@@ -16,6 +16,7 @@ module Control.Monad.Assertions
 import Control.Applicative (Applicative)
 
 import Control.Monad.Error (MonadError, catchError)
+import Control.Monad.Errors (MonadErrors (recover, annotate))
 import Control.Monad.Log (MonadLog, ConsoleLogT (ConsoleLogT))
 import Control.Monad.Reader (MonadReader, ReaderT, mapReaderT)
 import Control.Monad.State (MonadState, StateT (StateT))
@@ -23,8 +24,6 @@ import Control.Monad.Trans (MonadIO)
 import Control.Monad.Writer (MonadWriter, WriterT, runWriterT, tell, mapWriterT, censor)
 
 import Data.Monoid (Monoid, mempty)
-
-import Tools.Errors (MonadErrors (recover, annotate))
 
 -- | Computations with embedded assertions.
 class Monad m => MonadAssertions m where

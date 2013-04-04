@@ -5,6 +5,7 @@ import Prelude hiding (abs, pi, elem, notElem, const, mod)
 
 import Control.Applicative hiding (many, Const, optional)
 import Control.Monad
+import Control.Monad.Errors.Class
 import Control.Monad.Reader
 
 import Data.Char
@@ -16,8 +17,6 @@ import System.IO
 
 import Text.ParserCombinators.Parsec hiding ((<|>))
 import qualified Text.ParserCombinators.Parsec as Parsec
-
-import Tools.Errors.Class
 
 import Parametric.Error
 import Parametric.Parser

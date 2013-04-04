@@ -5,6 +5,7 @@ import Prelude (String)
 
 import Control.Monad
 import Control.Monad.Environment
+import Control.Monad.Errors.Class
 import Control.Monad.Log
 import Control.Monad.Reader
 import Control.Monad.Trans
@@ -30,8 +31,6 @@ import PTS.Syntax
 import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 
 import Text.Show (Show (show))
-
-import Tools.Errors.Class
 
 -- implementation of pure type systems as described on p.98 in Barendregt's "Lambda Calculi with Types"
 -- ftp://ftp.cs.kun.nl/pub/CompMath.Found/HBKJ.ps.Z

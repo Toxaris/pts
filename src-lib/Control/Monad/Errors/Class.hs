@@ -1,5 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction, MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, UndecidableInstances #-}
-module Tools.Errors.Class
+module Control.Monad.Errors.Class
   ( MonadErrors (..)
   , module Control.Monad.Error.Class
   ) where

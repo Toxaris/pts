@@ -31,6 +31,8 @@ Library
                        directory >= 1.2.0.1 && < 1.3
   Exposed-modules:     Control.Monad.Assertions
                        Control.Monad.Environment
+                       Control.Monad.Errors
+                       Control.Monad.Errors.Class
                        Control.Monad.Log
                        Parametric.AST
                        Parametric.Error
@@ -62,8 +64,6 @@ Library
                        PTS.Syntax.Substitution
                        PTS.Syntax.Term
                        PTS.Transform
-                       Tools.Errors
-                       Tools.Errors.Class
 
 Executable pts
   Hs-source-dirs:      src-exec

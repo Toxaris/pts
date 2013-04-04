@@ -17,6 +17,7 @@ module PTS.Transform
 import Control.Applicative (Applicative)
 
 import Control.Monad.Environment (runEnvironmentT)
+import Control.Monad.Errors (runErrorsT)
 import Control.Monad.Log (runConsoleLogT)
 import Control.Monad.Reader (runReaderT)
 import Control.Monad.Trans (liftIO)
@@ -32,8 +33,6 @@ import PTS.Syntax (TypedTerm, typeOf, structure, Term, TermStructure (..), mkVar
 
 import System.Exit (exitSuccess, exitFailure)
 import System.IO (hPutStrLn, stderr)
-
-import Tools.Errors (runErrorsT)
 
 data Sort
   = Term
