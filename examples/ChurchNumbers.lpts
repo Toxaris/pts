@@ -1,0 +1,92 @@
+This file explores Böhm-Berarducci encoding of natural numbers.
+
+> Number
+>   = Pi alpha : * . (alpha -> alpha) -> alpha -> alpha;
+
+> assert Number : *;
+
+Some numbers:
+
+> zero (alpha : *) (s : alpha -> alpha) (z : alpha)
+>   = z;
+>
+> one (alpha : *) (s : alpha -> alpha) (z : alpha)
+>   = s z;
+>
+> two (alpha : *) (s : alpha -> alpha) (z : alpha)
+>   = s (s z);
+>
+> three (alpha : *) (s : alpha -> alpha) (z : alpha)
+>   = s (s (s z));
+>
+> four (alpha : *) (s : alpha -> alpha) (z : alpha)
+>   = s (s (s (s z)));
+>
+> five (alpha : *) (s : alpha -> alpha) (z : alpha)
+>   = s (s (s (s (s z))));
+>
+> six (alpha : *) (s : alpha -> alpha) (z : alpha)
+>   = s (s (s (s (s (s z)))));
+>
+> seven (alpha : *) (s : alpha -> alpha) (z : alpha)
+>   = s (s (s (s (s (s (s z))))));
+>
+> eight (alpha : *) (s : alpha -> alpha) (z : alpha)
+>   = s (s (s (s (s (s (s (s z)))))));
+>
+> nine (alpha : *) (s : alpha -> alpha) (z : alpha)
+>   = s (s (s (s (s (s (s (s (s z))))))));
+>
+> ten (alpha : *) (s : alpha -> alpha) (z : alpha)
+>   = s (s (s (s (s (s (s (s (s (s z)))))))));
+
+> assert zero : Number;
+> assert one : Number;
+> assert two : Number;
+> assert three : Number;
+> assert four : Number;
+> assert five : Number;
+> assert six : Number;
+> assert seven : Number;
+> assert eight : Number;
+> assert nine : Number;
+> assert ten : Number;
+
+The successor function:
+
+> succ (n : Number) (alpha : *) (s : alpha -> alpha) (z : alpha)
+>   = s (n alpha s z);
+>
+> assert succ : Number -> Number;
+> assert succ zero = one;
+> assert succ one = two;
+> assert succ two = three;
+> assert succ three = four;
+> assert succ four = five;
+> assert succ five = six;
+> assert succ six = seven;
+> assert succ seven = eight;
+> assert succ eight = nine;
+> assert succ nine = ten;
+
+Addition:
+
+> plus (a b : Number)
+>   = a Number succ b;
+>
+> assert plus : Number -> Number -> Number;
+> assert succ = plus one;
+> assert plus two four = six;
+> assert plus six two = eight;
+> assert plus six two = plus two six;
+
+Multiplication:
+
+> times (a b : Number)
+>   = a Number (plus b) zero;
+>
+> assert times : Number -> Number -> Number;
+> assert times zero four = zero;
+> assert times one two = two;
+> assert times two two = four;
+> assert times two four = times four two;

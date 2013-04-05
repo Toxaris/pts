@@ -10,6 +10,7 @@ Maintainer:          rendel@informatik.uni-marburg.de
 Category:            Language
 Build-type:          Simple
 Extra-source-files:  examples/Arithmetics.lpts
+                     examples/ChurchNumbers.lpts
 Cabal-version:       >= 1.8
 
 Source-Repository head

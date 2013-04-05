@@ -20,4 +20,5 @@ tests =
   ,  PTS.Pretty.Tests.tests
   ,  PTS.Substitution.Tests.tests
   ,  testFile True ["examples"] "Arithmetics.lpts"
+  ,  testFile True ["examples"] "ChurchNumbers.lpts"
   ]
