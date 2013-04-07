@@ -94,8 +94,23 @@ debug n t result = do
   log $ "Subject: " ++ show t
   x <- result
   log $ "Result:  " ++ show x
+  log $ "         : " ++ show (typeOf x)
   exit
   return x
+
+debugPush :: (MonadEnvironment Name (Binding M) m, MonadLog m) => String -> Term -> TypedTerm -> m TypedTerm -> m TypedTerm
+debugPush n t q result = do
+  enter n
+  ctx <- getEnvironment
+  log $ "Context: " ++ showCtx ctx
+  log $ "Subject: " ++ show t
+  log $ "Push type: " ++ show q
+  x <- result
+  log $ "Result:  " ++ show x
+  log $ "         : " ++ show (typeOf x)
+  exit
+  return x
+
 
 -- error messages and generic error checking
 
@@ -301,19 +316,16 @@ typecheckPull t = case structure t of
     t1'@(MkTypedTerm _ tt1) <- typecheckPull t1
     Pi x a b <- normalizeToPi tt1 t1 (text "in application") (text "operator")
 
-    -- What is this? Why do we do this? What do I do instead? -Stefan
     -- TODO avoid rechecking
-    a' <- typecheck a
+    a' <- typecheckPull a
     b' <- bind x (ResidualVar x, a') $
-            typecheck b
+            typecheckPull b
 
     -- in t1 t2
     -- t1 is a function from a -> b, so
     -- t2 better be of type a
-    -- check that the argument actually has the type we expect
-    t2'@(MkTypedTerm _ tt2) <- typecheckPush t2 a
-    -- I think we don't need this because typecheckPush should fail if it's not the case, but I'm not sure
-    -- normalizeToSame a tt2 (pretty 0 x) t2 (text "in application") (text "formal parameter") (text "actual parameter")
+    -- check that the argument t2 actually has the type we expect
+    t2'@(MkTypedTerm _ tt2) <- typecheckPush t2 a'
 
     -- TODO get rid of subst?
     return (MkTypedTerm (App t1' t2') (typedSubst b' x t2'))
@@ -365,16 +377,26 @@ typecheckPull t = case structure t of
     return x
 
 
--- "Subtyping" relation
--- Question: should I use `normalizeToSame` for checking whether the actual type matches the expected type?
-(<:) :: TypedTerm -> Term -> Bool
-(<:) _ _ = True
+-- Check whether actualType is beta equivalent to expectedType.
+-- checkedTerm is only used for error reporting.
+bidiExpected actualType expectedType checkedTerm = do
+  let actualType' = strip actualType
+  let expectedType' = strip expectedType
+  env <- getEnvironment
+  if equivTerm env actualType' expectedType'
+     then return ()
+     else prettyFail $ text "Type error, checking" <+> (pretty 0 checkedTerm) <+> text "expected" <+> (pretty 0 actualType) <+> text "to be beta-equivalent to" <+>  (pretty 0 expectedType)
 
 
-typecheckPush :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> Term -> m TypedTerm
+-- Checking rule in bidirectional type checking.
+-- First argument (t) is the term to typecheck.
+-- Second argument (q) is its expected type.
+--   The second argument is of the form (MkTypedTerm type kind) where type is the actual expected
+--   type of the first argument and kind is the type of type.
+typecheckPush :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> TypedTerm -> m TypedTerm
 typecheckPush t q = case structure t of
   -- constant
-  Const c -> debug ("typecheckPush Const q=" ++ (show q)) t $ do
+  Const c -> debug "typecheckPush Const" t $ do
     pts <- asks optInstance
     case axioms pts c of
       Just t  ->  return (MkTypedTerm (Const c) t)
@@ -383,9 +405,8 @@ typecheckPush t q = case structure t of
   Var x -> debug "typecheckPush Var" t $ do
     xt <- lookupType x
     case xt of
-      Just xt -> if xt <: q
-                    then do return (MkTypedTerm (Var x) xt)
-                    else fail $ "Identifier " ++ show x ++ " has type " ++ show xt ++ " expected " ++ show q
+      Just xt -> do bidiExpected xt q t
+                    return (MkTypedTerm (Var x) xt)
       Nothing ->
         fail $ "Unbound identifier: " ++ show x
 
@@ -436,8 +457,9 @@ typecheckPush t q = case structure t of
       return (MkTypedTerm (Lam newx a' newb') (MkTypedTerm (Pi newx a' tb'') s3))
 
   -- Int
-  Int i -> debug "typecheck Int" t $ do
-    int' <- typecheck (mkConst int)
+  Int i -> debugPush "typecheckPush Int" t q $ do
+    int' <- typecheckPull (mkConst int)
+    bidiExpected int' q t
     return (MkTypedTerm (Int i) int')
 
   -- IntOp
