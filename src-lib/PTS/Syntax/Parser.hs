@@ -17,9 +17,7 @@ import System.IO
 
 import Text.ParserCombinators.Parsec hiding ((<|>))
 import qualified Text.ParserCombinators.Parsec as Parsec
-
-import Parametric.Parser
-import Parametric.Parser.Error
+import Text.ParserCombinators.Parsec.Error
 
 import PTS.Error
 import PTS.Syntax.Algebra
@@ -28,6 +26,35 @@ import PTS.Syntax.File
 import PTS.Syntax.Names
 import PTS.Syntax.Statement
 import PTS.Syntax.Term
+
+     ---------------------
+    -- PARAMETRIC PARSER --
+     ---------------------
+
+-- left-recursion handling
+term simple rec pos msg = result where
+  result = combine <$> getPosition <*> simple <*> many ((,) <$> rec <*> getPosition)
+  combine p = foldl' (\x (f, q) -> setPos pos p (f x) q)
+
+-- right-recursive syntax pattern: "lambda ident : qualifier . body"
+abs cons lambda ident colon qualifier dot body
+  = cons <$> try (lambda *> ident <* colon) <*> qualifier <*> (dot *> body)
+
+-- left-recursive syntax pattern: "x -> y"
+arr cons arrow simple = flip cons <$> (arrow *> simple)
+
+-- left-recursive syntax pattern: "x y"
+app cons simple = flip cons <$> simple
+
+-- non-recursive syntax pattern: "ident"
+var cons ident = cons <$> ident
+
+-- non-recursive syntax pattern: "constant"
+con cons constant = cons <$ constant
+
+withPos f p = setPos f <$> getPosition <*> p <*> getPosition where
+
+setPos f p1 x p2 = f (Position (sourceName p1) (sourceLine p1) (sourceLine p2) (sourceColumn p1) (pred $ sourceColumn p2)) x
 
      -----------------
     -- PTS PARSER --
@@ -173,6 +200,36 @@ lparen = lexem(char '(')
 rparen = lexem(char ')')
 lbracket = lexem(char '[')
 rbracket = lexem(char ']')
+
+     ----------------
+    -- ERROR OUTPUT --
+     ----------------
+
+formatError :: FilePath -> String -> ParseError -> PTSError
+formatError expectedName src err
+  = Error (Just file) (Just "Syntax Error") (lines msg) maybeSrc where
+
+  -- extract information
+  messages = errorMessages err
+  pos = errorPos err
+  name = sourceName pos
+
+  (line, column) = convert (sourceLine pos) (sourceColumn pos)
+  convert l c = if l > srcLineCount
+                  then (srcLineCount, succ srcLineLength)
+                  else (l, min c (length srcLine))
+
+  maybeSrc = if name == expectedName
+               then Just (lines src)
+               else Nothing
+
+  srcLines = lines src
+  srcLineCount = length srcLines
+  srcLine = srcLines !! (pred line)
+  srcLineLength = length srcLine
+
+  file = Position name line line column column
+  msg = tail $ showErrorMessages "or" "unknown parse error" "expecting" "unexpected" "end of input" messages
 
      ----------------------
     -- RUNNING the PARSER --
