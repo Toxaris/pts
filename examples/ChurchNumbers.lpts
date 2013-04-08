@@ -1,4 +1,4 @@
-This file explores Böhm-Berarducci encoding of natural numbers.
+This file explores Boehm-Berarducci encoding of natural numbers.
 
 > Number
 >   = Pi alpha : * . (alpha -> alpha) -> alpha -> alpha;
