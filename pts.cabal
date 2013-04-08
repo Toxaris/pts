@@ -34,7 +34,6 @@ Library
                        Control.Monad.Errors
                        Control.Monad.Errors.Class
                        Control.Monad.Log
-                       Parametric.Pretty
                        PTS.Dynamics
                        PTS.Dynamics.Binding
                        PTS.Dynamics.Evaluation

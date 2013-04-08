@@ -12,7 +12,7 @@ import System.Console.GetOpt
 import System.Environment (getArgs)
 import System.FilePath (splitSearchPath)
 
-import Parametric.Pretty hiding (when)
+import Text.PrettyPrint.HughesPJ hiding (render)
 
 import PTS.Instances
 
@@ -33,7 +33,7 @@ whenOption :: (MonadReader Options m) => (Options -> Bool) -> m () -> m ()
 whenOption  f act = ask >>= \opt            -> when (f opt) act
 
 prettyFail :: MonadReader Options m => Doc -> m a
-prettyFail doc = asks (flip multiLine doc . optColumns) >>= fail
+prettyFail doc = asks (flip render doc . optColumns) >>= fail
 
 -- default options
 defaultOptions = Options
@@ -137,7 +137,7 @@ processFlagsShowInsts []              = return ()
 processFlagsShowInsts (ShowInsts : _) = liftIO printInstances
 processFlagsShowInsts (_ : rest)      = processFlagsShowInsts rest
 
-printHelp = putStrLn (usageInfo (multiLine 80 header) options) where
+printHelp = putStrLn (usageInfo (render 80 header) options) where
   header =
     programName $$ supported $$ optionsText
   programName =
@@ -153,7 +153,7 @@ printHelp = putStrLn (usageInfo (multiLine 80 header) options) where
     text "Options:"
 
 printInstances :: IO ()
-printInstances = putStrLn (multiLine 80 info) where
+printInstances = putStrLn (render 80 info) where
   info = text "Available instances:" $$ text "" $$
          (vcat $ punctuate (text "" $+$ text "")
            [ (text $ head $ name i) $$
@@ -162,6 +162,9 @@ printInstances = putStrLn (multiLine 80 info) where
                    (fsep $
                      text "Synonyms:" : (punctuate (text ",") $ map text $ tail $ name i)))
            | i <- instances ])
+
+-- printing
+render n = renderStyle (Style PageMode n 1)
 
 -- main entry point
 parseCommandLine :: (Functor m, MonadIO m) => ([(Options, FilePath)] -> m a) -> m ()

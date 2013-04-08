@@ -21,8 +21,6 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Tuple (fst, snd)
 
-import Parametric.Pretty
-
 import PTS.Dynamics
 import PTS.Error
 import PTS.Instances
@@ -30,6 +28,7 @@ import PTS.Options
 import PTS.Syntax
 import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 
+import Text.PrettyPrint.HughesPJ hiding (int)
 import Text.Show (Show (show))
 
 -- implementation of pure type systems as described on p.98 in Barendregt's "Lambda Calculi with Types"

@@ -13,8 +13,6 @@ import Control.Monad.Writer (execWriterT, tell)
 
 import Data.Monoid (mempty)
 
-import Parametric.Pretty hiding (when)
-
 import PTS.Dynamics
 import PTS.Error
 import PTS.Instances
@@ -25,6 +23,8 @@ import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 
 import System.FilePath ((</>), (<.>), joinPath)
 import System.Directory (doesFileExist)
+
+import Text.PrettyPrint.HughesPJ
 
 deliterateLine ('>' : ' ' : line) = ' ' : ' ' : line
 deliterateLine _                  = ""

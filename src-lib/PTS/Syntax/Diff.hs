@@ -3,8 +3,6 @@ module PTS.Syntax.Diff where
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Parametric.Pretty
-
 import PTS.Syntax.Algebra
 import PTS.Syntax.Names
 import PTS.Syntax.Pretty

@@ -54,6 +54,7 @@ module PTS.Syntax
   , parseTerm
   , parseTermAtPos
     -- ** Printer
+  , Pretty (pretty)
   , singleLine
   , multiLine
   , showCtx

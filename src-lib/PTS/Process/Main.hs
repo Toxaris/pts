@@ -10,8 +10,6 @@ import Control.Monad.Log (runConsoleLogT)
 
 import qualified Data.Set as Set
 
-import Parametric.Pretty hiding (when)
-
 import PTS.Dynamics
 import PTS.Error
 import PTS.Instances
