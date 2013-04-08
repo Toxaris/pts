@@ -21,10 +21,10 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Tuple (fst, snd)
 
-import Parametric.Error
 import Parametric.Pretty
 
 import PTS.Dynamics
+import PTS.Error
 import PTS.Instances
 import PTS.Options
 import PTS.Syntax

@@ -13,10 +13,10 @@ import Control.Monad.Writer (execWriterT, tell)
 
 import Data.Monoid (mempty)
 
-import Parametric.Error
 import Parametric.Pretty hiding (when)
 
 import PTS.Dynamics
+import PTS.Error
 import PTS.Instances
 import PTS.Options
 import PTS.Statics
@@ -37,7 +37,7 @@ deliterate text = do
 runProcessFile action state opt =
   evalStateT (runErrorsT (runReaderT (runConsoleLogT action (optDebugType opt)) opt)) state 
 
-processFile :: (Functor m, MonadErrors [FOmegaError] m, MonadReader Options m, MonadState [(Name, Binding M)] m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module M))
+processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState [(Name, Binding M)] m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module M))
 processFile file = do
   outputLine $ "process file " ++ file
   text <- liftIO (readFile file)

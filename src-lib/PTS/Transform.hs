@@ -24,8 +24,7 @@ import Control.Monad.Trans (liftIO)
 
 import qualified Data.Set as Set (insert)
 
-import Parametric.Error (showErrors)
-
+import PTS.Error (showErrors)
 import PTS.Options (defaultOptions)
 import PTS.Statics (typecheck)
 import PTS.Syntax (TypedTerm, typeOf, structure, Name, Term, TermStructure (..), mkVar, strip, parseTerm, multiLine, C (C))

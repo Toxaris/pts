@@ -2,8 +2,7 @@ module PTS.Syntax.Statement
   ( Stmt (..)
   ) where
 
-import Parametric.Error (Position)
-
+import PTS.Error (Position)
 import PTS.Syntax.Names (Name, ModuleName)
 import PTS.Syntax.Term (Term)
 

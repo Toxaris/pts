@@ -4,11 +4,10 @@ import Test.Framework (testGroup)
 import Test.Framework.Providers.HUnit
 import Test.HUnit (assertEqual, assertFailure)
 
+import PTS.Error
 import PTS.Syntax
 
-import Parametric.Error
-
-parse text = parseTerm "PTS.Syntax.Parser.Tests" text :: Either [FOmegaError] PTS.Syntax.Term
+parse text = parseTerm "PTS.Syntax.Parser.Tests" text :: Either [PTSError] PTS.Syntax.Term
 
 testParser text term = testCase text $ case parse text of
   Right parsedTerm ->  assertEqual "Unexpected parse result." (show term) (show parsedTerm)

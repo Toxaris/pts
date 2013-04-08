@@ -1,7 +1,7 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleInstances, TypeSynonymInstances, DeriveDataTypeable #-}
-module Parametric.Error
+module PTS.Error
   ( Errors
-  , FOmegaError (..)
+  , PTSError (..)
   , Position (..)
   , annotatePos
   , annotateCode
@@ -20,18 +20,18 @@ import Data.List (intercalate)
 import Data.Typeable
 
 
-data FOmegaError
+data PTSError
   = Error (Maybe Position) (Maybe String) [String] (Maybe [String])
 
   deriving (Show, Eq)
 
-type Errors = [FOmegaError]
+type Errors = [PTSError]
 
 data Position
   = Position String Int Int Int Int
   deriving (Show, Eq, Data, Typeable)
 
-instance ErrorList FOmegaError where
+instance ErrorList PTSError where
   listMsg msg = pure (Error empty (pure msg) empty empty)
 
 annotateError p' e' m' c' = annotate (map update) where
@@ -45,22 +45,13 @@ annotateCode c = annotateError empty empty empty (pure c)
 showErrors :: Errors -> String
 showErrors = unlines . map showError
 
--- prefixes for Tillmann's old jEdit hack
--- probably no longer needed
-
---   errorPrefix = "[E] "
---   moreLinePrefix = "[-] "
-
--- prefixes for reasonable error reporting
-
 errorPrefix = ""
 moreLinePrefix = "  "
 
-
-showError :: FOmegaError -> String
+showError :: PTSError -> String
 showError (Error p e m c) = unlines allLines where
   allLines = firstLine : moreLines
-  firstLine = errorPrefix ++ maybePosition ++ head maybeError
+  firstLine = maybePosition ++ head maybeError
   moreLines = map (moreLinePrefix ++) (tail maybeError ++ maybeSource ++ maybeMessages)
 
   maybePosition = maybe "" showPosition p
@@ -104,35 +95,3 @@ compress c1 c2 width text = result where
          | cc1 - 1 <= left = (prespace, width - 3, "", "...", clen)
          | cc2 <= right = (prespace + tlen - width + 3, width - 3, "...", "", clen)
          | otherwise = (c1 - 1 - left + 3, width - 6, "...", "...", clen)
-
-
-{-
-formatError :: String -> ParseError -> FOmegaError
-formatError src err = [file, code, mark, msg] where
-  -- extract information
-  messages = errorMessages err
-  pos = errorPos err
-  name = sourceName pos
-
-  (line, column) = convert (sourceLine pos) (sourceColumn pos)
-  convert l c = if l > srcLineCount
-                  then (min l srcLineCount, succ srcLineLength)
-                  else (l, min c (length srcLine))
-
-  srcLines = lines src
-  srcLineCount = length srcLines
-  srcLine = srcLines !! (pred line)
-  srcLineLength = length srcLine
-
-  (leaveOut, howMany, predots, postdots)
-    | srcLineLength < 70 = (0, 70, "", "")
-    | column < 35 = (0, 67, "", "...")
-    | column > srcLineLength - 35 = (srcLineLength - 67, 67, "...", "")
-    | otherwise = (column - 33, column + 33, "...", "...")
-
-  file = name ++ ":" ++ show line ++ ":" ++ show column ++ ": Syntax Error"
-  code = "  " ++ predots ++ (drop leaveOut . take howMany $ lines src !! pred line) ++ postdots
-  mark = "  " ++ replicate (pred column - leaveOut + length predots) ' ' ++ "^"
-  msg = unlines . map ("  " ++) . lines . tail $
-          showErrorMessages "or" "unknown parse error" "expecting" "unexpected" "end of input" messages
- -}

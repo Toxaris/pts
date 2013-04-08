@@ -18,10 +18,10 @@ import System.IO
 import Text.ParserCombinators.Parsec hiding ((<|>))
 import qualified Text.ParserCombinators.Parsec as Parsec
 
-import Parametric.Error
 import Parametric.Parser
 import Parametric.Parser.Error
 
+import PTS.Error
 import PTS.Syntax.Algebra
 import PTS.Syntax.Constants
 import PTS.Syntax.File

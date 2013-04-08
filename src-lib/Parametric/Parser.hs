@@ -8,10 +8,11 @@ import Control.Applicative hiding (many)
 import Data.Function (flip, ($))
 import Data.List ((++), foldl')
 
+import PTS.Error (Position (Position))
+
 import Text.ParserCombinators.Parsec hiding ((<|>))
 import qualified Text.ParserCombinators.Parsec as Parsec
 
-import Parametric.Error (Position (Position))
 
      ---------------------
     -- PARAMETRIC PARSER --

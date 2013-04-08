@@ -7,8 +7,7 @@ import Language.Haskell.TH hiding (Name)
 import qualified Language.Haskell.TH as TH
 import Language.Haskell.TH.Quote
 
-import Parametric.Error (Position (..))
-
+import PTS.Error (Position (..))
 import PTS.Instances
 import PTS.Syntax
 import PTS.Syntax.Names (Name (PlainName, IndexName, MetaName))

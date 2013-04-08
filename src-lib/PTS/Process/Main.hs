@@ -10,10 +10,10 @@ import Control.Monad.Log (runConsoleLogT)
 
 import qualified Data.Set as Set
 
-import Parametric.Error
 import Parametric.Pretty hiding (when)
 
 import PTS.Dynamics
+import PTS.Error
 import PTS.Instances
 import PTS.Options
 import PTS.Process.File
@@ -47,7 +47,7 @@ processJobs jobs = do
     then exitSuccess
     else exitFailure
 
-processJob :: (Functor m, MonadIO m, MonadErrors [FOmegaError] m, MonadState [(Name, Binding M)] m) => (Options, FilePath) -> m ()
+processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState [(Name, Binding M)] m) => (Options, FilePath) -> m ()
 processJob (opt, file) = do
   let path = optPath opt
   file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return

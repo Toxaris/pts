@@ -3,7 +3,7 @@ module Parametric.Parser.Error
   ( formatError
   ) where
 
-import Parametric.Error
+import PTS.Error
 
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Error
@@ -11,7 +11,7 @@ import Text.ParserCombinators.Parsec.Error
 
   -- ERROR OUTPUT --
 
-formatError :: FilePath -> String -> ParseError -> FOmegaError
+formatError :: FilePath -> String -> ParseError -> PTSError
 formatError expectedName src err
   = Error (Just file) (Just "Syntax Error") (lines msg) maybeSrc where
 

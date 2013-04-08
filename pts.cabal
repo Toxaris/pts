@@ -34,7 +34,6 @@ Library
                        Control.Monad.Errors
                        Control.Monad.Errors.Class
                        Control.Monad.Log
-                       Parametric.Error
                        Parametric.Parser
                        Parametric.Parser.Error
                        Parametric.Pretty
@@ -44,6 +43,7 @@ Library
                        PTS.Dynamics.Module
                        PTS.Dynamics.Normalisation
                        PTS.Dynamics.Value
+                       PTS.Error
                        PTS.Instances
                        PTS.Options
                        PTS.Process
