@@ -439,8 +439,21 @@ typecheckPush t q = case structure t of
     -- TODO get rid of subst?
     return (MkTypedTerm (App t1' t2') (typedSubst b' x t2'))
 
-  -- abstraction
-  Lam x a b -> debug "typecheck Abs" t $ do
+  -- abstraction (fully annotated)
+  -- TODO unannotated abstractions
+  Lam x a b -> debug ("typecheckPush Abs (expect " ++ (show q) ++ ")") t $ do
+    -- I think this is what I want. It fails if we expect (in q) anything other than Pi
+    -- What's the nice way to do this? Currently:
+    -- ./foo.pts:3: Pattern match failure in do expression at src-lib/PTS/Core.hs:457:5-74
+    --
+    -- (lambda x : Int . x) (lambda x : Int . x);
+    --                       ^^^^^^^^^^^^^^^^^^
+    -- Which is actually not that bad, but not how the other errors are reported.
+    -- Do I write a function like normalizeToPi or something?
+    -- I don't think I need normalization, but I'm not sure.
+    -- Maybe just return the (Pi ...), haven't thought about whether we need the kind here.
+    (MkTypedTerm expectedFunctionType@(Pi _ expectedDomain expectedCodomain) kind) <- return q
+
     a'@(MkTypedTerm _ s1)  <- typecheck a
     s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
 
@@ -482,6 +495,6 @@ typecheckPush t q = case structure t of
   -- Position information
   Pos p t -> do
     -- trace ("Start: "++(show ctx) ++ " |- " ++ (show t) ++ " : ???") (return ())
-    x <- typedHandlePos ((flip typecheckPush) q) p t
+    x <- typedHandlePos (\ t -> typecheckPush t q) p t
     -- trace ("End: "++(show ctx) ++ " |- " ++ (show t) ++ " : "++(show x)) (return ())
     return x
