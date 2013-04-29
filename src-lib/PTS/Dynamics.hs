@@ -1,10 +1,15 @@
 module PTS.Dynamics
   ( -- * Values
-    module PTS.Dynamics.Value
-  , module PTS.Dynamics.Module
+    Value (..)
+  , Binding (..)
+  , Bindings
+  , Module (..)
     -- * Evaluation
-  , module PTS.Dynamics.Binding
-  , module PTS.Dynamics.Evaluation
+  , M
+  , evalTerm
+    -- * Normalization and Equivalence
+  , nbe
+  , equivTerm
   ) where
 
 import PTS.Dynamics.Binding
