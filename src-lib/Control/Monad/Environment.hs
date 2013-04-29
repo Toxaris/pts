@@ -14,14 +14,13 @@ import Data.Tuple (fst)
 import Control.Applicative (Applicative)
 import Control.Monad (Functor, Monad (return))
 import Control.Monad.Error (MonadError)
+import Control.Monad.Errors (MonadErrors)
 import Control.Monad.Log (MonadLog (..))
 import Control.Monad.Reader (MonadReader (ask, local), asks, ReaderT, runReaderT, mapReaderT)
 import Control.Monad.State (MonadState)
 import Control.Monad.Trans (MonadTrans (lift), MonadIO)
 
 import Data.Maybe (Maybe)
-
-import Tools.Errors (MonadErrors)
 
 class (Eq k, Ord k, Monad m) => MonadEnvironment k v m | m -> k v where
   bind :: k -> v -> m a -> m a

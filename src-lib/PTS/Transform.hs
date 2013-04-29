@@ -15,28 +15,22 @@ module PTS.Transform
   )  where
 
 import Control.Applicative (Applicative)
+
 import Control.Monad.Environment (runEnvironmentT)
+import Control.Monad.Errors (runErrorsT)
 import Control.Monad.Log (runConsoleLogT)
 import Control.Monad.Reader (runReaderT)
 import Control.Monad.Trans (liftIO)
 
 import qualified Data.Set as Set (insert)
 
-import Parametric.Error (showErrors)
-import Parametric.AST (Name, Names, freshvarl)
-
-import PTS.Algebra (strip)
-import PTS.AST (TypedTerm, typeOf, structure, Term, TermStructure (..), mkVar)
-import PTS.Core (typecheck)
+import PTS.Error (showErrors)
 import PTS.Options (defaultOptions)
-import PTS.Parser (parseTerm)
-import PTS.Pretty (multiLine)
-import PTS.Constants (C (C))
+import PTS.Statics (typecheck)
+import PTS.Syntax (TypedTerm, typeOf, structure, Name, Term, TermStructure (..), mkVar, strip, parseTerm, multiLine, C (C))
 
-import System.IO (hPutStrLn, stderr)
 import System.Exit (exitSuccess, exitFailure)
-
-import Tools.Errors (runErrorsT)
+import System.IO (hPutStrLn, stderr)
 
 data Sort
   = Term

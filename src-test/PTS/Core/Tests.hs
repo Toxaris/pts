@@ -5,11 +5,10 @@ import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.Framework.Providers.HUnit
 import Test.HUnit (assertBool)
 
-import PTS.AST
+import PTS.Syntax
 import PTS.Instances
 import qualified PTS.Core.Properties as Prop
 import PTS.Core.Properties(equivClosedTerm)
-import PTS.Constants
 
 import Test.Property (test)
 
@@ -33,14 +32,6 @@ alphaEquivalenceSymmetric
 alphaEquivalenceTransitive
   =  testProperty "transitivity"
        Prop.alphaEquivalenceTransitive
-
-ndotsLength
-  =  testProperty "n characters long" $
-       Prop.ndotsLength
-
-ndotsContainsDots
-  =  testProperty "consists only of dots" $
-       Prop.ndotsContainsDots
 
 alphaEquivalent t1 t2
   =  testCase (show t1 ++ " alpha-equiv. to " ++ show t2) $
@@ -69,9 +60,5 @@ tests
         ,  alphaInequivalent (mkPi x (mkVar x) (mkVar x)) (mkPi y (mkVar y) (mkVar y))
         ,  alphaInequivalent (mkLam x (mkVar x) (mkVar x)) (mkLam y (mkVar y) (mkVar y))
         ,  alphaInequivalent (mkLam x (mkVar x) (mkVar x)) (mkPi x (mkVar x) (mkVar x))
-        ]
-     ,  testGroup "n dots"
-        [  ndotsLength
-        ,  ndotsContainsDots
         ]
      ]

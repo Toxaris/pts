@@ -4,11 +4,10 @@ import Data.Set
 
 import Test.Property
 
-import PTS.Algebra
-import PTS.AST
-import PTS.AST.Arbitrary
-import PTS.Core
-import PTS.Evaluation
+import PTS.Syntax
+import PTS.Syntax.Arbitrary
+import PTS.Statics
+import PTS.Dynamics
 
 type Relation a = a -> a -> Bool
 
@@ -34,11 +33,3 @@ alphaEquivalenceSymmetric = symmetric equivClosedTerm
 
 alphaEquivalenceTransitive :: Property (Term -> Term -> Term -> Bool)
 alphaEquivalenceTransitive = transitive equivClosedTerm
-
-ndotsLength :: Property (Int -> Bool)
-ndotsLength = property $
-  \n -> n >= 0 && n < 200 ==> length (ndots n) == n
-
-ndotsContainsDots :: Property (Int -> Bool)
-ndotsContainsDots = property $
-  \n -> n >= 0 && n < 200 ==> all ('.' ==) (ndots n)

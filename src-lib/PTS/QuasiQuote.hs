@@ -1,19 +1,17 @@
 {-# LANGUAGE TemplateHaskell, FlexibleInstances #-}
 module PTS.QuasiQuote (pts) where
 
-import Parametric.Error (Position (..))
-import Parametric.AST
-import PTS.Instances
-import PTS.AST
-import PTS.Parser (parseTermAtPos)
-import PTS.Constants
+import Data.Char (isUpper)
 
-import Data.Char
-
-import Data.Generics
 import Language.Haskell.TH hiding (Name)
 import qualified Language.Haskell.TH as TH
 import Language.Haskell.TH.Quote
+
+import PTS.Error (Position (..))
+import PTS.Instances
+import PTS.Syntax
+import PTS.Syntax.Names (Name (PlainName, IndexName, MetaName))
+import PTS.Syntax.Term (Term (MkTerm))
 
 pts  :: QuasiQuoter
 pts  =  QuasiQuoter
