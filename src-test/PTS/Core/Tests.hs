@@ -33,14 +33,6 @@ alphaEquivalenceTransitive
   =  testProperty "transitivity"
        Prop.alphaEquivalenceTransitive
 
-ndotsLength
-  =  testProperty "n characters long" $
-       Prop.ndotsLength
-
-ndotsContainsDots
-  =  testProperty "consists only of dots" $
-       Prop.ndotsContainsDots
-
 alphaEquivalent t1 t2
   =  testCase (show t1 ++ " alpha-equiv. to " ++ show t2) $
        assertBool "False negative: terms should be considered alpha-equiv." $
@@ -68,9 +60,5 @@ tests
         ,  alphaInequivalent (mkPi x (mkVar x) (mkVar x)) (mkPi y (mkVar y) (mkVar y))
         ,  alphaInequivalent (mkLam x (mkVar x) (mkVar x)) (mkLam y (mkVar y) (mkVar y))
         ,  alphaInequivalent (mkLam x (mkVar x) (mkVar x)) (mkPi x (mkVar x) (mkVar x))
-        ]
-     ,  testGroup "n dots"
-        [  ndotsLength
-        ,  ndotsContainsDots
         ]
      ]

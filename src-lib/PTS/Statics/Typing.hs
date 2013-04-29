@@ -62,9 +62,6 @@ checkMaybe :: Monad m => Maybe a -> String -> m ()
 checkMaybe (Just _) _ = return ()
 checkMaybe Nothing s = fail s
 
-ndots :: Int -> String
-ndots n = replicate n '.'
-
 lookupValue x = do
   m <- lookup x
   return (fmap fst m)

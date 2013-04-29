@@ -33,11 +33,3 @@ alphaEquivalenceSymmetric = symmetric equivClosedTerm
 
 alphaEquivalenceTransitive :: Property (Term -> Term -> Term -> Bool)
 alphaEquivalenceTransitive = transitive equivClosedTerm
-
-ndotsLength :: Property (Int -> Bool)
-ndotsLength = property $
-  \n -> n >= 0 && n < 200 ==> length (ndots n) == n
-
-ndotsContainsDots :: Property (Int -> Bool)
-ndotsContainsDots = property $
-  \n -> n >= 0 && n < 200 ==> all ('.' ==) (ndots n)
