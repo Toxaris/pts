@@ -186,6 +186,7 @@ prettyRelations pts s1 s2 =
     (relations pts s1 s2)
 
 typecheck t = case structure t of
+  _ -> do fail "foo"
   -- constant
   Const c -> debug "typecheck Const" t $ do
     pts <- asks optInstance
@@ -376,7 +377,6 @@ typecheckPull t = case structure t of
     -- trace ("End: "++(show ctx) ++ " |- " ++ (show t) ++ " : "++(show x)) (return ())
     return x
 
-
 -- Check whether actualType is beta equivalent to expectedType.
 -- checkedTerm is only used for error reporting.
 bidiExpected actualType expectedType checkedTerm = do
@@ -441,33 +441,25 @@ typecheckPush t q = case structure t of
 
   -- abstraction (fully annotated)
   -- TODO unannotated abstractions
-  Lam x a b -> debug ("typecheckPush Abs (expect " ++ (show q) ++ ")") t $ do
-    -- I think this is what I want. It fails if we expect (in q) anything other than Pi
-    -- What's the nice way to do this? Currently:
-    -- ./foo.pts:3: Pattern match failure in do expression at src-lib/PTS/Core.hs:457:5-74
-    --
-    -- (lambda x : Int . x) (lambda x : Int . x);
-    --                       ^^^^^^^^^^^^^^^^^^
-    -- Which is actually not that bad, but not how the other errors are reported.
-    -- Do I write a function like normalizeToPi or something?
-    -- I don't think I need normalization, but I'm not sure.
-    -- Maybe just return the (Pi ...), haven't thought about whether we need the kind here.
-    (MkTypedTerm expectedFunctionType@(Pi _ expectedDomain expectedCodomain) kind) <- return q
-
-    a'@(MkTypedTerm _ s1)  <- typecheck a
-    s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
-
-    safebind x a' b $ \newx newb -> do
-      newb'@(MkTypedTerm _ tb)  <- typecheck newb
-      env <- getEnvironment
-      let tb' = nbe env (strip tb)
-      tb''@(MkTypedTerm _ s2)  <- typecheck tb'
-      s2' <- normalizeToSort s2 tb' (text "in lambda abstraction") (text "as type of body")
-
-      pts <- asks optInstance
-      s3 <- prettyRelations pts s1' s2'
-
-      return (MkTypedTerm (Lam newx a' newb') (MkTypedTerm (Pi newx a' tb'') s3))
+  Lam argumentName declaredArgumentType body -> debug ("typecheckPush Abs (expect " ++ (show q) ++ ")") t $ do
+    -- TODO not sure whether this is actually needed
+    argumentType <- typecheckPull declaredArgumentType
+    -- Check whether we actually expect a lambda abstraction, that is a Pi-type. Fail immediately otherwise.
+    case q of
+      (MkTypedTerm expectedFunctionType@(Pi _ expectedDomain expectedCodomain) kind) -> do
+        -- Need to check two things here:
+        --  1. does the declared argument type match the expected domain
+        bidiExpected argumentType expectedDomain t
+        --  2. does the body have the type of the expected codomain (typecheckPush in extended environment)
+        safebind argumentName argumentType body $ \newArgumentName newBody -> do
+          typedNewBody <- typecheckPush newBody expectedCodomain
+          -- Both succeed, so return the lambda term with its pi type.
+          -- This is a bit more cumbersome than expected, we actually want to just return a (MkTypedTerm q t).
+          -- But the returned t is t with a new argument name and body,
+          -- and the returned q is q with a new argument name.
+          return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
+                              (MkTypedTerm (Pi newArgumentName expectedDomain expectedCodomain) kind))
+      _ -> prettyFail $ text "Expected" <+> pretty 0 q <+> text "but found" <+> pretty 0 t
 
   -- Int
   Int i -> debugPush "typecheckPush Int" t q $ do
