@@ -30,36 +30,38 @@ Library
                        syb,
                        filepath,
                        directory >= 1.2.0.1 && < 1.3
-  Exposed-modules:     Tools.Instances,
-                       Tools.Errors.Class,
-                       Parametric.Pretty,
-                       PTS.Instances,
-                       PTS.Options,
-                       Parametric.Error,
-                       Parametric.AST,
-                       PTS.Algebra,
-                       PTS.AST,
-                       PTS.Normalisation,
-                       PTS.Pretty,
-                       PTS.Diff,
-                       PTS.Evaluation,
-                       PTS.File,
-                       PTS.Core,
-                       PTS.Main,
-                       PTS.Substitution,
-                       PTS.QuasiQuote,
-                       PTS.Constants,
-                       PTS.Transform,
-                       Parametric.Parser.Error,
-                       Parametric.Parser,
-                       PTS.Parser,
-                       Tools.Errors,
-                       Control.Monad.Log,
-                       Control.Monad.Environment,
-                       Control.Monad.Assertions,
-                       PTS.Module,
-                       PTS.Binding,
-                       PTS.Value
+  Exposed-modules:     Control.Monad.Assertions
+                       Control.Monad.Environment
+                       Control.Monad.Errors
+                       Control.Monad.Errors.Class
+                       Control.Monad.Log
+                       PTS.Dynamics
+                       PTS.Dynamics.Binding
+                       PTS.Dynamics.Evaluation
+                       PTS.Dynamics.Module
+                       PTS.Dynamics.Normalisation
+                       PTS.Dynamics.Value
+                       PTS.Error
+                       PTS.Instances
+                       PTS.Options
+                       PTS.Process
+                       PTS.Process.File
+                       PTS.Process.Main
+                       PTS.QuasiQuote
+                       PTS.Statics
+                       PTS.Statics.Typing
+                       PTS.Syntax
+                       PTS.Syntax.Algebra
+                       PTS.Syntax.Constants
+                       PTS.Syntax.Diff
+                       PTS.Syntax.File
+                       PTS.Syntax.Names
+                       PTS.Syntax.Parser
+                       PTS.Syntax.Pretty
+                       PTS.Syntax.Statement
+                       PTS.Syntax.Substitution
+                       PTS.Syntax.Term
+                       PTS.Transform
 
 Executable pts
   Hs-source-dirs:      src-exec
@@ -90,15 +92,14 @@ Test-suite tests
   Type: exitcode-stdio-1.0
   Hs-source-dirs:      src-test
   Main-is:             tests.hs
-  Other-modules:       PTS.AST.Arbitrary
-                       PTS.Core.Properties
+  Other-modules:       PTS.Core.Properties
                        PTS.Core.Tests
                        PTS.File.Tests
-                       PTS.Instances.Arbitrary
-                       PTS.Parser.Tests
-                       PTS.Pretty.Tests
-                       PTS.Substitution.Properties
-                       PTS.Substitution.Tests
+                       PTS.Syntax.Arbitrary
+                       PTS.Syntax.Parser.Tests
+                       PTS.Syntax.Pretty.Tests
+                       PTS.Syntax.Substitution.Properties
+                       PTS.Syntax.Substitution.Tests
                        Test.Property
   Build-depends:       base >= 4.0 && < 5,
                        mtl >= 2.0 && < 2.2,
