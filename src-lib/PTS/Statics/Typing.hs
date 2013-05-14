@@ -186,7 +186,7 @@ prettyRelations pts s1 s2 =
     (relations pts s1 s2)
 
 typecheck t = case structure t of
-  _ -> do fail "foo"
+--  _ -> do fail "foo"
   -- constant
   Const c -> debug "typecheck Const" t $ do
     pts <- asks optInstance
@@ -441,9 +441,9 @@ typecheckPush t q = case structure t of
 
   -- abstraction (fully annotated)
   -- TODO unannotated abstractions
-  Lam argumentName declaredArgumentType body -> debug ("typecheckPush Abs (expect " ++ (show q) ++ ")") t $ do
+  Lam argumentName declaredDomain body -> debug ("typecheckPush Abs (expect " ++ (show q) ++ ")") t $ do
     -- TODO not sure whether this is actually needed
-    argumentType <- typecheckPull declaredArgumentType
+    argumentType <- typecheckPull declaredDomain
     -- Check whether we actually expect a lambda abstraction, that is a Pi-type. Fail immediately otherwise.
     case q of
       (MkTypedTerm expectedFunctionType@(Pi _ expectedDomain expectedCodomain) kind) -> do
@@ -452,13 +452,13 @@ typecheckPush t q = case structure t of
         bidiExpected argumentType expectedDomain t
         --  2. does the body have the type of the expected codomain (typecheckPush in extended environment)
         safebind argumentName argumentType body $ \newArgumentName newBody -> do
-          typedNewBody <- typecheckPush newBody expectedCodomain
-          -- Both succeed, so return the lambda term with its pi type.
-          -- This is a bit more cumbersome than expected, we actually want to just return a (MkTypedTerm q t).
+          typedNewBody@(MkTypedTerm _ newCodomain) <- typecheckPush newBody expectedCodomain
+          -- Both succeed, so return the term (=lambda) with its type (=pi).
+          -- This is a bit more cumbersome than expected, we actually want to just return a (MkTypedTerm t q).
           -- But the returned t is t with a new argument name and body,
-          -- and the returned q is q with a new argument name.
+          -- and the returned q is q with a new argument name and new codomain.
           return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
-                              (MkTypedTerm (Pi newArgumentName expectedDomain expectedCodomain) kind))
+                              (MkTypedTerm (Pi newArgumentName expectedDomain newCodomain) kind))
       _ -> prettyFail $ text "Expected" <+> pretty 0 q <+> text "but found" <+> pretty 0 t
 
   -- Int
