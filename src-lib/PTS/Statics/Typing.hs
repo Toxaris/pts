@@ -1,7 +1,7 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts, PatternGuards, FlexibleInstances #-}
 module PTS.Statics.Typing where
 
-import Prelude (fst, snd, String, flip)
+import Prelude (fst, snd, String)
 
 import Control.Monad
 import Control.Monad.Environment
