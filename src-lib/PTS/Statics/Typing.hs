@@ -300,12 +300,12 @@ typecheckPull t = case structure t of
         fail $ "Unbound identifier: " ++ show x
 
   -- product
-  Pi x a b -> debug "typecheck Fun" t $ do
-    a'@(MkTypedTerm _ s1) <- typecheck a
+  Pi x a b -> debug "typecheckPull Fun" t $ do
+    a'@(MkTypedTerm _ s1) <- typecheckPull a
     s1' <- normalizeToSort s1 a (text "in product type") (text "as domain")
 
     safebind x a' b $ \newx newb -> do
-      newb'@(MkTypedTerm _ s2) <- typecheck newb
+      newb'@(MkTypedTerm _ s2) <- typecheckPull newb
       s2' <- normalizeToSort s2 newb (text "in product type") (text "as codomain")
 
       pts <- asks optInstance
