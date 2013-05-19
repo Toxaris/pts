@@ -349,17 +349,19 @@ typecheckPull t = case structure t of
       return (MkTypedTerm (Lam newx a' newb') (MkTypedTerm (Pi newx a' tb'') s3))
 
   -- Int
-  Int i -> debug "typecheck Int" t $ do
-    int' <- typecheck (mkConst int)
+  Int i -> debug "typecheckPull Int" t $ do
+    int' <- typecheckPull (mkConst int)
     return (MkTypedTerm (Int i) int')
 
   -- IntOp
-  IntOp i f t1 t2 -> debug "typecheck IntOp" t $ do
-    t1'@(MkTypedTerm _ tt1) <- typecheck t1
-    normalizeToInt tt1 t1' (text "in" <+> pretty 0 i) (text "first argument of" <+> pretty 0 i)
-    t2'@(MkTypedTerm _ tt2) <- typecheck t2
-    result <- normalizeToInt tt2 t2' (text "in" <+> pretty 0 i) (text "second argument of" <+> pretty 0 i)
-    return (MkTypedTerm (IntOp i f t1' t2') result)
+  IntOp opName opFunction t1 t2 -> debug "typecheckPull IntOp" t $ do
+    -- The type integers have. This might depend on the PTS instance, not so sure...
+    integerType <- typecheckPull (mkConst int)
+    -- Both arguments to any IntOp have to be Ints, so typecheckPush an Int in there.
+    t1'@(MkTypedTerm _ tt1) <- typecheckPush t1 integerType
+    t2'@(MkTypedTerm _ tt2) <- typecheckPush t2 integerType
+    -- If this worked we return the IntOp with typed arguments and type Int. 
+    return (MkTypedTerm (IntOp opName opFunction t1' t2') integerType)
 
   -- IfZero
   IfZero t1 t2 t3 -> debug "typecheck IfZero" t $ do
