@@ -364,13 +364,17 @@ typecheckPull t = case structure t of
     return (MkTypedTerm (IntOp opName opFunction t1' t2') integerType)
 
   -- IfZero
-  IfZero t1 t2 t3 -> debug "typecheck IfZero" t $ do
-    t1'@(MkTypedTerm _ tt1) <- typecheck t1
-    normalizeToInt tt1 t1' (text "in if0") (text "condition")
-    t2'@(MkTypedTerm _ tt2) <- typecheck t2
-    t3'@(MkTypedTerm _ tt3) <- typecheck t3
-    normalizeToSame tt2 tt3 t2' t3' (text "in if0") (text "then branch") (text "else branch")
-    return (MkTypedTerm (IfZero t1' t2' t3') tt2)
+  IfZero condition thenTerm elseTerm -> debug "typecheckPull IfZero" t $ do
+    -- Condition needs to be of type integer (think boolean in a real if).
+    integerType <- typecheckPull (mkConst int)
+    typedCondition <- typecheckPush condition integerType
+    -- Then and else branch need to have the same type. We could typecheckPull
+    -- the then branch and push the result into the else branch. This might be
+    -- faster, but the asymmetry seems weird.
+    typedThen@(MkTypedTerm _ thenType) <- typecheckPull thenTerm
+    typedElse@(MkTypedTerm _ elseType) <- typecheckPull elseTerm
+    normalizeToSame thenType elseType typedThen typedElse (text "in if0") (text "then branch") (text "else branch")
+    return (MkTypedTerm (IfZero typedCondition typedThen typedElse) thenType)
 
   -- Position information
   Pos p t -> do
