@@ -474,15 +474,22 @@ typecheckPush t q = case structure t of
     return (MkTypedTerm (Int i) int')
 
   -- IntOp
-  IntOp i f t1 t2 -> debug "typecheck IntOp" t $ do
-    t1'@(MkTypedTerm _ tt1) <- typecheck t1
-    normalizeToInt tt1 t1' (text "in" <+> pretty 0 i) (text "first argument of" <+> pretty 0 i)
-    t2'@(MkTypedTerm _ tt2) <- typecheck t2
-    result <- normalizeToInt tt2 t2' (text "in" <+> pretty 0 i) (text "second argument of" <+> pretty 0 i)
-    return (MkTypedTerm (IntOp i f t1' t2') result)
+  IntOp opName opFunction t1 t2 -> debug "typecheck IntOp" t $ do
+    integerType <- typecheckPull (mkConst int)
+    -- Check that we actually expect an int
+    bidiExpected integerType q t
+    -- Ok, we're in the right case. Descend into arguments.
+    typedT1 <- typecheckPush t1 integerType
+    typedT2 <- typecheckPush t2 integerType
+    -- Arguments are Integers as well, return.
+    return (MkTypedTerm (IntOp opName opFunction typedT1 typedT2) integerType)
 
   -- IfZero
   IfZero t1 t2 t3 -> debug "typecheck IfZero" t $ do
+    -- I'm confused again about dependent types.
+    -- Do we need to evaluate the conditionTerm here to figure out the type???
+    -- What about the IfZero case in typecheckPull?
+    -- The original typecheck function seems to only make sure that thenTerm and elseTerm have the same type.
     t1'@(MkTypedTerm _ tt1) <- typecheck t1
     normalizeToInt tt1 t1' (text "in if0") (text "condition")
     t2'@(MkTypedTerm _ tt2) <- typecheck t2
