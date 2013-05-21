@@ -430,20 +430,20 @@ typecheckPush t q = case structure t of
       return (MkTypedTerm (Pi newx a' newb') s3)
 
   -- application
-  App t1 t2 -> debug "typecheck App" t $ do
-    t1'@(MkTypedTerm _ tt1) <- typecheck t1
-    Pi x a b <- normalizeToPi tt1 t1 (text "in application") (text "operator")
+  App functionTerm argumentTerm -> debug "typecheckPush App" t $ do
+    typedFunction@(MkTypedTerm _ functionType) <- typecheckPull functionTerm
+    Pi argumentName domain codomain <- normalizeToPi functionType functionTerm (text "in application") (text "operator")
 
     -- TODO avoid rechecking
-    a' <- typecheck a
-    b' <- bind x (ResidualVar x, a') $
-            typecheck b
+    typedDomain <- typecheckPull domain
+    typedCodomain <- bind argumentName (ResidualVar argumentName, typedDomain) $
+            typecheckPull codomain
 
-    t2'@(MkTypedTerm _ tt2) <- typecheck t2
-    normalizeToSame a tt2 (pretty 0 x) t2 (text "in application") (text "formal parameter") (text "actual parameter")
+    typedArgument@(MkTypedTerm _ argumentType) <- typecheckPush argumentTerm typedCodomain
 
     -- TODO get rid of subst?
-    return (MkTypedTerm (App t1' t2') (typedSubst b' x t2'))
+    return (MkTypedTerm (App typedFunction typedArgument)
+                        (typedSubst typedCodomain argumentName typedArgument))
 
   -- abstraction (fully annotated)
   -- TODO unannotated abstractions
