@@ -186,7 +186,7 @@ prettyRelations pts s1 s2 =
     (relations pts s1 s2)
 
 typecheck t = case structure t of
---  _ -> do fail "foo"
+  _ -> do fail "plain typecheck called. This should not happen anymore."
   -- constant
   Const c -> debug "typecheck Const" t $ do
     pts <- asks optInstance
@@ -391,7 +391,7 @@ bidiExpected actualType expectedType checkedTerm = do
   env <- getEnvironment
   if equivTerm env actualType' expectedType'
      then return ()
-     else prettyFail $ text "Type error, checking" <+> (pretty 0 checkedTerm) <+> text "expected" <+> (pretty 0 actualType) <+> text "to be beta-equivalent to" <+>  (pretty 0 expectedType)
+     else prettyFail $ text "Type error, checking" <+> (pretty 0 checkedTerm) <+> text "got type" <+> (pretty 0 actualType) <+> text "but expected" <+>  (pretty 0 expectedType)
 
 
 -- Checking rule in bidirectional type checking.
@@ -417,12 +417,15 @@ typecheckPush t q = case structure t of
         fail $ "Unbound identifier: " ++ show x
 
   -- product
-  Pi x a b -> debug "typecheck Fun" t $ do
-    a'@(MkTypedTerm _ s1) <- typecheck a
+  Pi x a b -> debug "typecheckPush Fun" t $ do
+    -- TODO This whole case is rather stupid at the moment. We could
+    -- (maybe) call prettyRelations with s1 and s3 and get the s2 out
+    -- of it. Maybe.
+    a'@(MkTypedTerm _ s1) <- typecheckPull a
     s1' <- normalizeToSort s1 a (text "in product type") (text "as domain")
 
     safebind x a' b $ \newx newb -> do
-      newb'@(MkTypedTerm _ s2) <- typecheck newb
+      newb'@(MkTypedTerm _ s2) <- typecheckPull newb
       s2' <- normalizeToSort s2 newb (text "in product type") (text "as codomain")
 
       pts <- asks optInstance
@@ -474,7 +477,7 @@ typecheckPush t q = case structure t of
     return (MkTypedTerm (Int i) int')
 
   -- IntOp
-  IntOp opName opFunction t1 t2 -> debug "typecheck IntOp" t $ do
+  IntOp opName opFunction t1 t2 -> debug "typecheckPush IntOp" t $ do
     integerType <- typecheckPull (mkConst int)
     -- Check that we actually expect an int
     bidiExpected integerType q t
@@ -485,15 +488,17 @@ typecheckPush t q = case structure t of
     return (MkTypedTerm (IntOp opName opFunction typedT1 typedT2) integerType)
 
   -- IfZero
-  IfZero t1 t2 t3 -> debug "typecheck IfZero" t $ do
-    -- I'm confused again about dependent types.
-    -- Do we need to evaluate the conditionTerm here to figure out the type???
-    -- What about the IfZero case in typecheckPull?
-    -- The original typecheck function seems to only make sure that thenTerm and elseTerm have the same type.
-    t1'@(MkTypedTerm _ tt1) <- typecheck t1
+  IfZero t1 t2 t3 -> debug "typecheckPush IfZero" t $ do
+    -- Because of normalization, we only reach this case if the
+    -- condition is not a constant, so this whole IfZero did not
+    -- normalize away. Therefore the then and else branches need to be
+    -- of the same type.
+    -- Or does this type have to be q? I think I'm still confused about normalization.
+    integerType <- typecheckPull (mkConst int)
+    t1'@(MkTypedTerm _ tt1) <- typecheckPush t1 integerType
     normalizeToInt tt1 t1' (text "in if0") (text "condition")
-    t2'@(MkTypedTerm _ tt2) <- typecheck t2
-    t3'@(MkTypedTerm _ tt3) <- typecheck t3
+    t2'@(MkTypedTerm _ tt2) <- typecheckPush t2 q
+    t3'@(MkTypedTerm _ tt3) <- typecheckPush t3 q
     normalizeToSame tt2 tt3 t2' t3' (text "in if0") (text "then branch") (text "else branch")
     return (MkTypedTerm (IfZero t1' t2' t3') tt2)
 
