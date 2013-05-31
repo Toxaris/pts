@@ -90,7 +90,7 @@ debug :: (MonadEnvironment Name (Binding M) m, MonadLog m) => String -> Term -> 
 debug n t result = do
   enter n
   ctx <- getEnvironment
-  log $ "Context: " ++ showCtx ctx
+--  log $ "Context: " ++ showCtx ctx
   log $ "Subject: " ++ show t
   x <- result
   log $ "Result:  " ++ show x
@@ -186,7 +186,7 @@ prettyRelations pts s1 s2 =
     (relations pts s1 s2)
 
 typecheck t = case structure t of
-  _ -> do fail "plain typecheck called. This should not happen anymore."
+  _ -> do prettyFail $ text "plain typecheck called. This should not happen anymore."
   -- constant
   Const c -> debug "typecheck Const" t $ do
     pts <- asks optInstance
@@ -402,13 +402,13 @@ bidiExpected actualType expectedType checkedTerm = do
 typecheckPush :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> TypedTerm -> m TypedTerm
 typecheckPush t q = case structure t of
   -- constant
-  Const c -> debug "typecheckPush Const" t $ do
+  Const c -> debugPush "typecheckPush Const" t q $ do
     pts <- asks optInstance
     case axioms pts c of
       Just t  ->  return (MkTypedTerm (Const c) t)
       _       ->  prettyFail $ text "Unknown constant:" <+> pretty 0 c
 
-  Var x -> debug "typecheckPush Var" t $ do
+  Var x -> debugPush "typecheckPush Var" t q $ do
     xt <- lookupType x
     case xt of
       Just xt -> do bidiExpected xt q t
@@ -417,7 +417,7 @@ typecheckPush t q = case structure t of
         fail $ "Unbound identifier: " ++ show x
 
   -- product
-  Pi x a b -> debug "typecheckPush Fun" t $ do
+  Pi x a b -> debugPush "typecheckPush Fun" t q $ do
     -- TODO This whole case is rather stupid at the moment. We could
     -- (maybe) call prettyRelations with s1 and s3 and get the s2 out
     -- of it. Maybe.
@@ -433,16 +433,22 @@ typecheckPush t q = case structure t of
       return (MkTypedTerm (Pi newx a' newb') s3)
 
   -- application
-  App functionTerm argumentTerm -> debug "typecheckPush App" t $ do
+  App functionTerm argumentTerm -> debugPush "typecheckPush App" t q $ do
     typedFunction@(MkTypedTerm _ functionType) <- typecheckPull functionTerm
     Pi argumentName domain codomain <- normalizeToPi functionType functionTerm (text "in application") (text "operator")
 
     -- TODO avoid rechecking
     typedDomain <- typecheckPull domain
+    -- I think we should use typecheckPush codomain q here. But this probably requires some 
     typedCodomain <- bind argumentName (ResidualVar argumentName, typedDomain) $
             typecheckPull codomain
 
-    typedArgument@(MkTypedTerm _ argumentType) <- typecheckPush argumentTerm typedCodomain
+    -- Check that argument is of the expected type (that is the domain of the function).
+    typedArgument@(MkTypedTerm _ argumentType) <- typecheckPush argumentTerm typedDomain
+    -- Check that the result of the application, that is the codomain
+    -- is of the applied function, that is the type of the body is the
+    -- same as what we expect of the whole term (q).
+    bidiExpected typedCodomain q t
 
     -- TODO get rid of subst?
     return (MkTypedTerm (App typedFunction typedArgument)
@@ -450,7 +456,7 @@ typecheckPush t q = case structure t of
 
   -- abstraction (fully annotated)
   -- TODO unannotated abstractions
-  Lam argumentName declaredDomain body -> debug ("typecheckPush Abs (expect " ++ (show q) ++ ")") t $ do
+  Lam argumentName declaredDomain body -> debugPush "typecheckPush Abs" t q $ do
     -- TODO not sure whether this is actually needed
     argumentType <- typecheckPull declaredDomain
     -- Check whether we actually expect a lambda abstraction, that is a Pi-type. Fail immediately otherwise.
@@ -477,7 +483,7 @@ typecheckPush t q = case structure t of
     return (MkTypedTerm (Int i) int')
 
   -- IntOp
-  IntOp opName opFunction t1 t2 -> debug "typecheckPush IntOp" t $ do
+  IntOp opName opFunction t1 t2 -> debugPush "typecheckPush IntOp" t q $ do
     integerType <- typecheckPull (mkConst int)
     -- Check that we actually expect an int
     bidiExpected integerType q t
@@ -488,7 +494,7 @@ typecheckPush t q = case structure t of
     return (MkTypedTerm (IntOp opName opFunction typedT1 typedT2) integerType)
 
   -- IfZero
-  IfZero t1 t2 t3 -> debug "typecheckPush IfZero" t $ do
+  IfZero t1 t2 t3 -> debugPush "typecheckPush IfZero" t q $ do
     -- Because of normalization, we only reach this case if the
     -- condition is not a constant, so this whole IfZero did not
     -- normalize away. Therefore the then and else branches need to be
