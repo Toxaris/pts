@@ -56,3 +56,19 @@ Doubling as function composition
 > compositionDouble (X : *) (f : X -> X) = comp X X X f f;
 
 > assert double = compositionDouble;
+
+Test (what exactly? Push App?)
+Doesn't actually test what I want tested :(
+
+> id (T : *) (t : T) = t;
+> assert id : (Pi T : * . T -> T);
+
+> somethingItoI = add1;
+> assert somethingItoI : Int -> Int;
+
+> fun (arg : Int -> Int) = id (Int -> Int) arg;
+
+
+> assert fun : (Int -> Int) -> (Int -> Int);
+> fun somethingItoI;
+> assert fun somethingItoI : Int -> Int;
