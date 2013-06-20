@@ -433,28 +433,30 @@ typecheckPush t q = case structure t of
       return (MkTypedTerm (Pi newx a' newb') s3)
 
   -- application
-  App functionTerm argumentTerm -> debugPush "typecheckPush App" t q $ do
-    typedFunction@(MkTypedTerm _ functionType) <- typecheckPull functionTerm
-    Pi argumentName domain codomain <- normalizeToPi functionType functionTerm (text "in application") (text "operator")
+  App f a -> debugPush "typecheckPush App" t q $ do
+    -- 3 Things to do here:
+    -- 1. Pull the function type and get a result type.
+    -- 2. Push the domain of the function type (A) into the argument (a).
+    -- 3. In the codomain (R) substitute the formal parameter (a') for the actual argument value (a) and check that this matches the expected type (B).
 
-    -- TODO avoid rechecking
-    typedDomain <- typecheckPull domain
-    -- I think we should use typecheckPush codomain q here. But this probably requires some 
-    typedCodomain <- bind argumentName (ResidualVar argumentName, typedDomain) $
-            typecheckPull codomain
+    -- Γ ⊢ f  pull  (Pi a' A -> R)    Γ ⊢ a  push  A    R[a'/a] ≡(β?) B
+    -- ----------------------------------------------------------------
+    -- Γ ⊢ f a  push  B
 
-    -- Check that argument is of the expected type (that is the domain of the function).
-    typedArgument@(MkTypedTerm _ argumentType) <- typecheckPush argumentTerm typedDomain
-    -- Check that the result of the application, that is the codomain
-    -- is of the applied function, that is the type of the body is the
-    -- same as what we expect of the whole term (q).
-    bidiExpected typedCodomain q t
+    -- 1.
+    -- NOTE this should already be normalized (because typecheck should only return normalized types)!
+    -- NOTE well, it's not, apparently. Can't figure it out right now.
+    typedFunction@(MkTypedTerm _ (MkTypedTerm (Pi a' typeA typeR) _)) <- typecheckPull f
 
-    -- TODO get rid of subst?
-    return (MkTypedTerm (App typedFunction typedArgument)
-                        (typedSubst typedCodomain argumentName typedArgument))
+    -- 2.
+    typedArgument <- typecheckPush a typeA
+   
+    -- 3. (B is actually the pushed term q)
+    bidiExpected (typedSubst typeR a' typedArgument) q t
 
-  -- abstraction (fully annotated)
+    return (MkTypedTerm (App typedFunction typedArgument) q)
+
+
   -- TODO unannotated abstractions
   Lam argumentName declaredDomain body -> debugPush "typecheckPush Abs" t q $ do
     -- TODO not sure whether this is actually needed
