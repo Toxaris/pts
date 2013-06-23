@@ -79,6 +79,7 @@ expr = term simple rec mkPos "expression" where
     , intop (read "div") Div simple
     , mkConst <$> const
     , mkUnquote <$> unquote
+    , mkInfer <$> infer 
     , var mkVar ident
     , mkInt <$> number ]
 
@@ -140,6 +141,11 @@ meta = lexem (do char '$'
                  rest <- many (satisfy (\c -> isAlphaNum c || c `elem` "'_"))
                  return (read ('$' : first : rest)))
          <?> "meta variable name"
+
+infer = lexem (do char '_'
+                  n <- getState
+                  updateState (+1)
+                  return n)
 
 ident = lexem (do name <- namepart
                   when (Prelude.all (== '*') name) $
@@ -234,9 +240,8 @@ formatError expectedName src err
      ----------------------
     -- RUNNING the PARSER --
      ----------------------
-
 parseInternal parser file text = do
-  case parse (skipSpace *> parser <* eof) file text of
+  case runParser (skipSpace *> parser <* eof) 0 file text of
     Left e -> throwError . pure . formatError file text $ e
     Right r -> return r
 
@@ -248,7 +253,7 @@ parseFile = parseInternal file
 
 parseTermAtPos :: Monad m => String -> Int -> Int -> String -> m Term
 parseTermAtPos file line col text =
-    case parse p file text of
+    case runParser p 0 file text of
       Left err  -> fail $ show err
       Right e   -> return e
   where

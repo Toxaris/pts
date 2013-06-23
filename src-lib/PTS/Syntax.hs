@@ -35,6 +35,7 @@ module PTS.Syntax
   , mkPi
   , mkPos
   , mkUnquote
+  , mkInfer
   , handlePos
     -- ** Typed terms
   , TypedTerm

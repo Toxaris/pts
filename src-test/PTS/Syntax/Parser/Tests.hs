@@ -56,4 +56,6 @@ tests
      ,  testParser "Pi (x : y) (y : x) . y" (mkPi x (mkVar y) (mkPi y (mkVar x) (mkVar y)))
      ,  testParser "lambda (x : y) (y : x) . y" (mkLam x (mkVar y) (mkLam y (mkVar x) (mkVar y)))
      ,  testParser "lambda (x : e) (y z : f) . x" (mkLam x (mkVar e) (mkLam y (mkVar f) (mkLam z (mkVar f) (mkVar x))))
+     ,  testParser "_" (mkInfer 0)
+     ,  testParser "lambda x : _ . x" (mkLam x (mkInfer 0) (mkVar x))
      ]

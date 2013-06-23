@@ -15,6 +15,7 @@ module PTS.Syntax.Term
   , mkPi
   , mkPos
   , mkUnquote
+  , mkInfer
   , freshvarl
   , handlePos
   , typedHandlePos
@@ -88,6 +89,7 @@ data TermStructure alpha
   | Pi      Name alpha alpha
   | Pos     Position alpha
   | Unquote alpha
+  | Infer   Integer
   deriving (Functor, Data, Typeable)
 
 -- | Desugar a binder with multiple arguments like this:
@@ -129,6 +131,7 @@ mkLam n t1 t2      =  mkTerm (Lam n t1 t2)
 mkPi n t1 t2       =  mkTerm (Pi n t1 t2)
 mkPos p t          =  mkTerm (Pos p t)
 mkUnquote t        =  mkTerm (Unquote t)
+mkInfer i          =  mkTerm (Infer i)
 
 handlePos f p t = annotatePos p $ mkPos p <$> f t
 
