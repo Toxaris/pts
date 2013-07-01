@@ -57,5 +57,10 @@ tests
      ,  testParser "lambda (x : y) (y : x) . y" (mkLam x (mkVar y) (mkLam y (mkVar x) (mkVar y)))
      ,  testParser "lambda (x : e) (y z : f) . x" (mkLam x (mkVar e) (mkLam y (mkVar f) (mkLam z (mkVar f) (mkVar x))))
      ,  testParser "_" (mkInfer 0)
+     ,  testParser "_1" (mkInfer 1)
      ,  testParser "lambda x : _ . x" (mkLam x (mkInfer 0) (mkVar x))
-     ]
+     ,  testParser "_ _" (mkApp (mkInfer 0) (mkInfer 1))
+     ,  testParser "_1 _" (mkApp (mkInfer 1) (mkInfer 0))
+     ,  testParser "_ _2 _ _ _3 _700 _" (mkApp (mkApp (mkApp (mkApp (mkApp (mkApp (mkInfer 0) (mkInfer 2)) (mkInfer 1)) (mkInfer 4)) (mkInfer 3)) (mkInfer 700)) (mkInfer 5))
+     ,  testParser "_2 _2" (mkApp (mkInfer 2) (mkInfer 2))
+   ]
