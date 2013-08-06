@@ -74,6 +74,7 @@ normalize term = decompose emptyEnv Top term where
     Lam n t1 t2      ->  continueLam env env n t1 t2 ctx
     Pi n t1 t2       ->  decompose env (Pi1 n ctx t2) t1
     Pos p t          ->  decompose env ctx t
+    Infer _          ->  t
 
   continueTerm !env !t  !Top                   =  t
   continueTerm !_   !t  !(Local env ctx)       =  continueTerm env t ctx
