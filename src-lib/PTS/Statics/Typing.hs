@@ -394,6 +394,11 @@ bidiExpected actualType expectedType checkedTerm = do
      else prettyFail $ text "Type error, checking" <+> (pretty 0 checkedTerm) <+> text "got type" <+> (pretty 0 actualType) <+> text "but expected" <+>  (pretty 0 expectedType)
 
 
+structure' :: Structure term => term -> TermStructure term
+structure' t = case structure t of
+  Pos _ t -> structure' t
+  t -> t
+
 -- Checking rule in bidirectional type checking.
 -- First argument (t) is the term to typecheck.
 -- Second argument (q) is its expected type.
@@ -439,21 +444,17 @@ typecheckPush t q = case structure t of
     -- 2. Push the domain of the function type (A) into the argument (a).
     -- 3. In the codomain (R) substitute the formal parameter (a') for the actual argument value (a) and check that this matches the expected type (B).
 
-    -- Γ ⊢ f  pull  (Pi a' A -> R)    Γ ⊢ a  push  A    R[a'/a] ≡(β?) B
-    -- ----------------------------------------------------------------
+    -- Γ ⊢ f  pull  (Pi a' A -> R)    Γ ⊢ a  push  A    R[a'/a] ≡β B
+    -- -------------------------------------------------------------
     -- Γ ⊢ f a  push  B
 
     -- 1.
-    -- NOTE this should already be normalized (because typecheck should only return normalized types)!
-    -- NOTE well, it's not, apparently. Can't figure it out right now.
-    typedFunction@(MkTypedTerm _ (MkTypedTerm (Pi a' typeA typeR) _)) <- typecheckPull f
-
+    typedFunction <- typecheckPull f
+    let (Pi a' typeA typeR) = structure' (typeOf typedFunction)
     -- 2.
     typedArgument <- typecheckPush a typeA
-   
     -- 3. (B is actually the pushed term q)
     bidiExpected (typedSubst typeR a' typedArgument) q t
-
     return (MkTypedTerm (App typedFunction typedArgument) q)
 
 
