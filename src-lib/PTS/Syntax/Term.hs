@@ -55,6 +55,12 @@ instance Structure Term where
 instance Structure TypedTerm where
   structure (MkTypedTerm t _) = t
 
+-- | Return the actual TermStructure of a Term-like thing without Pos nodes.
+structure' :: Structure term => term -> TermStructure term
+structure' t = case structure t of
+  Pos _ t -> structure' t
+  t -> t
+
 typeOf :: TypedTerm -> TypedTerm
 typeOf (MkTypedTerm _ t) = t
 

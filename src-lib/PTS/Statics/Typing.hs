@@ -394,11 +394,6 @@ bidiExpected actualType expectedType checkedTerm = do
      else prettyFail $ text "Type error, checking" <+> (pretty 0 checkedTerm) <+> text "got type" <+> (pretty 0 actualType) <+> text "but expected" <+>  (pretty 0 expectedType)
 
 
-structure' :: Structure term => term -> TermStructure term
-structure' t = case structure t of
-  Pos _ t -> structure' t
-  t -> t
-
 -- Checking rule in bidirectional type checking.
 -- First argument (t) is the term to typecheck.
 -- Second argument (q) is its expected type.
