@@ -106,6 +106,8 @@ prettyAlgebra (IfZero (_, c) (_, t) (_, e)) = Composite pIf0 $
       , nest 2 $ text "then" <+> pretty pIf0 t
       , nest 2 $ text "else" <+> pretty pIf0 e ]
 
+prettyAlgebra (Infer n) = Atomic $ text "_" <> integer n
+
 prettyAlgebra (Var n) = Atomic $
   pretty 0 n
 

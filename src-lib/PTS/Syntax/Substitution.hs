@@ -55,6 +55,7 @@ subst t x t' = case structure t of
     in mkPi newy (subst t1 x t') (subst newt2 x t')
   Pi y t1 t2 | x == y   ->  mkPi y (subst t1 x t') t2
   Pos p t               ->  mkPos p (subst t x t') -- delete pos annotation here?
+  Infer i               ->  mkInfer i
 
 typedSubst :: TypedTerm -> Name -> TypedTerm -> TypedTerm
 typedSubst t x t' = case structure t of
@@ -74,6 +75,7 @@ typedSubst t x t' = case structure t of
     in MkTypedTerm (Pi newy (typedSubst t1 x t') (typedSubst newt2 x t')) (typeOf t)
   Pi y t1 t2 | x == y   ->  MkTypedTerm (Pi y (typedSubst t1 x t') t2) (typeOf t)
   Pos p t               ->  MkTypedTerm (Pos p (typedSubst t x t')) (typeOf t) -- delete pos annotation here?
+  Infer i               ->  MkTypedTerm (Infer i) (typeOf t)
 
 freshCommonVar
   :: Name -> Name -> Term -> Term -> (Name, Term, Term)

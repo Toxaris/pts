@@ -12,6 +12,7 @@ import Data.Char
 import Data.Either
 import Data.Eq
 import Data.Foldable
+import Data.List ((\\))
 
 import System.IO
 
@@ -79,6 +80,7 @@ expr = term simple rec mkPos "expression" where
     , intop (read "div") Div simple
     , mkConst <$> const
     , mkUnquote <$> unquote
+    , mkInfer <$> infer
     , var mkVar ident
     , mkInt <$> number ]
 
@@ -140,6 +142,18 @@ meta = lexem (do char '$'
                  rest <- many (satisfy (\c -> isAlphaNum c || c `elem` "'_"))
                  return (read ('$' : first : rest)))
          <?> "meta variable name"
+
+infer = lexem (do char '_'
+                  n <- number
+                  ~(available, explicits) <- getState
+                  setState (available, n:explicits)
+                  return n)
+        <|>
+        lexem (do char '_'
+                  ~(available, explicits) <- getState
+                  setState (tail available, explicits)
+                  return $ head available)
+        
 
 ident = lexem (do name <- namepart
                   when (Prelude.all (== '*') name) $
@@ -236,9 +250,14 @@ formatError expectedName src err
      ----------------------
 
 parseInternal parser file text = do
-  case parse (skipSpace *> parser <* eof) file text of
+  let result = runParser (do result <- (skipSpace *> parser <* eof)
+                             state <- getState
+                             return (result, state)) initialState file text
+      initialState = case result of
+                       ~(Right (_, (available, used))) -> ([0..] \\ used, [])
+  case result of
     Left e -> throwError . pure . formatError file text $ e
-    Right r -> return r
+    Right (ast, state) -> return ast
 
 parseStmt = parseInternal stmt
 
@@ -248,9 +267,14 @@ parseFile = parseInternal file
 
 parseTermAtPos :: Monad m => String -> Int -> Int -> String -> m Term
 parseTermAtPos file line col text =
-    case parse p file text of
+  let result = runParser (do result <- p
+                             state <- getState
+                             return (result, state)) initialState file text
+      initialState = case result of
+                       ~(Right (_, (available, used))) -> ([0..] \\ used, [])
+  in case result of
       Left err  -> fail $ show err
-      Right e   -> return e
+      Right (e, state) -> return e
   where
     p = do  pos <- getPosition
             setPosition $

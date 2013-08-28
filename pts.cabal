@@ -63,6 +63,7 @@ Library
                        PTS.Syntax.Substitution
                        PTS.Syntax.Term
                        PTS.Transform
+  Ghc-options: -fwarn-incomplete-patterns
 
 Executable pts
   Hs-source-dirs:      src-exec

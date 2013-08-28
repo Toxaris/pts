@@ -97,6 +97,7 @@ instance Lift Term where
   lift (MkTerm (Pi      v  t  e))        =  con 'MkTerm  [con 'Pi      [lift v, lift t, lift e]]
   lift (MkTerm (Unquote t))              =  unquote t
   lift (MkTerm (Pos     p  e))           =  lift e
+  lift (MkTerm (Infer   i))              =  con 'MkTerm  [con 'Infer   [lift i]]
 
 class Unquote e where
   unquote :: PatOrExp t => e -> Q t
