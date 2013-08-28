@@ -17,6 +17,7 @@ module PTS.Syntax
     -- ** Term structure
   , TermStructure (..)
   , Structure (structure)
+  , structure'
     -- ** Folding
   , PreAlgebra
   , Algebra

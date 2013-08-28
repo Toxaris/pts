@@ -4,6 +4,7 @@ module PTS.Syntax.Term
   , TypedTerm (..)
   , TermStructure (..)
   , Structure (structure)
+  , structure'
   , typeOf
   , mkInt
   , mkIntOp
