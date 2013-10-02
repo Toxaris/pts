@@ -12,3 +12,13 @@ parameters to be omitted."
 This should be the same type for both x and y. But I am not so sure this is
 actually guaranteed since there is no unification.
 > assert (lambda f : Int -> Int -> Int . f 2 3) (lambda (x y : _) . add x y) = 5;
+
+
+
+> double (X : *) (f : X -> X) (x : X) = f (f x);
+
+> add1Twice = double Int (lambda x : _ . add 1 x);
+
+I think this should work too, (c.f. Pierce p.35) but currently does not:
+
+> add1Twice2 = double _ (lambda x : Int . add 1 x);
