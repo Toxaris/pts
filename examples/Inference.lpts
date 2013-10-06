@@ -19,6 +19,6 @@ actually guaranteed since there is no unification.
 
 > add1Twice = double Int (lambda x : _ . add 1 x);
 
-I think this should work too, (c.f. Pierce p.35) but currently does not:
+Since the second half of the Pierce paper is not currently implemented, this will not work:
 
-> add1Twice2 = double _ (lambda x : Int . add 1 x);
+  add1Twice2 = double _ (lambda x : Int . add 1 x);
