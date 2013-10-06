@@ -13,7 +13,10 @@ This should be the same type for both x and y. But I am not so sure this is
 actually guaranteed since there is no unification.
 > assert (lambda f : Int -> Int -> Int . f 2 3) (lambda (x y : _) . add x y) = 5;
 
+There is syntactic sugar:
+> assert (lambda f : Int -> Int . f 1) (lambda x . add 1 x) = 2;
 
+> assert (lambda f : Int -> Int -> Int . f 2 3) (lambda (x y) . add x y) = 5;
 
 > double (X : *) (f : X -> X) (x : X) = f (f x);
 
@@ -30,3 +33,4 @@ This:
 should be the same as this:
 > foo2 : Int -> Int
 >  = lambda x : Int . x;
+

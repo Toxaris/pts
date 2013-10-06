@@ -39,7 +39,7 @@ term simple rec pos msg = result where
 
 -- right-recursive syntax pattern: "lambda ident : qualifier . body"
 abs cons lambda ident colon qualifier dot body
-  = cons <$> try (lambda *> ident <* colon) <*> qualifier <*> (dot *> body)
+  = cons <$> try (lambda *> ident) <*> inferredOrExplicitType <*> (dot *> body)
 
 -- left-recursive syntax pattern: "x -> y"
 arr cons arrow simple = flip cons <$> (arrow *> simple)
@@ -107,7 +107,9 @@ stmts = many (optional pragma *> stmt)
 
 args = many (parens argGroup)
 
-argGroup = (,) <$> names <* colon1 <*> expr
+inferredOrExplicitType = (colon1 *> expr) <|> (mkInfer <$> nextInfer)
+
+argGroup = (,) <$> names <*> inferredOrExplicitType
 
 file = File <$> optionMaybe (keyword "module" *> modname <* semi) <*> stmts
 
@@ -143,6 +145,10 @@ meta = lexem (do char '$'
                  return (read ('$' : first : rest)))
          <?> "meta variable name"
 
+nextInfer = do ~(available, explicits) <- getState
+               setState (tail available, explicits)
+               return $ head available
+
 infer = lexem (do char '_'
                   n <- number
                   ~(available, explicits) <- getState
@@ -150,9 +156,7 @@ infer = lexem (do char '_'
                   return n)
         <|>
         lexem (do char '_'
-                  ~(available, explicits) <- getState
-                  setState (tail available, explicits)
-                  return $ head available)
+                  nextInfer)
         
 
 ident = lexem (do name <- namepart
