@@ -96,24 +96,15 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   env <- get
 
   -- typecheck type
-  MkTypedTerm _ q' <- runEnvironmentT (typecheckPull t'') env
+  qq@(MkTypedTerm _ q') <- runEnvironmentT (typecheckPull t'') env
   case structure (nbe env (strip q')) of
     Const _ -> return ()
     _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
                          $$ text "  expected:" <+> text "constant"
                          $$ text "     found:" <+> pretty 0 q'
 
-  -- typecheck body
-  MkTypedTerm _ q <- runEnvironmentT (typecheckPull t) env
-
-  -- compare specified and actual type
-  if equivTerm env (strip q) t''
-    then output (nest 2 (sep [text "type:", nest 2 (pretty 0 (strip t') )]))
-    else let (expected, given) = showDiff 0 (diff (nbe env t'' ) (nbe env (strip q))) in
-           prettyFail $ text "Type mismatch in top-level binding of" <+> pretty 0 n
-                     $$ text "  specified type:" <+> pretty 0 t'
-                     $$ text "     normal form:" <+> text expected
-                     $$ text "     actual type:" <+> text given
+  -- use declared type to typecheck push
+  MkTypedTerm _ q <- runEnvironmentT (typecheckPush t qq) env
 
   let v = evalTerm env t
   modify ((n, (v, q)) :)

@@ -22,3 +22,11 @@ actually guaranteed since there is no unification.
 Since the second half of the Pierce paper is not currently implemented, this will not work:
 
   add1Twice2 = double _ (lambda x : Int . add 1 x);
+
+
+This:
+> foo : Int -> Int
+>  = lambda x : _ . x;
+should be the same as this:
+> foo2 : Int -> Int
+>  = lambda x : Int . x;

@@ -383,6 +383,9 @@ typecheckPull t = case structure t of
     -- trace ("End: "++(show ctx) ++ " |- " ++ (show t) ++ " : "++(show x)) (return ())
     return x
 
+  Infer _ -> do
+    prettyFail $ text "Attempted to pull pull a type from an underscore. Most likely there is an underscore at a position where type inference is impossible. The offending underscore is" <+> pretty 0 t
+
 -- Check whether actualType is beta equivalent to expectedType.
 -- checkedTerm is only used for error reporting.
 bidiExpected actualType expectedType checkedTerm = do
@@ -457,27 +460,27 @@ typecheckPush t q = case structure t of
   Lam argumentName declaredDomain body -> debugPush "typecheckPush Abs" t q $ case structure' declaredDomain of
     -- Domain is not actually declared but needs to be inferred.
     Infer n -> do
-      case q of
-        (MkTypedTerm expectedFunctionType@(Pi _ expectedDomain expectedCodomain) kind) -> do
+      case structure' q of
+        expectedFunctionType@(Pi _ expectedDomain expectedCodomain) -> do
           let argumentType = expectedDomain
           safebind argumentName argumentType body $ \newArgumentName newBody -> do
-          typedNewBody@(MkTypedTerm _ newCodomain) <- typecheckPush newBody expectedCodomain
+          typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody expectedCodomain
           return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
                               (MkTypedTerm (Pi newArgumentName expectedDomain newCodomain) kind))
-        _ -> prettyFail $ text "Expected a function type for" <+> pretty 0 q <+> text "but got" <+> pretty 0 t
+        _ -> prettyFail $ text "Expected a function type for" <+> pretty 0 t <+> text "but got" <+> pretty 0 q
     -- Domain is declared, check that it is correct.
     _       -> do
       -- TODO not sure whether this is actually needed
       argumentType <- typecheckPull declaredDomain
       -- Check whether we actually expect a lambda abstraction, that is a Pi-type. Fail immediately otherwise.
-      case q of
-        (MkTypedTerm expectedFunctionType@(Pi _ expectedDomain expectedCodomain) kind) -> do
+      case structure' q of
+        expectedFunctionType@(Pi _ expectedDomain expectedCodomain) -> do
           -- Need to check two things here:
           --  1. does the declared argument type match the expected domain
           bidiExpected argumentType expectedDomain t
           --  2. does the body have the type of the expected codomain (typecheckPush in extended environment)
           safebind argumentName argumentType body $ \newArgumentName newBody -> do
-          typedNewBody@(MkTypedTerm _ newCodomain) <- typecheckPush newBody expectedCodomain
+          typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody expectedCodomain
           -- Both succeed, so return the term (=lambda) with its type (=pi).
           -- This is a bit more cumbersome than expected, we actually want to just return a (MkTypedTerm t q).
           -- But the returned t is t with a new argument name and body,

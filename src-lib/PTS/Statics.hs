@@ -1,5 +1,6 @@
 module PTS.Statics
-  ( typecheckPull
+  ( typecheckPull,
+    typecheckPush
   ) where
 
 import PTS.Statics.Typing
