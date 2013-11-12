@@ -1,4 +1,4 @@
-{-# LANGUAGE NoMonomorphismRestriction, DeriveFunctor, DeriveDataTypeable #-}
+{-# LANGUAGE NoMonomorphismRestriction, DeriveFunctor, DeriveDataTypeable, StandaloneDeriving #-}
 module PTS.Syntax.Term
   ( Term (..)
   , TypedTerm (..)
@@ -71,7 +71,7 @@ data BinOp
   | Sub
   | Mul
   | Div
-  deriving (Eq, Data, Typeable)
+  deriving (Eq, Data, Typeable, Show)
 
 returnLift2 :: (a -> b -> c) -> a -> b -> Maybe c
 returnLift2 = ((Just .) .)
@@ -98,6 +98,8 @@ data TermStructure alpha
   | Unquote alpha
   | Infer   Integer
   deriving (Functor, Data, Typeable)
+
+deriving instance Show a => Show (TermStructure a)
 
 -- | Desugar a binder with multiple arguments like this:
 --
