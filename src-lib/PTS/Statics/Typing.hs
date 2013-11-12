@@ -389,7 +389,8 @@ typecheckPull t = case structure t of
 
 -- Check whether actualType is beta equivalent to expectedType.
 -- checkedTerm is only used for error reporting.
-bidiExpected actualType expectedType checkedTerm = do
+bidiExpected :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => TypedTerm -> TypedTerm -> Term -> String -> m ()
+bidiExpected actualType expectedType checkedTerm context = do
   let actualType' = strip actualType
   let expectedType' = strip expectedType
   env <- getEnvironment
@@ -397,7 +398,8 @@ bidiExpected actualType expectedType checkedTerm = do
      then return ()
      else do
        let (actual, expected) = showDiff 0 (diff actualType' expectedType')
-       prettyFail $ text "Type error. We expected two terms to be equivalent but they are not."
+       prettyFail $ text "Type error: we expected two terms to be equivalent but they are not."
+                 $$ text context
                  $$ text "Checked term:" <+> pretty 0 checkedTerm
                  $$ text "Actual type:" <+> pretty 0 actualType
                  $$ text "But we expected type:" <+> pretty 0 expectedType
@@ -423,7 +425,7 @@ typecheckPush t q = case structure t of
   Var x -> debugPush "typecheckPush Var" t q $ do
     xt <- lookupType x
     case xt of
-      Just xt -> do bidiExpected xt q t
+      Just xt -> do bidiExpected xt q t "A variable from the environment has an unexpected type."
                     return (MkTypedTerm (Var x) xt)
       Nothing ->
         fail $ "Unbound identifier: " ++ show x
@@ -462,7 +464,7 @@ typecheckPush t q = case structure t of
         -- 2.
         typedArgument <- typecheckPush a typeA
         -- 3. (B is actually the pushed term q)
-        bidiExpected (typedSubst typeR a' typedArgument) q t
+        bidiExpected (typedSubst typeR a' typedArgument) q t "The function has an unexpected codomain."
         return (MkTypedTerm (App typedFunction typedArgument) q)
       _ -> do
         prettyFail $ text "In type checking a push application, found the term in function position to not be of a function type."
@@ -491,7 +493,7 @@ typecheckPush t q = case structure t of
         expectedFunctionType@(Pi _ expectedDomain expectedCodomain) -> do
           -- Need to check two things here:
           --  1. does the declared argument type match the expected domain
-          bidiExpected argumentType expectedDomain t
+          bidiExpected argumentType expectedDomain t "In a lambda abstraction, the declared argument type does not match the expected domain."
           --  2. does the body have the type of the expected codomain (typecheckPush in extended environment)
           safebind argumentName argumentType body $ \newArgumentName newBody -> do
           typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody expectedCodomain
@@ -507,14 +509,14 @@ typecheckPush t q = case structure t of
   -- Int
   Int i -> debugPush "typecheckPush Int" t q $ do
     int' <- typecheckPull (mkConst int)
-    bidiExpected int' q t
+    bidiExpected int' q t "An integer literal is not expected to be one."
     return (MkTypedTerm (Int i) int')
 
   -- IntOp
   IntOp opName opFunction t1 t2 -> debugPush "typecheckPush IntOp" t q $ do
     integerType <- typecheckPull (mkConst int)
     -- Check that we actually expect an int
-    bidiExpected integerType q t
+    bidiExpected integerType q t "An integer operation is not expected to be one."
     -- Ok, we're in the right case. Descend into arguments.
     typedT1 <- typecheckPush t1 integerType
     typedT2 <- typecheckPush t2 integerType
