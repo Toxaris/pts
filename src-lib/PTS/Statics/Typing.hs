@@ -395,7 +395,15 @@ bidiExpected actualType expectedType checkedTerm = do
   env <- getEnvironment
   if equivTerm env actualType' expectedType'
      then return ()
-     else prettyFail $ text "Type error, checking" <+> (pretty 0 checkedTerm) <+> text "got type" <+> (pretty 0 actualType) <+> text "but expected" <+>  (pretty 0 expectedType)
+     else do
+       let (actual, expected) = showDiff 0 (diff actualType' expectedType')
+       prettyFail $ text "Type error. We expected two terms to be equivalent but they are not."
+                 $$ text "Checked term:" <+> pretty 0 checkedTerm
+                 $$ text "Actual type:" <+> pretty 0 actualType
+                 $$ text "But we expected type:" <+> pretty 0 expectedType
+                 $$ text "Difference"
+                 $$ text "  actual:  " <+> text actual
+                 $$ text "  expected:" <+> text expected
 
 
 -- Checking rule in bidirectional type checking.
