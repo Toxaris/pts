@@ -96,7 +96,7 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   env <- get
 
   -- typecheck type
-  qq@(MkTypedTerm _ q') <- runEnvironmentT (typecheckPull t'') env
+  qq@(MkTypedTerm _ q') <- runEnvironmentT (typecheckPull (nbe env t'')) env
   case structure (nbe env (strip q')) of
     Const _ -> return ()
     _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
