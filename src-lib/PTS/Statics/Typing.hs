@@ -486,13 +486,13 @@ typecheckPush t q = case structure t of
                   $$ text "This might or might not be a bug in the type checker."
 
   -- abstraction
-  Lam argumentName declaredDomain body -> debugPush "typecheckPush Abs" t q $ case structure' declaredDomain of
+  Lam declaredName declaredDomain body -> debugPush "typecheckPush Abs" t q $ case structure' declaredDomain of
     -- Domain is not actually declared but needs to be inferred.
     Infer n -> do
       case structure' q of
         expectedFunctionType@(Pi _ expectedDomain expectedCodomain) -> do
           let argumentType = expectedDomain
-          safebind argumentName argumentType body $ \newArgumentName newBody -> do
+          safebind declaredName argumentType body $ \newArgumentName newBody -> do
             typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody expectedCodomain
             return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
                                 (MkTypedTerm (Pi newArgumentName expectedDomain newCodomain) kind))
@@ -503,13 +503,13 @@ typecheckPush t q = case structure t of
       argumentType <- typecheckPull (nbe env declaredDomain)
       -- Check whether we actually expect a lambda abstraction, that is a Pi-type. Fail immediately otherwise.
       case structure' q of
-        expectedFunctionType@(Pi _ expectedDomain expectedCodomain) -> do
+        expectedFunctionType@(Pi expectedName expectedDomain expectedCodomain) -> do
           -- Need to check two things here:
           --  1. does the declared argument type match the expected domain
           bidiExpected argumentType expectedDomain t "In a lambda abstraction, the declared argument type does not match the expected domain."
           --  2. does the body have the type of the expected codomain (typecheckPush in extended environment)
-          safebind argumentName argumentType body $ \newArgumentName newBody -> do
-            typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody expectedCodomain
+          safebind declaredName argumentType body $ \newArgumentName newBody -> do
+            typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody (typedSubst expectedCodomain expectedName (MkTypedTerm (Var  newArgumentName) expectedDomain))
             -- Both succeed, so return the term (=lambda) with its type (=pi).
             -- This is a bit more cumbersome than expected, we actually want to just return a (MkTypedTerm t q).
             -- But the returned t is t with a new argument name and body,
