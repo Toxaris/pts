@@ -186,7 +186,7 @@ prettyRelations pts s1 s2 =
     (relations pts s1 s2)
 
 typecheck t = case structure t of
-  _ -> do prettyFail $ text "plain typecheck called. This should not happen anymore."
+--  _ -> do prettyFail $ text "plain typecheck called. This should not happen anymore."
   -- constant
   Const c -> debug "typecheck Const" t $ do
     pts <- asks optInstance
@@ -283,6 +283,12 @@ typecheck t = case structure t of
 
 
 typecheckPull :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m TypedTerm
+-- typecheckPull t = do masterResult <- typecheck t
+--                      result <- typecheckPull' t
+--                      bidiExpected result masterResult t "typecheckPull sanity check"
+--                      return result
+
+
 typecheckPull t = case structure t of
   -- constant
   Const c -> debug "typecheckPull Const" t $ do
@@ -292,6 +298,8 @@ typecheckPull t = case structure t of
       _       ->  prettyFail $ text "Unknown constant:" <+> pretty 0 c
 
   Var x -> debug "typecheckPull Var" t $ do
+    ctx <- getEnvironment
+    log $ "Context: " ++ showCtx ctx
     xt <- lookupType x
     case xt of
       Just xt -> do
@@ -414,6 +422,11 @@ bidiExpected actualType expectedType checkedTerm context = do
 --   The second argument is of the form (MkTypedTerm type kind) where type is the actual expected
 --   type of the first argument and kind is the type of type.
 typecheckPush :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> TypedTerm -> m TypedTerm
+-- typecheckPush t q = do masterResult <- typecheck t
+--                        result <- typecheckPush' t q
+--                        bidiExpected result masterResult t "typecheckPush sanity check"
+--                        return result
+
 typecheckPush t q = case structure t of
   -- constant
   Const c -> debugPush "typecheckPush Const" t q $ do
@@ -480,9 +493,9 @@ typecheckPush t q = case structure t of
         expectedFunctionType@(Pi _ expectedDomain expectedCodomain) -> do
           let argumentType = expectedDomain
           safebind argumentName argumentType body $ \newArgumentName newBody -> do
-          typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody expectedCodomain
-          return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
-                              (MkTypedTerm (Pi newArgumentName expectedDomain newCodomain) kind))
+            typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody expectedCodomain
+            return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
+                                (MkTypedTerm (Pi newArgumentName expectedDomain newCodomain) kind))
         _ -> prettyFail $ text "Expected a function type for" <+> pretty 0 t <+> text "but got" <+> pretty 0 q
     -- Domain is declared, check that it is correct.
     _       -> do
@@ -496,13 +509,13 @@ typecheckPush t q = case structure t of
           bidiExpected argumentType expectedDomain t "In a lambda abstraction, the declared argument type does not match the expected domain."
           --  2. does the body have the type of the expected codomain (typecheckPush in extended environment)
           safebind argumentName argumentType body $ \newArgumentName newBody -> do
-          typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody expectedCodomain
-          -- Both succeed, so return the term (=lambda) with its type (=pi).
-          -- This is a bit more cumbersome than expected, we actually want to just return a (MkTypedTerm t q).
-          -- But the returned t is t with a new argument name and body,
-          -- and the returned q is q with a new argument name and new codomain.
-          return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
-                              (MkTypedTerm (Pi newArgumentName expectedDomain newCodomain) kind))
+            typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody expectedCodomain
+            -- Both succeed, so return the term (=lambda) with its type (=pi).
+            -- This is a bit more cumbersome than expected, we actually want to just return a (MkTypedTerm t q).
+            -- But the returned t is t with a new argument name and body,
+            -- and the returned q is q with a new argument name and new codomain.
+            return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
+                                (MkTypedTerm (Pi newArgumentName expectedDomain newCodomain) kind))
         _ -> prettyFail $ text "Expected" <+> pretty 0 q <+> text "but found" <+> pretty 0 t
 
 
