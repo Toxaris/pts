@@ -490,10 +490,10 @@ typecheckPush t q = case structure t of
     -- Domain is not actually declared but needs to be inferred.
     Infer n -> do
       case structure' q of
-        expectedFunctionType@(Pi _ expectedDomain expectedCodomain) -> do
+        expectedFunctionType@(Pi expectedName expectedDomain expectedCodomain) -> do
           let argumentType = expectedDomain
           safebind declaredName argumentType body $ \newArgumentName newBody -> do
-            typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody expectedCodomain
+            typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody (typedSubst expectedCodomain expectedName (MkTypedTerm (Var newArgumentName) expectedDomain))
             return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
                                 (MkTypedTerm (Pi newArgumentName expectedDomain newCodomain) kind))
         _ -> prettyFail $ text "Expected a function type for" <+> pretty 0 t <+> text "but got" <+> pretty 0 q
@@ -509,7 +509,7 @@ typecheckPush t q = case structure t of
           bidiExpected argumentType expectedDomain t "In a lambda abstraction, the declared argument type does not match the expected domain."
           --  2. does the body have the type of the expected codomain (typecheckPush in extended environment)
           safebind declaredName argumentType body $ \newArgumentName newBody -> do
-            typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody (typedSubst expectedCodomain expectedName (MkTypedTerm (Var  newArgumentName) expectedDomain))
+            typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody (typedSubst expectedCodomain expectedName (MkTypedTerm (Var newArgumentName) expectedDomain))
             -- Both succeed, so return the term (=lambda) with its type (=pi).
             -- This is a bit more cumbersome than expected, we actually want to just return a (MkTypedTerm t q).
             -- But the returned t is t with a new argument name and body,
