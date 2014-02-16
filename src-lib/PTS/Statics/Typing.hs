@@ -160,7 +160,7 @@ normalizeToInt t' t context info = do
   let stripT' = strip t'
   env <- getEnvironment
   if equivTerm env stripT' (mkConst int)
-    then typecheck (mkConst int)
+    then typecheckPull (mkConst int)
     else let t'' = nbe env stripT'
           in prettyFail $ msgNotInt context info t t'' int
 
@@ -184,119 +184,34 @@ msgNotPi context info t t'
     sep [info <> text ":", nest 2 (pretty 0 t)] $$
     sep [text "Type of" <+> info <> text ":", nest 2 (pretty 0 t')])
 
-typecheck :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m TypedTerm
---typecheck p d ctx t | mytrace d ctx t = undefined
---
 prettyRelations pts s1 s2 =
   maybe
     (prettyFail $ let s1t = pretty 0 s1; s2t = pretty 0 s2 in text "in this PTS you can't abstract on expressions of sort" <+> s1t <+> text "in expressions of sort" <+> s2t <+> text ": no relation" <+> s1t <+> text ":" <+> s2t)
     return
     (relations pts s1 s2)
 
-typecheck t = case structure t of
---  _ -> do prettyFail $ text "plain typecheck called. This should not happen anymore."
-  -- constant
-  Const c -> debug "typecheck Const" t $ do
-    pts <- asks optInstance
-    case axioms pts c of
-      Just t  ->  return (MkTypedTerm (Const c) t)
-      _       ->  prettyFail $ text "Unknown constant:" <+> pretty 0 c
-
-  -- start
-  Var x -> debug "typecheck Var" t $ do
-    xt <- lookupType x
-    case xt of
-      Just xt -> do
-        -- s <- typecheck xt
-        -- normalizeToSort s xt (text "in variable") (text "as type of" <+> pretty 0 x)
-        return (MkTypedTerm (Var x) xt)
-
-      Nothing ->
-        fail $ "Unbound identifier: " ++ show x
-
-  -- product
-  Pi x a b -> debug "typecheck Fun" t $ do
-    a'@(MkTypedTerm _ s1) <- typecheck a
-    s1' <- normalizeToSort s1 a (text "in product type") (text "as domain")
-
-    safebind x a' b $ \newx newb -> do
-      newb'@(MkTypedTerm _ s2) <- typecheck newb
-      s2' <- normalizeToSort s2 newb (text "in product type") (text "as codomain")
-
-      pts <- asks optInstance
-      s3 <- prettyRelations pts s1' s2'
-      return (MkTypedTerm (Pi newx a' newb') s3)
-
-  -- application
-  App t1 t2 -> debug "typecheck App" t $ do
-    t1'@(MkTypedTerm _ tt1) <- typecheck t1
-    Pi x a b <- normalizeToPi tt1 t1 (text "in application") (text "operator")
-
-    -- TODO avoid rechecking
-    a' <- typecheck a
-    b' <- bind x (ResidualVar x, a') $
-            typecheck b
-
-    t2'@(MkTypedTerm _ tt2) <- typecheck t2
-    normalizeToSame a tt2 (pretty 0 x) t2 (text "in application") (text "formal parameter") (text "actual parameter")
-
-    -- TODO get rid of subst?
-    return (MkTypedTerm (App t1' t2') (typedSubst b' x t2'))
-
-  -- abstraction
-  Lam x a b -> debug "typecheck Abs" t $ do
-    a'@(MkTypedTerm _ s1)  <- typecheck a
-    s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
-
-    safebind x a' b $ \newx newb -> do
-      newb'@(MkTypedTerm _ tb)  <- typecheck newb
-      env <- getEnvironment
-      let tb' = nbe env (strip tb)
-      tb''@(MkTypedTerm _ s2)  <- typecheck tb'
-      s2' <- normalizeToSort s2 tb' (text "in lambda abstraction") (text "as type of body")
-
-      pts <- asks optInstance
-      s3 <- prettyRelations pts s1' s2'
-
-      return (MkTypedTerm (Lam newx a' newb') (MkTypedTerm (Pi newx a' tb'') s3))
-
-  -- Int
-  Int i -> debug "typecheck Int" t $ do
-    int' <- typecheck (mkConst int)
-    return (MkTypedTerm (Int i) int')
-
-  -- IntOp
-  IntOp i f t1 t2 -> debug "typecheck IntOp" t $ do
-    t1'@(MkTypedTerm _ tt1) <- typecheck t1
-    normalizeToInt tt1 t1' (text "in" <+> pretty 0 i) (text "first argument of" <+> pretty 0 i)
-    t2'@(MkTypedTerm _ tt2) <- typecheck t2
-    result <- normalizeToInt tt2 t2' (text "in" <+> pretty 0 i) (text "second argument of" <+> pretty 0 i)
-    return (MkTypedTerm (IntOp i f t1' t2') result)
-
-  -- IfZero
-  IfZero t1 t2 t3 -> debug "typecheck IfZero" t $ do
-    t1'@(MkTypedTerm _ tt1) <- typecheck t1
-    normalizeToInt tt1 t1' (text "in if0") (text "condition")
-    t2'@(MkTypedTerm _ tt2) <- typecheck t2
-    t3'@(MkTypedTerm _ tt3) <- typecheck t3
-    normalizeToSame tt2 tt3 t2' t3' (text "in if0") (text "then branch") (text "else branch")
-    return (MkTypedTerm (IfZero t1' t2' t3') tt2)
-
-  -- Position information
-  Pos p t -> do
-    -- trace ("Start: "++(show ctx) ++ " |- " ++ (show t) ++ " : ???") (return ())
-    x <- typedHandlePos typecheck p t
-    -- trace ("End: "++(show ctx) ++ " |- " ++ (show t) ++ " : "++(show x)) (return ())
-    return x
+-- Check whether actualType is beta equivalent to expectedType.
+-- checkedTerm is only used for error reporting.
+bidiExpected :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => TypedTerm -> TypedTerm -> Term -> String -> m ()
+bidiExpected actualType expectedType checkedTerm context = do
+  let actualType' = strip actualType
+  let expectedType' = strip expectedType
+  env <- getEnvironment
+  if equivTerm env actualType' expectedType'
+     then return ()
+     else do
+       let (actual, expected) = showDiff 0 (diff actualType' expectedType')
+       prettyFail $ text "Type error: we expected two terms to be equivalent but they are not."
+                 $$ text context
+                 $$ text "Checked term:" <+> pretty 0 checkedTerm
+                 $$ text "Actual type:" <+> pretty 0 actualType
+                 $$ text "But we expected type:" <+> pretty 0 expectedType
+                 $$ text "Difference"
+                 $$ text "  actual:  " <+> text actual
+                 $$ text "  expected:" <+> text expected
 
 
 typecheckPull :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m TypedTerm
--- typecheckPull t = do masterResult <- typecheck t
---                      result <- typecheckPull' t
---                      bidiExpected result masterResult t "typecheckPull sanity check"
---                      return result
-
-
 typecheckPull t = case structure t of
   -- constant
   Const c -> debug "typecheckPull Const" t $ do
@@ -372,12 +287,10 @@ typecheckPull t = case structure t of
 
   -- IntOp
   IntOp opName opFunction t1 t2 -> debug "typecheckPull IntOp" t $ do
-    -- The type integers have. This might depend on the PTS instance, not so sure...
     integerType <- typecheckPull (mkConst int)
     -- Both arguments to any IntOp have to be Ints, so typecheckPush an Int in there.
     t1'@(MkTypedTerm _ tt1) <- typecheckPush t1 integerType
     t2'@(MkTypedTerm _ tt2) <- typecheckPush t2 integerType
-    -- If this worked we return the IntOp with typed arguments and type Int. 
     return (MkTypedTerm (IntOp opName opFunction t1' t2') integerType)
 
   -- IfZero
@@ -403,26 +316,6 @@ typecheckPull t = case structure t of
   Infer _ -> do
     prettyFail $ text "Attempted to pull pull a type from an underscore. Most likely there is an underscore at a position where type inference is impossible. The offending underscore is" <+> pretty 0 t
 
--- Check whether actualType is beta equivalent to expectedType.
--- checkedTerm is only used for error reporting.
-bidiExpected :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => TypedTerm -> TypedTerm -> Term -> String -> m ()
-bidiExpected actualType expectedType checkedTerm context = do
-  let actualType' = strip actualType
-  let expectedType' = strip expectedType
-  env <- getEnvironment
-  if equivTerm env actualType' expectedType'
-     then return ()
-     else do
-       let (actual, expected) = showDiff 0 (diff actualType' expectedType')
-       prettyFail $ text "Type error: we expected two terms to be equivalent but they are not."
-                 $$ text context
-                 $$ text "Checked term:" <+> pretty 0 checkedTerm
-                 $$ text "Actual type:" <+> pretty 0 actualType
-                 $$ text "But we expected type:" <+> pretty 0 expectedType
-                 $$ text "Difference"
-                 $$ text "  actual:  " <+> text actual
-                 $$ text "  expected:" <+> text expected
-
 
 -- Checking rule in bidirectional type checking.
 -- First argument (t) is the term to typecheck.
@@ -430,11 +323,6 @@ bidiExpected actualType expectedType checkedTerm context = do
 --   The second argument is of the form (MkTypedTerm type kind) where type is the actual expected
 --   type of the first argument and kind is the type of type.
 typecheckPush :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> TypedTerm -> m TypedTerm
--- typecheckPush t q = do masterResult <- typecheck t
---                        result <- typecheckPush' t q
---                        bidiExpected result masterResult t "typecheckPush sanity check"
---                        return result
-
 typecheckPush t q = case structure t of
   -- constant
   Const c -> debugPush "typecheckPush Const" t q $ do
@@ -453,9 +341,6 @@ typecheckPush t q = case structure t of
 
   -- product
   Pi x a b -> debugPush "typecheckPush Fun" t q $ do
-    -- TODO This whole case is rather stupid at the moment. We could
-    -- (maybe) call prettyRelations with s1 and s3 and get the s2 out
-    -- of it. Maybe.
     a'@(MkTypedTerm _ s1) <- typecheckPull a
     s1' <- normalizeToSort s1 a (text "in product type") (text "as domain")
 
@@ -536,21 +421,13 @@ typecheckPush t q = case structure t of
   -- IntOp
   IntOp opName opFunction t1 t2 -> debugPush "typecheckPush IntOp" t q $ do
     integerType <- typecheckPull (mkConst int)
-    -- Check that we actually expect an int
     bidiExpected integerType q t "An integer operation is not expected to be one."
-    -- Ok, we're in the right case. Descend into arguments.
     typedT1 <- typecheckPush t1 integerType
     typedT2 <- typecheckPush t2 integerType
-    -- Arguments are Integers as well, return.
     return (MkTypedTerm (IntOp opName opFunction typedT1 typedT2) integerType)
 
   -- IfZero
   IfZero t1 t2 t3 -> debugPush "typecheckPush IfZero" t q $ do
-    -- Because of normalization, we only reach this case if the
-    -- condition is not a constant, so this whole IfZero did not
-    -- normalize away. Therefore the then and else branches need to be
-    -- of the same type.
-    -- Or does this type have to be q? I think I'm still confused about normalization.
     integerType <- typecheckPull (mkConst int)
     t1'@(MkTypedTerm _ tt1) <- typecheckPush t1 integerType
     normalizeToInt tt1 t1' (text "in if0") (text "condition")
