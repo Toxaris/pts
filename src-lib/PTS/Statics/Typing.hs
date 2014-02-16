@@ -40,6 +40,14 @@ import Text.Show (Show (show))
 -- http://www.springerlink.com/content/f510r63138068632/
 --
 
+-- Bidirectional type checking following the first part of:
+-- Benjamin C. Pierce and David N. Turner. Local Type Inference. In
+-- ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages
+-- (POPL), San Diego, California, 1998. Full version in ACM
+-- Transactions on Programming Languages and Systems (TOPLAS), 22(1),
+-- January 2000, pp. 1-44.
+-- Full version: http://www.cis.upenn.edu/~bcpierce/papers/lti-toplas.pdf
+
 import Debug.Trace
 
 -- instance Ord Term where
