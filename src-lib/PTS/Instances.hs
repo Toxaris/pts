@@ -5,10 +5,6 @@ import PTS.Syntax
 import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 
 -- This type defines a specific pure type system, see Barendregt
---
--- TODO: should be a record!
---
--- axioms, sorts, relations, int, constants parser
 
 data PTS = PTS
   { sorts :: C -> Bool
