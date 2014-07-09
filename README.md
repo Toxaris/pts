@@ -1,5 +1,7 @@
 #PTS
 
+[![Build Status](https://travis-ci.org/Toxaris/pts.svg?branch=master)](https://travis-ci.org/Toxaris/pts)
+
 ## Description
 
 A Haskell implementation of the [Pure Type
