@@ -12,6 +12,7 @@ module PTS.Syntax
   , star
   , box
   , triangle
+  , circle
     -- ** Arithmetic operators
   , BinOp (Add, Sub, Mul, Div)
   , evalOp

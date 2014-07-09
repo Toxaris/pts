@@ -5,6 +5,7 @@ module PTS.Syntax.Constants
   , star
   , box
   , triangle
+  , circle
   ) where
 
 import Data.Data
@@ -25,3 +26,6 @@ box = C 2
 
 triangle :: C
 triangle = C 3
+
+circle :: C
+circle = C 4

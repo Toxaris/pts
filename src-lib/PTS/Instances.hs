@@ -365,18 +365,20 @@ uu = PTS sorts axioms relations name description where
   sorts (C 1) = True
   sorts (C 2) = True
   sorts (C 3) = True
+  sorts (C 4) = True
   sorts (C _) = False
 
   axioms (C 0) = Just typedStar
   axioms (C 1) = Just typedBox
   axioms (C 2) = Just typedTriangle
+  axioms (C 3) = Just typedCircle
   axioms (C _) = Nothing
 
-  relations (C 1) (C 1) = Just typedStar
-  relations (C 2) (C 1) = Just typedStar
   relations (C 2) (C 2) = Just typedBox
   relations (C 3) (C 2) = Just typedBox
-  relations (C 3) (C 1) = Just typedStar
+  relations (C 3) (C 3) = Just typedTriangle
+  relations (C 4) (C 3) = Just typedTriangle
+  relations (C 4) (C 2) = Just typedCircle
 
   relations (C _) (C _) = Nothing
 
@@ -388,7 +390,8 @@ uu = PTS sorts axioms relations name description where
 
   typedStar     = MkTypedTerm (Const star) typedBox
   typedBox      = MkTypedTerm (Const box) typedTriangle
-  typedTriangle = MkTypedTerm (Const triangle) notExpressible
+  typedTriangle = MkTypedTerm (Const triangle) typedCircle
+  typedCircle   = MkTypedTerm (Const circle) notExpressible
 
 instances :: [PTS]
 instances = [lama, lam2, lamp, lamv, lap2, lapv, lamc, lams, laws, lawu, u, uu]
