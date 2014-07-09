@@ -374,6 +374,11 @@ uu = PTS sorts axioms relations name description where
   axioms (C 3) = Just typedCircle
   axioms (C _) = Nothing
 
+  relations (C 1) (C 1) = Just typedStar
+  relations (C 2) (C 1) = Just typedStar
+  relations (C 3) (C 1) = Just typedStar
+  relations (C 4) (C 1) = Just typedStar
+
   relations (C 2) (C 2) = Just typedBox
   relations (C 3) (C 2) = Just typedBox
   relations (C 3) (C 3) = Just typedTriangle
