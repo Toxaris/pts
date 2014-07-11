@@ -12,14 +12,6 @@ import Control.Monad.Reader.Class
 import Control.Monad.State (StateT (StateT), mapStateT)
 import Control.Monad.State.Class
 
-instance (Monoid e, Error e, MonadErrors e m) => MonadErrors e (ReaderT r m) where
-  annotate f = mapReaderT (annotate f)
-  recover x = mapReaderT (recover x)
-
-instance (Monoid e, Error e, MonadErrors e m) => MonadErrors e (StateT s m) where
-  annotate f = mapStateT (annotate f)
-  recover x (StateT f) = StateT (\s -> recover (x, s) (f s))
-
 newtype ErrorsT e m a
   =  ErrorsT (forall r . (a -> m r) -> (e -> a -> m r) -> (e -> m r) -> m r)
 
