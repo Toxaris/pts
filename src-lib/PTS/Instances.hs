@@ -179,6 +179,7 @@ lamw = PTS sorts axioms relations name description where
   relations (C _) (C _) = Nothing
 
   name = [ "fw"
+         , "fomega"
          , "f-omega"
          , "system-f-omega"
          , "lamw"
