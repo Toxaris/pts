@@ -19,7 +19,7 @@ testFileWithOptions :: Options -> FilePath -> Test
 testFileWithOptions opt file = buildTest $ do
   let path = optPath opt
   file <- findFile path file >>= maybe (fail ("file not found: " ++ file)) return
-  result <- runProcessFile (collectAssertions (processFile file)) [] opt
+  result <- runProcessFile (collectAssertions (processFile file)) ([], []) opt
   case result of
     Left e -> fail (showErrors e)
     Right (_, assertions) -> return $ testGroup file $

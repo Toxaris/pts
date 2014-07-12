@@ -17,7 +17,7 @@ envToNames :: Env m -> Names
 envToNames env = Set.fromList (map fst env)
 
 dropTypes :: Bindings m -> Env m
-dropTypes = map (\(x, (y, z)) -> (x, y))
+dropTypes = map (\(x, (_, y, z)) -> (x, y))
 
 newtype M a = M (State Names a)
   deriving (Functor, Monad, MonadState Names)

@@ -64,11 +64,11 @@ checkMaybe Nothing s = fail s
 
 lookupValue x = do
   m <- lookup x
-  return (fmap fst m)
+  return (fmap (\(_, y, _) -> y) m)
 
 lookupType x = do
   m <- lookup x
-  return (fmap snd m)
+  return (fmap (\(_, _, y) -> y) m)
 
 -- mytrace d ctx (Const x) | x == star = False
 -- mytrace d ctx t =
@@ -80,17 +80,17 @@ safebind x t b f = do
   result <- lookupType x
   case result of
     Nothing -> do
-      bind x (ResidualVar x, t) (f x b)
+      bind x (False, ResidualVar x, t) (f x b)
     Just _ -> do
       vars <- keys
       let nx = freshvarl (freevars b `Set.union` vars) x
-      bind nx (ResidualVar nx, t) (f nx (subst b x (mkVar nx)))
+      bind nx (False, ResidualVar nx, t) (f nx (subst b x (mkVar nx)))
 
 debug :: (MonadEnvironment Name (Binding M) m, MonadLog m) => String -> Term -> m TypedTerm -> m TypedTerm
 debug n t result = do
   enter n
   ctx <- getEnvironment
-  log $ "Context: " ++ showCtx ctx
+  log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
   log $ "Subject: " ++ show t
   x <- result
   log $ "Result:  " ++ show x
@@ -210,7 +210,7 @@ typecheck t = case structure t of
 
     -- TODO avoid rechecking
     a' <- typecheck a
-    b' <- bind x (ResidualVar x, a') $
+    b' <- bind x (False, ResidualVar x, a') $
             typecheck b
 
     t2'@(MkTypedTerm _ tt2) <- typecheck t2
