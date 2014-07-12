@@ -88,7 +88,11 @@ handleColumns  arg = case reads arg of
 
 handlePTS      arg = case find nameIn instances of
                        Just inst -> Global (setInstance inst)
-                       Nothing   -> Error  ("Error: Unknown pure type system instance " ++ arg)
+                       Nothing   -> Error $ show $ text "Error: Unknown pure type system instance" <+> text arg $$
+                                      text "" $$
+                                      supported $$
+                                      text "" $$
+                                      text "To learn more about the instances, run: pts --enumerate-instances"
                      where str = map toLower arg
                            nameIn = elem str . name
 
