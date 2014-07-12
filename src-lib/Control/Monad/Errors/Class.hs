@@ -6,12 +6,9 @@ module Control.Monad.Errors.Class
 
 import Control.Monad.Error.Class
 import Data.Monoid
-import Control.Monad.Writer
-import Control.Monad.Writer
+import Control.Monad.Writer(WriterT, mapWriterT)
 import Control.Monad.Reader(ReaderT, mapReaderT)
-import Control.Monad.Reader.Class
-import Control.Monad.State (StateT (StateT), mapStateT)
-import Control.Monad.State.Class
+import Control.Monad.State (StateT (StateT), runStateT, mapStateT)
 
 class MonadError e m => MonadErrors e m | m -> e where
   recover :: a -> m a -> m a
@@ -24,8 +21,8 @@ instance (Monoid e, Error e, MonadErrors e m) => MonadErrors e (ReaderT r m) whe
 
 instance (Monoid e, Error e, MonadErrors e m) => MonadErrors e (StateT s m) where
   annotate f = mapStateT (annotate f)
-  recover x (StateT f) = StateT (\s -> recover (x, s) (f s))
+  recover x p = StateT (\s -> recover (x, s) (runStateT p s))
 
 instance (Monoid w, MonadErrors e m) => MonadErrors e (WriterT w m) where
-  recover x p = WriterT (recover (x, mempty) (runWriterT p))
-  annotate f p = WriterT (annotate f (runWriterT p))
+  recover x = mapWriterT (recover (x, mempty))
+  annotate f = mapWriterT (annotate f)
