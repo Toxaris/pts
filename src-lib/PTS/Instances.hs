@@ -399,4 +399,4 @@ uu = PTS sorts axioms relations name description where
   typedCircle   = MkTypedTerm (Const circle) notExpressible
 
 instances :: [PTS]
-instances = [lama, lam2, lamp, lamv, lap2, lapv, lamc, lams, laws, lawu, u, uu]
+instances = [lama, lam2, lamp, lamv, lap2, lamw, lapv, lamc, lams, laws, lawu, u, uu]
