@@ -46,7 +46,7 @@ runMainState act = evalStateT act []
 processJobs jobs = do
   runMainState $ mapM_ processJob jobs
 
-processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState [(Name, Binding M)] m) => (Options, FilePath) -> m ()
+processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Bindings M) m) => (Options, FilePath) -> m ()
 processJob (opt, file) = do
   let path = optPath opt
   file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return

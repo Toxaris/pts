@@ -37,7 +37,7 @@ deliterate text = do
 runProcessFile action state opt =
   evalStateT (runErrorsT (runReaderT (runConsoleLogT action (optDebugType opt)) opt)) state 
 
-processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState [(Name, Binding M)] m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module M))
+processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState (Bindings M) m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module M))
 processFile file = do
   outputLine $ "process file " ++ file
   text <- liftIO (readFile file)
