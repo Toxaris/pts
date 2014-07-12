@@ -62,6 +62,9 @@ Library
                        PTS.Syntax.Substitution
                        PTS.Syntax.Term
                        PTS.Transform
+  -- Flags useful for heap profiling. They might be redundant with
+  -- --enable-library-profiling.
+  -- Ghc-options: -fprof-auto -fno-prof-count-entries
 
 Executable pts
   Hs-source-dirs:      src-exec
@@ -73,6 +76,8 @@ Executable pts
                        transformers >= 0.2 && < 0.4,
                        parsec == 3.1.*,
                        pts
+  -- Flags useful for heap profiling:
+  -- Ghc-options: -fprof-auto -fno-prof-count-entries -rtsopts
 
   -- Build-tools:
 
