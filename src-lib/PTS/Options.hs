@@ -142,15 +142,17 @@ printHelp = putStrLn (usageInfo (render 80 header) options) where
     programName $$ supported $$ optionsText
   programName =
     text "PTS interpreter."
-  supported = fsep $ concat
-    [  [ text "Supported instances:"]
-    ,  punctuate (text ",")
-         [text (head (name i)) | i <- instances]
-    ,  map text $ words
-         "(and synonyms)"
-    ]
   optionsText =
     text "Options:"
+
+supported :: Doc
+supported = fsep $ concat
+  [  [ text "Supported instances:"]
+  ,  punctuate (text ",")
+       [text (head (name i)) | i <- instances]
+  ,  map text $ words
+       "(and synonyms)"
+  ]
 
 printInstances :: IO ()
 printInstances = putStrLn (render 80 info) where
