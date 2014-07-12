@@ -54,8 +54,8 @@ showError (Error p e m c) = unlines allLines where
   firstLine = maybePosition ++ head maybeError
   moreLines = map (moreLinePrefix ++) (tail maybeError ++ maybeSource ++ maybeMessages)
 
-  maybePosition = maybe "" showPosition p
-  maybeError = lines $ maybe "" (' ' :) e
+  maybePosition = maybe "" ((++ " ") . showPosition) p
+  maybeError = lines $ maybe "Unknown Error" id e
   maybeSource = maybe [] (" " :) (showSource <$> p <*> c)
   maybeMessages = m
 
