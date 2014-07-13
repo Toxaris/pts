@@ -1,6 +1,7 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
 module PTS.Process.File where
 
+import Control.Applicative ((<$>))
 import Control.Arrow (second)
 
 import Control.Monad (when, unless)
@@ -57,7 +58,7 @@ processFileInt' file = do
 
 processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module Eval))
 processFile file = do
-  fmap filterRet $ processFileInt file
+  filterRet <$> processFileInt file
 
 filterRet res =
   let (maybeName, cache, imports, bindings) = res
