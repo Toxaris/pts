@@ -32,7 +32,8 @@ Library
                        syb,
                        filepath,
                        directory >= 1.2.0.1 && < 1.3
-  Exposed-modules:     PTS.Dynamics
+  Exposed-modules:     PTS.Interactive
+                       PTS.Dynamics
                        PTS.Dynamics.Binding
                        PTS.Dynamics.Evaluation
                        PTS.Dynamics.Module
@@ -72,15 +73,7 @@ Executable pts
   Hs-source-dirs:      src-exec
   Main-is:             pts.hs
   Build-depends:       base < 5,
-                       containers >= 0.4 && < 0.6,
-                       pretty >= 1.0 && < 1.2,
-                       mtl >= 2.0 && < 2.2,
-                       transformers >= 0.2 && < 0.4,
-                       parsec == 3.1.*,
-                       pts,
-		       --These are only needed for cabal repl exe:pts
-                       filepath,
-                       directory >= 1.2.0.1 && < 1.3
+                       pts
   -- Flags useful for heap profiling:
   -- Ghc-options: -fprof-auto -fno-prof-count-entries -rtsopts
 
