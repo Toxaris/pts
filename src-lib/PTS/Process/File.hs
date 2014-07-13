@@ -116,37 +116,45 @@ processStmt (Bind n args (Just body') body) = recover () $ do
 processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ do
   output (text "")
   output (text "process assertion")
-  output (nest 2 (sep [text "term:", nest 2 (pretty 0 t)]))
+  output (nest 2 (sep [text " term:", nest 2 (pretty 0 t)]))
+
   (_, _, env) <- get
 
-  -- compare specified and actual type
-  MkTypedTerm _ q <- runEnvironmentT (typecheckPull t) env
-  case q' of
-    Nothing ->
-      output (nest 2 (sep [text "type:", nest 2 (pretty 0 (strip q))]))
-    Just q'
-      | equivTerm env (strip q) q' ->
-          output (nest 2 (sep [text "type:", nest 2 (pretty 0 q')]))
-      | otherwise ->
-          let (expected, given) = showDiff 0 (diff (nbe env q') (nbe env (strip q))) in
-            prettyFail $ text "Type mismatch in assertion"
-                      $$ text "  specified type:" <+> pretty 0 q'
-                      $$ text "     normal form:" <+> text expected
-                      $$ text "     actual type:" <+> text given
+  let check Nothing Nothing = do
+        t <- typecheckPull t
+        return (typeOf t, nbe env (strip t))
+      check (Just q') Nothing = do
+        q' <- typecheckPull q'
+        normalizeToSort (typeOf q') q' (text "in assertion") (text "as annotated type")
+        t <- typecheckPush t q'
+        return (t, nbe env (strip t))
+      check Nothing (Just t') = do
+        t' <- typecheckPull t'
+        let q' = typeOf t'
+        t <- typecheckPush t q'
+        unless (equivTerm env (strip t) (strip t')) $ do
+          let (expected, given) = showDiff 0 (diff (nbe env (strip t')) (nbe env (strip t)))
+          prettyFail $ text "Result mismatch in assertion"
+                    $$ text "  specified result:" <+> pretty 0 t'
+                    $$ text "       normal form:" <+> text expected
+                    $$ text "     actual result:" <+> text given
+        return (t, strip t')
+      check (Just q') (Just t') = do
+        q' <- typecheckPull q'
+        normalizeToSort (typeOf q') q' (text "in assertion") (text "as annotated type")
+        t' <- typecheckPush t' q'
+        t <- typecheckPush t q'
+        unless (equivTerm env (strip t) (strip t')) $ do
+          let (expected, given) = showDiff 0 (diff (nbe env (strip t')) (nbe env (strip t)))
+          prettyFail $ text "Result mismatch in assertion"
+                    $$ text "  specified result:" <+> pretty 0 t'
+                    $$ text "       normal form:" <+> text expected
+                    $$ text "     actual result:" <+> text given
+        return (t, strip t')
 
-  -- compare specified and actual result
-  case t' of
-    Nothing ->
-      output (nest 2 (sep [text "value:", nest 2 (pretty 0 (nbe env t))]))
-    Just t'
-      | equivTerm env t t' ->
-          output (nest 2 (sep [text "value:", nest 2 (pretty 0 t')]))
-      | otherwise ->
-          let (expected, given) = showDiff 0 (diff (nbe env t') (nbe env t)) in
-            prettyFail $ text "Result mismatch in assertion"
-                      $$ text "  specified result:" <+> pretty 0 t'
-                      $$ text "       normal form:" <+> text expected
-                      $$ text "     actual result:" <+> text given
+  (t, v) <- runEnvironmentT (check q' t') env
+  output (nest 2 (sep [text " type:", nest 2 (pretty 0 (typeOf t))]))
+  output (nest 2 (sep [text "value:", nest 2 (pretty 0 v)]))
 
 processStmt (Export n) = recover () $ do
   output (text "")
