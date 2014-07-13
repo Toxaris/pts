@@ -97,9 +97,7 @@ data TermStructure alpha
   | Pos     Position alpha
   | Unquote alpha
   | Infer   Integer
-  deriving (Functor, Data, Typeable)
-
-deriving instance Show a => Show (TermStructure a)
+  deriving (Functor, Data, Typeable, Show)
 
 -- | Desugar a binder with multiple arguments like this:
 --
