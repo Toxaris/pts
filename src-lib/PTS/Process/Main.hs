@@ -47,7 +47,7 @@ runMainState act = evalStateT act (Map.empty, [], [])
 processJobs jobs = do
   runMainState $ mapM_ processJob jobs
 
-processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.Map ModuleName (Module M), [ModuleName], Bindings M) m) => (Options, FilePath) -> m ()
+processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m) => (Options, FilePath) -> m ()
 processJob (opt, file) = do
   let path = optPath opt
   file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
@@ -58,9 +58,9 @@ simpleRunMonads processor file opt =
   checkAssertions (runReaderT (runConsoleLogT (processor file) (optDebugType opt)) opt)
 
 processFileSimple
-  :: FilePath -> IO (Either [PTSError] (Maybe (Module M)))
+  :: FilePath -> IO (Either [PTSError] (Maybe (Module Eval)))
 processFileSimple f = runErrorsT . runMainState $ simpleRunMonads processFile f defaultOptions
 
 processFileSimpleInt
-  :: FilePath -> IO (Either [PTSError] (Maybe ModuleName, Map.Map ModuleName (Module M), [ModuleName], Bindings M))
+  :: FilePath -> IO (Either [PTSError] (Maybe ModuleName, Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval))
 processFileSimpleInt f = runErrorsT . runMainState $ simpleRunMonads processFileInt f defaultOptions

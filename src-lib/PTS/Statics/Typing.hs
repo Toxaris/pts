@@ -83,7 +83,7 @@ lookupType x = do
 --   trace ((show d) ++ (ndots d) ++ (show ctx) ++ " |- "++(show t) ++ " : ???") False
 
 -- safe bind
-safebind :: MonadEnvironment Name (Binding M) m => Name -> TypedTerm -> Term -> (Name -> Term -> m a) -> m a
+safebind :: MonadEnvironment Name (Binding Eval) m => Name -> TypedTerm -> Term -> (Name -> Term -> m a) -> m a
 safebind x t b f = do
   result <- lookupType x
   case result of
@@ -94,7 +94,7 @@ safebind x t b f = do
       let nx = freshvarl (freevars b `Set.union` vars) x
       bind nx (False, ResidualVar nx, t) (f nx (subst b x (mkVar nx)))
 
-debug :: (MonadEnvironment Name (Binding M) m, MonadLog m) => String -> Term -> m TypedTerm -> m TypedTerm
+debug :: (MonadEnvironment Name (Binding Eval) m, MonadLog m) => String -> Term -> m TypedTerm -> m TypedTerm
 debug n t result = do
   enter n
   ctx <- getEnvironment
@@ -106,7 +106,7 @@ debug n t result = do
   exit
   return x
 
-debugPush :: (MonadEnvironment Name (Binding M) m, MonadLog m) => String -> Term -> TypedTerm -> m TypedTerm -> m TypedTerm
+debugPush :: (MonadEnvironment Name (Binding Eval) m, MonadLog m) => String -> Term -> TypedTerm -> m TypedTerm -> m TypedTerm
 debugPush n t q result = do
   enter n
   ctx <- getEnvironment
@@ -155,7 +155,7 @@ msgNotSame context info1 info2 s t s' t'
         sep [text "Type of" <+> info1 <> text ":", nest 2 (text s'')] $$
         sep [text "Type of" <+> info2 <> text ":", nest 2 (text t'')])
 
-normalizeToInt :: (MonadLog m, Functor m, MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m) => TypedTerm -> TypedTerm -> Doc -> Doc -> m TypedTerm
+normalizeToInt :: (MonadLog m, Functor m, MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m) => TypedTerm -> TypedTerm -> Doc -> Doc -> m TypedTerm
 normalizeToInt t' t context info = do
   let stripT' = strip t'
   env <- getEnvironment
@@ -192,7 +192,7 @@ prettyRelations pts s1 s2 =
 
 -- Check whether actualType is beta equivalent to expectedType.
 -- checkedTerm is only used for error reporting.
-bidiExpected :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => TypedTerm -> TypedTerm -> Term -> String -> m ()
+bidiExpected :: (MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => TypedTerm -> TypedTerm -> Term -> String -> m ()
 bidiExpected actualType expectedType checkedTerm context = do
   let actualType' = strip actualType
   let expectedType' = strip expectedType
@@ -211,7 +211,7 @@ bidiExpected actualType expectedType checkedTerm context = do
                  $$ text "  expected:" <+> text expected
 
 
-typecheckPull :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m TypedTerm
+typecheckPull :: (MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m TypedTerm
 typecheckPull t = case structure t of
   -- constant
   Const c -> debug "typecheckPull Const" t $ do
@@ -322,7 +322,7 @@ typecheckPull t = case structure t of
 -- Second argument (q) is its expected type.
 --   The second argument is of the form (MkTypedTerm type kind) where type is the actual expected
 --   type of the first argument and kind is the type of type.
-typecheckPush :: (MonadEnvironment Name (Binding M) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> TypedTerm -> m TypedTerm
+typecheckPush :: (MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> TypedTerm -> m TypedTerm
 typecheckPush t q = case structure t of
   -- constant
   Const c -> debugPush "typecheckPush Const" t q $ do

@@ -48,7 +48,7 @@ processFileInt file = do
   (cache, imports, bindings) <- get
   return (maybeName, cache, imports, bindings)
 
-processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState (Map.Map ModuleName (Module M), [ModuleName], Bindings M) m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module M))
+processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module Eval))
 processFile file = do
   fmap filterRet $ processFileInt file
 
