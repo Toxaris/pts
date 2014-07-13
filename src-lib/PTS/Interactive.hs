@@ -20,7 +20,8 @@ import PTS.Dynamics
 import PTS.Statics
 import PTS.QuasiQuote
 import PTS.Error
-import PTS.Process.Main (processFileSimple)
+import PTS.Process.Main (processFileSimple, processFileSimpleInt)
+import Data.Map (Map)
 
 parseSimple :: String -> Either [PTSError] Term
 parseSimple input = parseTerm "REPL" input

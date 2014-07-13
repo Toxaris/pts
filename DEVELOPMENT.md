@@ -48,7 +48,13 @@ canonicalize the text.
 
 You can use:
 
-    processFileSimple "path/to/file"
+    r <- processFileSimple "path/to/file"
 
 The output value will be interesting only if the source contains a module and
-some exports.
+some exports. To see internals, use instead:
+
+    r <- processFileSimpleInt "path/to/file"
+
+Be careful though! Calling `show` on the result will easily loop with cyclic
+terms, such as (by default) the constant `**` (which has itself as type in
+Fomega*, the default PTS instance).

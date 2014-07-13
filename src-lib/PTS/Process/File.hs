@@ -39,18 +39,26 @@ deliterate text = do
 runProcessFile action state opt =
   evalStateT (runErrorsT (runReaderT (runConsoleLogT action (optDebugType opt)) opt)) state 
 
-processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState (Map.Map ModuleName (Module M), [ModuleName], Bindings M) m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module M))
-processFile file = do
+processFileInt file = do
   outputLine $ "process file " ++ file
   text <- liftIO (readFile file)
   text <- deliterate text
   File maybeName stmts <- parseFile file text
   processStmts (lines text, stmts)
   (cache, imports, bindings) <- get
-  let contents = [(n, (False, t, v)) | (n, (True, t, v)) <- bindings]
-  return (do
+  return (maybeName, cache, imports, bindings)
+
+processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState (Map.Map ModuleName (Module M), [ModuleName], Bindings M) m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module M))
+processFile file = do
+  fmap filterRet $ processFileInt file
+
+filterRet res =
+  let (maybeName, cache, imports, bindings) = res
+      contents = [(n, (False, t, v)) | (n, (True, t, v)) <- bindings]
+   in
+  do
     name <- maybeName
-    return (Module imports name contents))
+    return (Module imports name contents)
 
 processStmts (text, stmts) = do
   annotateCode text $ mapM_ processStmt stmts
