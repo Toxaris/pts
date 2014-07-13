@@ -10,7 +10,7 @@ import PTS.Syntax
 parse text = parseTerm "PTS.Syntax.Parser.Tests" text :: Either [PTSError] PTS.Syntax.Term
 
 testParser text term = testCase text $ case parse text of
-  Right parsedTerm ->  assertEqual "Unexpected parse result." (show term) (show parsedTerm)
+  Right parsedTerm ->  assertEqual "Unexpected parse result." (showPretty term) (showPretty parsedTerm)
   Left error -> assertFailure $ "Unexpected parse error: " ++ show error
 
 x :: Name

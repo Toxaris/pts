@@ -6,6 +6,7 @@ module PTS.Syntax.Pretty
   , showCtx
   , prettyAlgebra
   , showAssertion
+  , showPretty
   ) where
 
 import Control.Arrow (first)
@@ -175,14 +176,8 @@ showAssertion t q' t' = singleLine (prettyAssertion t q' t')
 instance Pretty ModuleName where
   pretty p m = text (intercalate "." (parts m))
 
-instance Show Term where
-  show t = singleLine t
-
-instance Show TypedTerm where
-  show t = singleLine t
-
-instance Show ModuleName where
-  show t = singleLine t
+showPretty :: Pretty p => p -> String
+showPretty = singleLine
 
 showCtx :: [(Name, (a, TypedTerm))] -> String
-showCtx = concat . intersperse ", " . map (\(n, (v, t)) -> show n ++ " : " ++ show t)
+showCtx = concat . intersperse ", " . map (\(n, (v, t)) -> show n ++ " : " ++ showPretty t)

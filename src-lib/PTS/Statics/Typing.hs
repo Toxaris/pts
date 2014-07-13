@@ -99,10 +99,10 @@ debug n t result = do
   enter n
   ctx <- getEnvironment
   -- log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
-  log $ "Subject: " ++ show t
+  log $ "Subject: " ++ showPretty t
   x <- result
-  log $ "Result:  " ++ show x
-  log $ "         : " ++ show (typeOf x)
+  log $ "Result:  " ++ showPretty x
+  log $ "         : " ++ showPretty (typeOf x)
   exit
   return x
 
@@ -111,11 +111,11 @@ debugPush n t q result = do
   enter n
   ctx <- getEnvironment
   log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
-  log $ "Subject: " ++ show t
-  log $ "Push type: " ++ show q
+  log $ "Subject: " ++ showPretty t
+  log $ "Push type: " ++ showPretty q
   x <- result
-  log $ "Result:  " ++ show x
-  log $ "         : " ++ show (typeOf x)
+  log $ "Result:  " ++ showPretty x
+  log $ "         : " ++ showPretty (typeOf x)
   exit
   return x
 

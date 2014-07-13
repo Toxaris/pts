@@ -8,6 +8,7 @@ import PTS.Syntax
 import PTS.Syntax.Arbitrary
 import PTS.Statics
 import PTS.Dynamics
+import PTS.PrettyToShow
 
 type Relation a = a -> a -> Bool
 
