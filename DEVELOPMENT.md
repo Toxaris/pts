@@ -1,7 +1,14 @@
 # Starting
 
-1. Do `cabal repl` to start GHCi on the project.
-2. Use `:browse` to see what's available.
+If you want to explore the code base with ghci, here is a good setup which might
+help you to get started.
+
+1. Do `cabal repl` to start GHCi on the project. This will load
+   `PTS.Interactive` by default.
+2. Use `:browse` to see what's available. We try to give easy access to
+   convenience functions by putting them in `PTS.Interactive` or re-exporting
+   them from there, but YMMV.
+
 3. Use `:add` to load new Haskell sources if ever needed.
 4. Use `:m + module` to import a new module, or `:m + *module` to also import
    its internals.
