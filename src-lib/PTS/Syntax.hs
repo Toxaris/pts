@@ -61,6 +61,7 @@ module PTS.Syntax
   , Pretty (pretty)
   , singleLine
   , multiLine
+  , showPretty
   , showCtx
   , showAssertion
     -- * Operations

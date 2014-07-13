@@ -8,6 +8,7 @@ import Test.HUnit (assertBool)
 import PTS.Syntax
 import PTS.Instances
 import qualified PTS.Syntax.Substitution.Properties as Prop
+import PTS.PrettyToShow
 
 import Test.Property (test)
 

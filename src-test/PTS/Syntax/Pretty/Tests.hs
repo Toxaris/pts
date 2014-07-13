@@ -21,7 +21,7 @@ z = read "z"
 
 testPretty text term
   =  testCase text $
-       assertEqual "Unexpected pretty print." text (show term)
+       assertEqual "Unexpected pretty print." text (showPretty term)
 
 tests
   =  testGroup "PTS.Pretty"

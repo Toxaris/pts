@@ -180,16 +180,16 @@ processStmt (Import mod) = recover () $ do
 
       case result of
         Nothing ->
-          fail $ "expected module " ++ show mod ++ " in file " ++ file ++ " but found no module statement."
+          fail $ "expected module " ++ showPretty mod ++ " in file " ++ file ++ " but found no module statement."
         Just (Module _ name _) | name /= mod ->
-          fail $ "expected module " ++ show mod ++ " inf file " ++ file ++ " but found module " ++ show name ++ "."
+          fail $ "expected module " ++ showPretty mod ++ " inf file " ++ file ++ " but found module " ++ showPretty name ++ "."
         Just found@(Module _ _ bindings') ->
           put (Map.insert mod found cache, imports, bindings ++ bindings')
 
 findModule path mod = find path where
   base  =  joinPath (parts mod)
 
-  find [] = fail ("source file for module " ++ show mod ++ " not found.")
+  find [] = fail ("source file for module " ++ showPretty mod ++ " not found.")
   find (dir : path) = do
     let lpts  = dir </> base <.> "lpts"
     let pts   = dir </> base <.> "pts"
