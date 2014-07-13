@@ -21,7 +21,7 @@ Example:
 lambda x : * . x
 ```
 
-You can also use parseSimple, if the program is not statically known.
+You can also use `parseSimple`, if the program is not statically known.
 
 # Normalizing terms
 
@@ -29,14 +29,19 @@ Use `nbeClosed`, or `nbe` with a list of bindings.
 
 # Viewing/decomposing terms
 
-We're working on this.
+You can use the standard `Show` instance (created with `deriving Show`), or
+`prettyShow` to invoke the pretty-printer.
+
+We expect that `parse . prettyShow = id`, while `prettyShow . parse` will
+canonicalize the text.
 
 # Typechecking terms
 
 # Loading modules
 
-Try:
+You can use:
 
-    maybeMod <- processFileSimple "path/to/file"
+    processFileSimple "path/to/file"
 
-But you won't be able to `show maybeMod` yet.
+The output value will be interesting only if the source contains a module and
+some exports.
