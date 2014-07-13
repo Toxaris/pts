@@ -3,7 +3,7 @@ module PTS.Process.File where
 
 import Control.Arrow (second)
 
-import Control.Monad (unless)
+import Control.Monad (when, unless)
 import Control.Monad.Assertions (MonadAssertions (assert))
 import Control.Monad.Environment (runEnvironmentT)
 import Control.Monad.Errors
@@ -154,6 +154,8 @@ processStmt (Export n) = recover () $ do
 
   -- mark as exported
   (cache, imports, bindings) <- get
+  when (and [n /= n' | (n', _) <- bindings]) $ do
+    fail $ "Unbound identifier: " ++ show n
   let bindings' = [(n', (x || n == n', t, v)) | (n', (x, t, v)) <- bindings]
   put (cache, imports, bindings')
 
