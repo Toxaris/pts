@@ -1,7 +1,7 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
 module PTS.Process.File where
 
-import Control.Applicative ((<$>))
+import Control.Applicative hiding (Const)
 import Control.Arrow (second)
 
 import Control.Monad (when, unless)
@@ -54,19 +54,16 @@ processFileInt' file = do
   File maybeName stmts <- parseFile file text
   processStmts (lines text, stmts)
   (cache, imports, bindings) <- get
-  return (maybeName, cache, imports, bindings)
+  return (maybeName, (cache, imports, bindings))
 
 processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module Eval))
 processFile file = do
-  filterRet <$> processFileInt file
+  (maybeName, rest) <- processFileInt file
+  return $ filterRet <$> maybeName <*> pure rest
 
-filterRet res =
-  let (maybeName, cache, imports, bindings) = res
-      contents = [(n, (False, t, v)) | (n, (True, t, v)) <- bindings]
-   in
-  do
-    name <- maybeName
-    return (Module imports name contents)
+filterRet name (cache, imports, bindings) =
+  let contents = [(n, (False, t, v)) | (n, (True, t, v)) <- bindings] in
+    Module imports name contents
 
 processStmts (text, stmts) = do
   annotateCode text $ mapM_ processStmt stmts

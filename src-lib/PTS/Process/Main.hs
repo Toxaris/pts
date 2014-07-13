@@ -62,5 +62,5 @@ processFileSimple
 processFileSimple f = runErrorsT . runMainState $ simpleRunMonads processFile f defaultOptions
 
 processFileSimpleInt
-  :: FilePath -> IO (Either [PTSError] (Maybe ModuleName, Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval))
+  :: FilePath -> IO (Either [PTSError] (Maybe ModuleName, (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval)))
 processFileSimpleInt f = runErrorsT . runMainState $ simpleRunMonads processFileInt f defaultOptions
