@@ -1,10 +1,12 @@
-module PTS.Interactive ( module PTS.Syntax.Term
+module PTS.Interactive
+           ( module PTS.Syntax.Term
            --, module PTS.Syntax -- too many parsing-related details
            , module PTS.Statics
            , module PTS.Dynamics
            , module PTS.QuasiQuote
            , module PTS.Interactive
            , module PTS.Process.Main
+           , showPretty
            ) where
 
 -- ASTs

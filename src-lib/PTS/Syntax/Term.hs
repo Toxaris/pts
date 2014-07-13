@@ -43,10 +43,10 @@ import PTS.Syntax.Names (Name, Names, freshvarl)
 -- type Tag = Int
 
 data Term = MkTerm (TermStructure Term)
-  deriving (Data, Typeable)
+  deriving (Data, Typeable, Show)
 
 data TypedTerm = MkTypedTerm (TermStructure TypedTerm) TypedTerm
-  deriving (Data, Typeable)
+  deriving (Data, Typeable, Show)
 
 class Structure term where
   structure :: term -> TermStructure term

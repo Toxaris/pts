@@ -98,7 +98,6 @@ Test-suite tests
   Other-modules:       PTS.Core.Properties
                        PTS.Core.Tests
                        PTS.File.Tests
-                       PTS.PrettyToShow
                        PTS.Syntax.Arbitrary
                        PTS.Syntax.Parser.Tests
                        PTS.Syntax.Pretty.Tests
