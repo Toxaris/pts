@@ -19,6 +19,7 @@ module PTS.Syntax
     -- ** Term structure
   , TermStructure (..)
   , Structure (structure)
+  , structure'
     -- ** Folding
   , PreAlgebra
   , Algebra
@@ -37,6 +38,7 @@ module PTS.Syntax
   , mkPi
   , mkPos
   , mkUnquote
+  , mkInfer
   , handlePos
     -- ** Typed terms
   , TypedTerm

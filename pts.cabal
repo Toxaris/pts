@@ -11,6 +11,8 @@ Category:            Language
 Build-type:          Simple
 Extra-source-files:  examples/Arithmetics.lpts
                      examples/ChurchNumbers.lpts
+                     examples/Functions.lpts
+                     examples/Inference.lpts
 Cabal-version:       >= 1.8
 
 Source-Repository head

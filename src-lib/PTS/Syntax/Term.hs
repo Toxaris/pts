@@ -1,9 +1,10 @@
-{-# LANGUAGE NoMonomorphismRestriction, DeriveFunctor, DeriveDataTypeable #-}
+{-# LANGUAGE NoMonomorphismRestriction, DeriveFunctor, DeriveDataTypeable, StandaloneDeriving #-}
 module PTS.Syntax.Term
   ( Term (..)
   , TypedTerm (..)
   , TermStructure (..)
   , Structure (structure)
+  , structure'
   , typeOf
   , mkInt
   , mkIntOp
@@ -15,6 +16,7 @@ module PTS.Syntax.Term
   , mkPi
   , mkPos
   , mkUnquote
+  , mkInfer
   , freshvarl
   , handlePos
   , typedHandlePos
@@ -55,6 +57,12 @@ instance Structure Term where
 instance Structure TypedTerm where
   structure (MkTypedTerm t _) = t
 
+-- | Return the actual TermStructure of a Term-like thing without Pos nodes.
+structure' :: Structure term => term -> TermStructure term
+structure' t = case structure t of
+  Pos _ t -> structure' t
+  t -> t
+
 typeOf :: TypedTerm -> TypedTerm
 typeOf (MkTypedTerm _ t) = t
 
@@ -63,7 +71,7 @@ data BinOp
   | Sub
   | Mul
   | Div
-  deriving (Eq, Data, Typeable)
+  deriving (Eq, Data, Typeable, Show)
 
 returnLift2 :: (a -> b -> c) -> a -> b -> Maybe c
 returnLift2 = ((Just .) .)
@@ -88,7 +96,10 @@ data TermStructure alpha
   | Pi      Name alpha alpha
   | Pos     Position alpha
   | Unquote alpha
+  | Infer   Integer
   deriving (Functor, Data, Typeable)
+
+deriving instance Show a => Show (TermStructure a)
 
 -- | Desugar a binder with multiple arguments like this:
 --
@@ -129,6 +140,7 @@ mkLam n t1 t2      =  mkTerm (Lam n t1 t2)
 mkPi n t1 t2       =  mkTerm (Pi n t1 t2)
 mkPos p t          =  mkTerm (Pos p t)
 mkUnquote t        =  mkTerm (Unquote t)
+mkInfer i          =  mkTerm (Infer i)
 
 handlePos f p t = annotatePos p $ mkPos p <$> f t
 

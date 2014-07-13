@@ -26,7 +26,7 @@ import qualified Data.Set as Set (insert)
 
 import PTS.Error (showErrors)
 import PTS.Options (defaultOptions)
-import PTS.Statics (typecheck)
+import PTS.Statics (typecheckPull)
 import PTS.Syntax (TypedTerm, typeOf, structure, Name, Term, TermStructure (..), mkVar, strip, parseTerm, multiLine, C (C))
 
 import System.Exit (exitSuccess, exitFailure)
@@ -59,5 +59,5 @@ transform :: (TypedTerm -> Term) -> IO ()
 transform f = run $ do
   text <- liftIO $ getContents
   term <- parseTerm "<stdin>" text
-  typed <- runEnvironmentT (typecheck term) []
+  typed <- runEnvironmentT (typecheckPull term) []
   return (f typed)

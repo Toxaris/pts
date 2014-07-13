@@ -64,7 +64,7 @@ processStmt (Term t) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
   (_, _, env) <- get
-  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
+  MkTypedTerm _ q <- runEnvironmentT (typecheckPull t) env
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let x = nbe env t
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
@@ -77,7 +77,7 @@ processStmt (Bind n args Nothing body) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   (_, _, env) <- get
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
-  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
+  MkTypedTerm _ q <- runEnvironmentT (typecheckPull t) env
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let v = evalTerm env t
   modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (False, v, q)) :)
@@ -100,24 +100,15 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   (_, _, env) <- get
 
   -- typecheck type
-  MkTypedTerm _ q' <- runEnvironmentT (typecheck t'') env
+  qq@(MkTypedTerm _ q') <- runEnvironmentT (typecheckPull (nbe env t'')) env
   case structure (nbe env (strip q')) of
     Const _ -> return ()
     _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
                          $$ text "  expected:" <+> text "constant"
                          $$ text "     found:" <+> pretty 0 q'
 
-  -- typecheck body
-  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
-
-  -- compare specified and actual type
-  if equivTerm env (strip q) t''
-    then output (nest 2 (sep [text "type:", nest 2 (pretty 0 (strip t') )]))
-    else let (expected, given) = showDiff 0 (diff (nbe env t'' ) (nbe env (strip q))) in
-           prettyFail $ text "Type mismatch in top-level binding of" <+> pretty 0 n
-                     $$ text "  specified type:" <+> pretty 0 t'
-                     $$ text "     normal form:" <+> text expected
-                     $$ text "     actual type:" <+> text given
+  -- use declared type to typecheck push
+  MkTypedTerm _ q <- runEnvironmentT (typecheckPush t qq) env
 
   let v = evalTerm env t
   modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (False, v, q)) :)
@@ -129,7 +120,7 @@ processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ 
   (_, _, env) <- get
 
   -- compare specified and actual type
-  MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
+  MkTypedTerm _ q <- runEnvironmentT (typecheckPull t) env
   case q' of
     Nothing ->
       output (nest 2 (sep [text "type:", nest 2 (pretty 0 (strip q))]))

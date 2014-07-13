@@ -47,4 +47,5 @@ tests
      ,  testPretty "lambda x : x . x" (mkLam x (mkVar x) (mkVar x))
      ,  testPretty "lambda x : y . x" (mkLam x (mkVar y) (mkVar x))
      ,  testPretty "lambda x : y . lambda y : x . y" (mkLam x (mkVar y) (mkLam y (mkVar x) (mkVar y)))
+     ,  testPretty "_0" (mkInfer 0)
      ]

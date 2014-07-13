@@ -169,6 +169,8 @@ eval t env = case structure t of
     return (PiType n v1 (\v -> eval e2 ((n, v) : env)))
   Pos _ e -> do
     eval e env
+  Infer _ -> error "Encountered type inference marker during evaluation. You either have an underscore in your code that cannnot be decided or you have discovered a bug in the interpreter."
+  Unquote _ -> error "During evaluation, there should be no unquote left."
 
 {-
 data TermStructure alpha
