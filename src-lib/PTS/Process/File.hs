@@ -23,7 +23,7 @@ import PTS.Statics
 import PTS.Syntax
 import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 
-import System.FilePath ((</>), (<.>), joinPath)
+import System.FilePath ((</>), (<.>), joinPath, takeExtension)
 import System.Directory (doesFileExist)
 
 import Text.PrettyPrint.HughesPJ
@@ -39,7 +39,14 @@ deliterate text = do
 runProcessFile action state opt =
   evalStateT (runErrorsT (runReaderT (runConsoleLogT action (optDebugType opt)) opt)) state 
 
-processFileInt file = do
+looksLiterate =
+  (".l" ==) . take 2 . takeExtension
+
+processFileInt fileName = do
+  let literate = looksLiterate fileName
+  local (setLiterate literate) $ processFileInt' fileName
+
+processFileInt' file = do
   outputLine $ "process file " ++ file
   text <- liftIO (readFile file)
   text <- deliterate text

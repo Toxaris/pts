@@ -58,3 +58,6 @@ some exports. To see internals, use instead:
 Be careful though! Calling `show` on the result will easily loop with cyclic
 terms, such as (by default) the constant `**` (which has itself as type in
 Fomega*, the default PTS instance).
+
+Either way, the code will autodetect whether to use literate parsing based on
+the extension.
