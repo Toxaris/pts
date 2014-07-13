@@ -14,7 +14,7 @@ import Data.Typeable (Typeable)
 
 data ModuleName
   =  ModuleName [String]
-  deriving (Eq)
+  deriving (Eq, Ord)
 
 parts :: ModuleName -> [String]
 parts (ModuleName xs) = xs

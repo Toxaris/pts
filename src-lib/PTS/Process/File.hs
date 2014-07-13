@@ -8,11 +8,12 @@ import Control.Monad.Assertions (MonadAssertions (assert))
 import Control.Monad.Environment (runEnvironmentT)
 import Control.Monad.Errors
 import Control.Monad.Reader (MonadReader (local), runReaderT, asks)
-import Control.Monad.State (MonadState, get, gets, put, modify, evalStateT)
+import Control.Monad.State (MonadState, get, put, modify, evalStateT)
 import Control.Monad.Trans (MonadIO (liftIO))
 import Control.Monad.Log (MonadLog, runConsoleLogT)
 
 import Data.Monoid (mempty)
+import qualified Data.Map as Map
 
 import PTS.Dynamics
 import PTS.Error
@@ -38,14 +39,14 @@ deliterate text = do
 runProcessFile action state opt =
   evalStateT (runErrorsT (runReaderT (runConsoleLogT action (optDebugType opt)) opt)) state 
 
-processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState ([ModuleName], Bindings M) m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module M))
+processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState (Map.Map ModuleName (Module M), [ModuleName], Bindings M) m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module M))
 processFile file = do
   outputLine $ "process file " ++ file
   text <- liftIO (readFile file)
   text <- deliterate text
   File maybeName stmts <- parseFile file text
   processStmts (lines text, stmts)
-  (imports, bindings) <- get
+  (cache, imports, bindings) <- get
   let contents = [(n, (False, t, v)) | (n, (True, t, v)) <- bindings]
   return (do
     name <- maybeName
@@ -62,7 +63,7 @@ processStmt (Term t) = recover () $ do
   output (text "process expression")
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
-  env <- gets snd
+  (_, _, env) <- get
   MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let x = nbe env t
@@ -74,12 +75,12 @@ processStmt (Bind n args Nothing body) = recover () $ do
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
-  env <- gets snd
+  (_, _, env) <- get
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
   MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let v = evalTerm env t
-  modify $ second $ ((n, (False, v, q)) :)
+  modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (False, v, q)) :)
 
 processStmt (Bind n args (Just body') body) = recover () $ do
   let t   =  desugarArgs mkLam args body
@@ -96,7 +97,7 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   output (nest 2 (sep [text "specified type:", nest 2 (pretty 0 t')]))
   let t'' = t'
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t'' )]))
-  env <- gets snd
+  (_, _, env) <- get
 
   -- typecheck type
   MkTypedTerm _ q' <- runEnvironmentT (typecheck t'') env
@@ -119,13 +120,13 @@ processStmt (Bind n args (Just body') body) = recover () $ do
                      $$ text "     actual type:" <+> text given
 
   let v = evalTerm env t
-  modify $ second $ ((n, (False, v, q)) :)
+  modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (False, v, q)) :)
 
 processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ do
   output (text "")
   output (text "process assertion")
   output (nest 2 (sep [text "term:", nest 2 (pretty 0 t)]))
-  env <- gets snd
+  (_, _, env) <- get
 
   -- compare specified and actual type
   MkTypedTerm _ q <- runEnvironmentT (typecheck t) env
@@ -161,30 +162,36 @@ processStmt (Export n) = recover () $ do
   output (text "process export of" <+> pretty 0 n)
 
   -- mark as exported
-  (imports, bindings) <- get
+  (cache, imports, bindings) <- get
   let bindings' = [(n', (x || n == n', t, v)) | (n', (x, t, v)) <- bindings]
-  put (imports, bindings')
+  put (cache, imports, bindings')
 
 processStmt (Import mod) = recover () $ do
   output (text "")
   output (text "process import of" <+> pretty 0 mod)
 
-  -- find file
-  path <- asks optPath
-  (literate, file) <- findModule path mod
+  (cache, imports, bindings) <- get
 
-  old <- get
-  put ([], []) 
-  result <- local (setLiterate literate) $ processFile file
-  put old
+  case Map.lookup mod cache of
+    Just (Module _ _ bindings') -> do
+      put (cache, imports, bindings ++ bindings')
+    Nothing -> do
+      -- find file
+      path <- asks optPath
+      (literate, file) <- findModule path mod
 
-  case result of
-    Nothing ->
-      fail $ "expected module " ++ show mod ++ " in file " ++ file ++ " but found no module statement."
-    Just (Module _ name _) | name /= mod ->
-      fail $ "expected module " ++ show mod ++ " inf file " ++ file ++ " but found module " ++ show name ++ "."
-    Just (Module imports name bindings) ->
-      modify $ second $ (bindings ++)
+      put (cache, [], [])
+      result <- local (setLiterate literate) $ processFile file
+      (cache, _, _) <- get
+      put (cache, imports, bindings)
+
+      case result of
+        Nothing ->
+          fail $ "expected module " ++ show mod ++ " in file " ++ file ++ " but found no module statement."
+        Just (Module _ name _) | name /= mod ->
+          fail $ "expected module " ++ show mod ++ " inf file " ++ file ++ " but found module " ++ show name ++ "."
+        Just found@(Module _ _ bindings') ->
+          put (Map.insert mod found cache, imports, bindings ++ bindings')
 
 findModule path mod = find path where
   base  =  joinPath (parts mod)
