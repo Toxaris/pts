@@ -22,6 +22,7 @@ import Control.Monad.Log (runConsoleLogT)
 import Control.Monad.Reader (runReaderT)
 import Control.Monad.Trans (liftIO)
 
+import Data.Monoid (mempty)
 import qualified Data.Set as Set (insert)
 
 import PTS.Error (showErrors)
@@ -59,5 +60,5 @@ transform :: (TypedTerm -> Term) -> IO ()
 transform f = run $ do
   text <- liftIO $ getContents
   term <- parseTerm "<stdin>" text
-  typed <- runEnvironmentT (typecheckPull term) []
+  typed <- runEnvironmentT (typecheckPull term) mempty
   return (f typed)

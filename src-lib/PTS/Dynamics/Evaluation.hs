@@ -5,19 +5,20 @@ import Control.Applicative hiding (Const)
 import Control.Monad.State
 
 import Data.Maybe (fromMaybe)
+import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import PTS.Dynamics.Binding
 import PTS.Dynamics.Value
 import PTS.Syntax
 
-type Env m = [(Name, Value m)]
+type Env m = Map.Map Name (Value m)
 
 envToNames :: Env m -> Names
-envToNames env = Set.fromList (map fst env)
+envToNames env = Map.keysSet env
 
 dropTypes :: Bindings m -> Env m
-dropTypes = map (\(x, (_, y, z)) -> (x, y))
+dropTypes = fmap (\(_, y, z) -> y)
 
 newtype Eval a = Eval (State Names a)
   deriving (Functor, Monad, MonadState Names)
@@ -148,7 +149,7 @@ eval t env = case structure t of
         v3   <- eval e3 env
         return (ResidualIfZero v1 v2 v3)
   Var n -> do
-    case lookup n env of
+    case Map.lookup n env of
       Just v -> return v
       Nothing -> return (ResidualVar n)
   Const c -> do
@@ -163,10 +164,10 @@ eval t env = case structure t of
         return (ResidualApp v1 v2)
   Lam n e1 e2 -> do
     v1 <- eval e1 env
-    return (Function n v1 (ValueFunction (\v -> eval e2 ((n, v) : env))))
+    return (Function n v1 (ValueFunction (\v -> eval e2 (Map.insert n v env))))
   Pi n e1 e2 -> do
     v1 <- eval e1 env
-    return (PiType n v1 (ValueFunction (\v -> eval e2 ((n, v) : env))))
+    return (PiType n v1 (ValueFunction (\v -> eval e2 (Map.insert n v env))))
   Pos _ e -> do
     eval e env
   Infer _ -> error "Encountered type inference marker during evaluation. You either have an underscore in your code that cannnot be decided or you have discovered a bug in the interpreter."
