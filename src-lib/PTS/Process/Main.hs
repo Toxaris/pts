@@ -56,11 +56,3 @@ processJob (opt, file) = do
 
 simpleRunMonads processor file opt =
   checkAssertions (runReaderT (runConsoleLogT (processor file) (optDebugType opt)) opt)
-
-processFileSimple
-  :: FilePath -> IO (Either [PTSError] (Maybe (Module Eval)))
-processFileSimple f = runErrorsT . runMainState $ simpleRunMonads processFile f defaultOptions
-
-processFileSimpleInt
-  :: FilePath -> IO (Either [PTSError] (Maybe ModuleName, (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval)))
-processFileSimpleInt f = runErrorsT . runMainState $ simpleRunMonads processFileInt f defaultOptions

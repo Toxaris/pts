@@ -14,6 +14,9 @@ help you to get started.
    its internals.
 5. Use `:r` to reload PTS source if you change it.
 
+If you want to add packages for GHCi (say, lens), add the corresponding command
+(e.g., `:set -package lens`) at the end of `.ghci`.
+
 # Tricks for working on this codebase
 
 ## Creating terms
@@ -44,6 +47,18 @@ canonicalize the text.
 
 # Typechecking terms
 
+Currently working example:
+
+    wrapTypecheckPull [pts|lambda x : * . x|] [] Nothing
+
+To apply pretty-printing to the term without needing to unwrap it, prepend:
+
+    fmap showPretty `fmap`
+
+Alternatively:
+
+    wrapTypecheckPull [pts|*|] [] Nothing & mapped . mapped %~ showPretty
+
 # Loading modules
 
 You can use:
@@ -61,3 +76,11 @@ Fomega*, the default PTS instance).
 
 Either way, the code will autodetect whether to use literate parsing based on
 the extension.
+
+# Typechecking in the context of other modules
+
+A pretty crude approach is this:
+
+    q <- wrapTypecheckPull [pts|eval|] (getBindings r) Nothing
+
+if `r` was bound as above.
