@@ -27,22 +27,17 @@ infixl 2 >>>
 (>>>) = flip (.)
 
 main = do
-  success <- runMainErrors $ parseCommandLine processJobs
-  if success
-    then exitSuccess
-    else exitFailure
+  result <- runErrorsT $ parseCommandLine processJobs
+  processErrors result
 
-runMainErrors act = do
-  result <- runErrorsT act
+processErrors result = do
   case result of
     Left errors -> do
       liftIO $ hFlush stdout
       liftIO $ hPutStrLn stderr $ showErrors $ errors
-      return False
+      exitFailure
     Right result -> do
-      return True
-
-runMainState act = evalStateT act (Map.empty, [], [])
+      exitSuccess
 
 processJobs jobs = do
   runMainState $ mapM_ processJob jobs
@@ -51,8 +46,8 @@ processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.M
 processJob (opt, file) = do
   let path = optPath opt
   file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
-  mod <- simpleRunMonads processFile file opt
+  mod <- simpleRunMonads (processFile file) opt
   return ()
 
-simpleRunMonads processor file opt =
-  checkAssertions (runReaderT (runConsoleLogT (processor file) (optDebugType opt)) opt)
+simpleRunMonads action opt =
+  checkAssertions (runBaseMonads action opt)

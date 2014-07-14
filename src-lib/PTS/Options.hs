@@ -173,7 +173,7 @@ printInstances = putStrLn (render 80 info) where
 render n = renderStyle (Style PageMode n 1)
 
 -- main entry point
-parseCommandLine :: (Functor m, MonadIO m) => ([(Options, FilePath)] -> m a) -> m ()
+parseCommandLine :: (Functor m, MonadIO m) => ([(Options, FilePath)] -> m a) -> m a
 parseCommandLine handler = do
   cmdline <- liftIO getArgs
   let (flags, [], errors) = getOpt argOrder options cmdline
@@ -184,4 +184,3 @@ parseCommandLine handler = do
   global <- processFlagsGlobal defaultOptions flags
   jobs <- processFlagsLocal global flags
   handler jobs
-  return ()

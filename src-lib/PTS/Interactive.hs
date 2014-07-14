@@ -41,17 +41,18 @@ nbeClosed = nbe []
 optionsForInstance Nothing = defaultOptions
 optionsForInstance (Just inst) = setInstance inst $ optionsForInstance Nothing
 
-runMoreMonads fun arg inst =
-  runErrorsT . runMainState $ simpleRunMonads fun arg (optionsForInstance inst) :: IO a
+runMoreMonads action inst =
+  runErrorsT . runMainState $ simpleRunMonads action (optionsForInstance inst)
+
 processFileSimple
   :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe (Module Eval)))
-processFileSimple f inst = runMoreMonads processFile f inst
+processFileSimple f inst = runMoreMonads (processFile f) inst
 
 processFileSimpleInt
   :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)))
-processFileSimpleInt f inst = runMoreMonads processFileInt f inst
+processFileSimpleInt f inst = runMoreMonads (processFileInt f) inst
 
-processStmtSimple stmt inst = runMoreMonads processStmt stmt inst
+processStmtSimple stmt inst = runMoreMonads (processStmt stmt) inst
 
 -- r ^. _Right . _2 . _3
 getBindings :: Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)) -> Bindings Eval
@@ -70,7 +71,13 @@ wrapTypecheckPush ::
   -> Maybe PTS
   -> IO (Either [PTSError] TypedTerm)
 
-wrapTypecheckPull term env inst = runErrorsT (simpleRunMonads (runEnvironmentT (typecheckPull term)) env (optionsForInstance inst))
+typecheckWrapper action env inst =
+  runErrorsT $ simpleRunMonads (runEnvironmentT action env) (optionsForInstance inst)
+
+
+wrapTypecheckPull term =
+  typecheckWrapper (typecheckPull term)
 
 -- expectedType must already have been typechecked. XXX add wrapper which does that too?
-wrapTypecheckPush term expectedType env inst = runErrorsT (simpleRunMonads (runEnvironmentT (typecheckPush term expectedType)) env (optionsForInstance inst))
+wrapTypecheckPush term expectedType =
+  typecheckWrapper (typecheckPush term expectedType)
