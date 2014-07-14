@@ -27,7 +27,7 @@ infixl 2 >>>
 (>>>) = flip (.)
 
 main = do
-  result <- runErrorsT $ parseCommandLine processJobs
+  result <- parseCommandLine processJobs
   processErrors result
 
 processErrors result = do
@@ -40,7 +40,7 @@ processErrors result = do
       exitSuccess
 
 processJobs jobs = do
-  runMainState $ mapM_ processJob jobs
+  runErrorsT $ runMainState $ mapM_ processJob jobs
 
 processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m) => (Options, FilePath) -> m ()
 processJob (opt, file) = do
