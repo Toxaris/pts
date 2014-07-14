@@ -22,11 +22,11 @@ dropTypes = map (\(x, (_, y, z)) -> (x, y))
 newtype Eval a = Eval (State Names a)
   deriving (Functor, Monad, MonadState Names)
 
-runM :: Names -> Eval a -> a
-runM names (Eval p) = evalState p names
+runEval :: Names -> Eval a -> a
+runEval names (Eval p) = evalState p names
 
 equivTerm :: Bindings Eval -> Term -> Term -> Bool
-equivTerm env' t1 t2 = runM (envToNames env) $ do
+equivTerm env' t1 t2 = runEval (envToNames env) $ do
   v1 <- eval t1 env
   v2 <- eval t2 env
   equiv v1 v2
@@ -71,7 +71,7 @@ equiv _ _ = do
   return False
 
 nbe :: Bindings Eval -> Term -> Term
-nbe env' e = runM (envToNames env) $ do
+nbe env' e = runEval (envToNames env) $ do
   v   <- eval e env
   e'  <- reify v
   return e'
@@ -118,7 +118,7 @@ reify (ResidualApp v1 v2) = do
   return (mkApp e1 e2)
 
 evalTerm :: Bindings Eval -> Term -> Value Eval
-evalTerm env' t = runM (envToNames env) $ do
+evalTerm env' t = runEval (envToNames env) $ do
   eval t env
  where env = dropTypes env'
 
