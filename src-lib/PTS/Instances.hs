@@ -226,7 +226,7 @@ lamc = PTS sorts axioms relations name description where
   sorts (C _) = False
 
   axioms (C 0) = Just typedStar
-  axioms (C 1) = Just typedStar
+  axioms (C 1) = Just typedBox
   axioms (C _) = Nothing
 
   relations (C 1) (C 1) = Just typedStar
