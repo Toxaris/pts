@@ -37,11 +37,6 @@ import PTS.Syntax.Names (Name, Names, freshvarl)
 
 -- Syntax
 
--- the string in IntOp is an identifier for the function. It is necessary
--- to check equivalence of terms (the functions cannot be directly compared)
-
--- type Tag = Int
-
 data Term = MkTerm (TermStructure Term)
   deriving (Data, Typeable, Show)
 
@@ -99,6 +94,11 @@ evalOp Div = safeDiv
   where
     safeDiv x 0 = Nothing
     safeDiv x y = Just $ div x y
+
+-- XXX outdated.
+
+-- the string in IntOp is an identifier for the function. It is necessary
+-- to check equivalence of terms (the functions cannot be directly compared)
 
 data TermStructure alpha
   = Int     Integer
