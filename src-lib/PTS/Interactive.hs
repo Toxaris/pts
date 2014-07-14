@@ -40,13 +40,13 @@ nbeClosed = nbe []
 
 processFileSimple
   :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe (Module Eval)))
-processFileSimple f inst = runMoreMonads inst (processFile f)
+processFileSimple f inst = runErrorsAndOptsWithEmptyState inst (processFile f)
 
 processFileSimpleInt
   :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)))
-processFileSimpleInt f inst = runMoreMonads inst (processFileInt f)
+processFileSimpleInt f inst = runErrorsAndOptsWithEmptyState inst (processFileInt f)
 
-processStmtSimple stmt inst = runMoreMonads inst (processStmt stmt)
+processStmtSimple stmt inst = runErrorsAndOptsWithEmptyState inst (processStmt stmt)
 
 -- r ^. _Right . _2 . _3
 getBindings :: Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)) -> Bindings Eval
@@ -79,11 +79,11 @@ typecheckWrapper action env inst =
   runErrorsAndOpts inst $ runEnvironmentT action env
 
 -- Instead, higher level actions need a state monad.
-runMoreMonads inst =
+runErrorsAndOptsWithEmptyState inst =
   withEmptyState . runErrorsAndOpts inst
 
 runErrorsAndOpts inst =
-  runErrorsT . simpleRunMonads (optionsForInstance inst)
+  runErrorsT . runOptMonadsWithAssertions (optionsForInstance inst)
 
 optionsForInstance Nothing = defaultOptions
 optionsForInstance (Just inst) = setInstance inst $ optionsForInstance Nothing

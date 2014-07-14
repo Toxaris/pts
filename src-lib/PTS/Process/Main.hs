@@ -46,7 +46,7 @@ processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.M
 processJob (opt, file) = do
   let path = optPath opt
   file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
-  simpleRunMonads opt (processFile file)
+  runOptMonadsWithAssertions opt (processFile file)
 
-simpleRunMonads opt =
+runOptMonadsWithAssertions opt =
   checkAssertions . runOptMonads opt
