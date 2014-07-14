@@ -41,13 +41,17 @@ nbeClosed = nbe []
 optionsForInstance Nothing = defaultOptions
 optionsForInstance (Just inst) = setInstance inst $ optionsForInstance Nothing
 
+runMoreMonads fun arg inst =
+  runErrorsT . runMainState $ simpleRunMonads fun arg (optionsForInstance inst) :: IO a
 processFileSimple
   :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe (Module Eval)))
-processFileSimple f inst = runErrorsT . runMainState $ simpleRunMonads processFile f (optionsForInstance inst)
+processFileSimple f inst = runMoreMonads processFile f inst
 
 processFileSimpleInt
   :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)))
-processFileSimpleInt f inst = runErrorsT . runMainState $ simpleRunMonads processFileInt f (optionsForInstance inst)
+processFileSimpleInt f inst = runMoreMonads processFileInt f inst
+
+processStmtSimple stmt inst = runMoreMonads processStmt stmt inst
 
 -- r ^. _Right . _2 . _3
 getBindings :: Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)) -> Bindings Eval
