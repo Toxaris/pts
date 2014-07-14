@@ -22,13 +22,12 @@
     ("\\<\\*+\\>" . 'font-lock-constant-face))
   "Font lock configuration for PTS.")
 
-(define-derived-mode pts-mode fundamental-mode "pts"
-  "Major mode for editing (literate) pts files."
+(defun pts-setup-fontlock ()
+  (setq font-lock-defaults `(pts-font-lock-keywords))
+  "Install `font-lock-defaults' for PTS mode.")
 
-  ; install font-lock configuration
-  (setq font-lock-defaults
-    `(pts-font-lock-keywords))
-
+(defun pts-setup-syntax-table ()
+  "Setup the syntax table for PTS mode."
   ; by default, all printable characters are word constituents
   (modify-syntax-entry '(?\x20 . ?\x7F) "w")
 
@@ -48,6 +47,11 @@
   ; comments
   (modify-syntax-entry ?\/ "w 14")
   (modify-syntax-entry ?\* "w 23"))
+
+(define-derived-mode pts-mode fundamental-mode "pts"
+  "Major mode for editing (literate) pts files."
+  (pts-setup-fontlock)
+  (pts-setup-syntax-table))
 
 (add-to-list 'auto-mode-alist '("\\.l?pts\\'" . pts-mode))
 
