@@ -40,14 +40,13 @@ processErrors result = do
       exitSuccess
 
 processJobs jobs = do
-  runErrorsT $ runMainState $ mapM_ processJob jobs
+  runErrorsT . runMainState $ mapM processJob jobs
 
-processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m) => (Options, FilePath) -> m ()
+processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m) => (Options, FilePath) -> m (Maybe (Module Eval))
 processJob (opt, file) = do
   let path = optPath opt
   file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
-  mod <- simpleRunMonads (processFile file) opt
-  return ()
+  simpleRunMonads opt (processFile file)
 
-simpleRunMonads action opt =
-  checkAssertions (runBaseMonads action opt)
+simpleRunMonads opt =
+  checkAssertions . runOptMonads opt

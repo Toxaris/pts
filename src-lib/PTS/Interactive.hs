@@ -38,21 +38,15 @@ parseSimple input = parseTerm "REPL" input
 nbeClosed :: Term -> Term
 nbeClosed = nbe []
 
-optionsForInstance Nothing = defaultOptions
-optionsForInstance (Just inst) = setInstance inst $ optionsForInstance Nothing
-
-runMoreMonads action inst =
-  runErrorsT . runMainState $ simpleRunMonads action (optionsForInstance inst)
-
 processFileSimple
   :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe (Module Eval)))
-processFileSimple f inst = runMoreMonads (processFile f) inst
+processFileSimple f inst = runMoreMonads inst (processFile f)
 
 processFileSimpleInt
   :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)))
-processFileSimpleInt f inst = runMoreMonads (processFileInt f) inst
+processFileSimpleInt f inst = runMoreMonads inst (processFileInt f)
 
-processStmtSimple stmt inst = runMoreMonads (processStmt stmt) inst
+processStmtSimple stmt inst = runMoreMonads inst (processStmt stmt)
 
 -- r ^. _Right . _2 . _3
 getBindings :: Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)) -> Bindings Eval
@@ -71,13 +65,25 @@ wrapTypecheckPush ::
   -> Maybe PTS
   -> IO (Either [PTSError] TypedTerm)
 
-typecheckWrapper action env inst =
-  runErrorsT $ simpleRunMonads (runEnvironmentT action env) (optionsForInstance inst)
-
-
 wrapTypecheckPull term =
   typecheckWrapper (typecheckPull term)
 
 -- expectedType must already have been typechecked. XXX add wrapper which does that too?
 wrapTypecheckPush term expectedType =
   typecheckWrapper (typecheckPush term expectedType)
+
+-- Monadic runners
+
+-- Typechecking needs an environment monad to read bindings.
+typecheckWrapper action env inst =
+  runErrorsAndOpts inst $ runEnvironmentT action env
+
+-- Instead, higher level actions need a state monad.
+runMoreMonads inst =
+  runMainState . runErrorsAndOpts inst
+
+runErrorsAndOpts inst =
+  runErrorsT . simpleRunMonads (optionsForInstance inst)
+
+optionsForInstance Nothing = defaultOptions
+optionsForInstance (Just inst) = setInstance inst $ optionsForInstance Nothing

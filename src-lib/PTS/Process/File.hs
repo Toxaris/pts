@@ -39,7 +39,7 @@ deliterate text = do
 
 runMainState act = evalStateT act (Map.empty, [], [])
 
-runBaseMonads action opt =
+runOptMonads opt action =
   runReaderT (runConsoleLogT action (optDebugType opt)) opt
 
 setLiterateFromName fileName =
