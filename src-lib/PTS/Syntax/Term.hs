@@ -31,22 +31,32 @@ import Data.Data (Data)
 import Data.Typeable (Typeable)
 
 import PTS.Error
-import PTS.Syntax.Constants (C)
+import PTS.Syntax.Constants (C(C))
 import PTS.Syntax.Names (Name, Names, freshvarl)
 
 
 -- Syntax
 
--- the string in IntOp is an identifier for the function. It is necessary
--- to check equivalence of terms (the functions cannot be directly compared)
-
--- type Tag = Int
-
 data Term = MkTerm (TermStructure Term)
-  deriving (Data, Typeable)
+  deriving (Data, Typeable, Show)
 
 data TypedTerm = MkTypedTerm (TermStructure TypedTerm) TypedTerm
   deriving (Data, Typeable)
+
+instance Show TypedTerm where
+  showsPrec d t@(MkTypedTerm struct typ) =
+    showParen (d > app_prec) $
+      showString "MkTypedTerm " . showsPrec (app_prec + 1) struct .
+        if loops t
+         then showString " <self>" -- This is the only non-default behavior.
+         else showString " " . showsPrec (app_prec + 1) typ
+   where
+     app_prec = 10
+
+loops t1 = sameConst (structure' t1) (structure' (typeOf t1))
+ where
+   sameConst (Const (C c1)) (Const (C c2)) = c1 == c2
+   sameConst _ _ = False
 
 class Structure term where
   structure :: term -> TermStructure term
@@ -85,6 +95,11 @@ evalOp Div = safeDiv
     safeDiv x 0 = Nothing
     safeDiv x y = Just $ div x y
 
+-- XXX outdated.
+
+-- the string in IntOp is an identifier for the function. It is necessary
+-- to check equivalence of terms (the functions cannot be directly compared)
+
 data TermStructure alpha
   = Int     Integer
   | IntOp   Name BinOp alpha alpha
@@ -97,9 +112,7 @@ data TermStructure alpha
   | Pos     Position alpha
   | Unquote alpha
   | Infer   Integer
-  deriving (Functor, Data, Typeable)
-
-deriving instance Show a => Show (TermStructure a)
+  deriving (Functor, Data, Typeable, Show)
 
 -- | Desugar a binder with multiple arguments like this:
 --

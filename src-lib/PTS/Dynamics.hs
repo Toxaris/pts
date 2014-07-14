@@ -5,7 +5,7 @@ module PTS.Dynamics
   , Bindings
   , Module (..)
     -- * Evaluation
-  , M
+  , Eval
   , evalTerm
     -- * Normalization and Equivalence
   , nbe

@@ -19,21 +19,21 @@ envToNames env = Set.fromList (map fst env)
 dropTypes :: Bindings m -> Env m
 dropTypes = map (\(x, (_, y, z)) -> (x, y))
 
-newtype M a = M (State Names a)
+newtype Eval a = Eval (State Names a)
   deriving (Functor, Monad, MonadState Names)
 
-runM :: Names -> M a -> a
-runM names (M p) = evalState p names
+runEval :: Names -> Eval a -> a
+runEval names (Eval p) = evalState p names
 
-equivTerm :: Bindings M -> Term -> Term -> Bool
-equivTerm env' t1 t2 = runM (envToNames env) $ do
+equivTerm :: Bindings Eval -> Term -> Term -> Bool
+equivTerm env' t1 t2 = runEval (envToNames env) $ do
   v1 <- eval t1 env
   v2 <- eval t2 env
   equiv v1 v2
  where env = dropTypes env'
 
-equiv :: Value M -> Value M -> M Bool
-equiv (Function n v1 f) (Function _ v1' f') = do
+equiv :: Value Eval -> Value Eval -> Eval Bool
+equiv (Function n v1 (ValueFunction f)) (Function _ v1' (ValueFunction f')) = do
   r1 <- equiv v1 v1'
   n'   <- fresh n
   v2   <- f   (ResidualVar n')
@@ -44,7 +44,7 @@ equiv (Number n) (Number n') = do
   return (n == n')
 equiv (Constant c) (Constant c') = do
   return (c == c')
-equiv (PiType n v1 f) (PiType _ v1' f') = do
+equiv (PiType n v1 (ValueFunction f)) (PiType _ v1' (ValueFunction f')) = do
   r1   <- equiv v1 v1'
   n'   <- fresh n
   v2   <- f   (ResidualVar n')
@@ -70,22 +70,22 @@ equiv (ResidualApp v1 v2) (ResidualApp v1' v2') = do
 equiv _ _ = do
   return False
 
-nbe :: Bindings M -> Term -> Term
-nbe env' e = runM (envToNames env) $ do
+nbe :: Bindings Eval -> Term -> Term
+nbe env' e = runEval (envToNames env) $ do
   v   <- eval e env
   e'  <- reify v
   return e'
  where env = dropTypes env'
 
-fresh :: Name -> M Name
+fresh :: Name -> Eval Name
 fresh n = do
   ns <- get
   let n' = freshvarl ns n
   put (Set.insert n' ns)
   return n'
 
-reify :: Value M -> M Term
-reify (Function n v1 f) = do
+reify :: Value Eval -> Eval Term
+reify (Function n v1 (ValueFunction f)) = do
   e1 <- reify v1
   n' <- fresh n
   v2 <- f (ResidualVar n')
@@ -95,7 +95,7 @@ reify (Number n) = do
   return (mkInt n)
 reify (Constant c) = do
   return (mkConst c)
-reify (PiType n v1 f) = do
+reify (PiType n v1 (ValueFunction f)) = do
   e1 <- reify v1
   n' <- fresh n
   v2 <- f (ResidualVar n')
@@ -117,13 +117,13 @@ reify (ResidualApp v1 v2) = do
   e2 <- reify v2
   return (mkApp e1 e2)
 
-evalTerm :: Bindings M -> Term -> Value M
-evalTerm env' t = runM (envToNames env) $ do
+evalTerm :: Bindings Eval -> Term -> Value Eval
+evalTerm env' t = runEval (envToNames env) $ do
   eval t env
  where env = dropTypes env'
 
 
-eval :: Term -> Env M -> M (Value M)
+eval :: Term -> Env Eval -> Eval (Value Eval)
 eval t env = case structure t of
   Int n -> do
     return (Number n)
@@ -157,16 +157,16 @@ eval t env = case structure t of
     v1 <- eval e1 env
     v2 <- eval e2 env
     case v1 of
-      Function n t f -> do
+      Function n t (ValueFunction f) -> do
         f v2
       _ -> do
         return (ResidualApp v1 v2)
   Lam n e1 e2 -> do
     v1 <- eval e1 env
-    return (Function n v1 (\v -> eval e2 ((n, v) : env)))
+    return (Function n v1 (ValueFunction (\v -> eval e2 ((n, v) : env))))
   Pi n e1 e2 -> do
     v1 <- eval e1 env
-    return (PiType n v1 (\v -> eval e2 ((n, v) : env)))
+    return (PiType n v1 (ValueFunction (\v -> eval e2 ((n, v) : env))))
   Pos _ e -> do
     eval e env
   Infer _ -> error "Encountered type inference marker during evaluation. You either have an underscore in your code that cannnot be decided or you have discovered a bug in the interpreter."

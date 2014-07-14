@@ -1,6 +1,7 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts #-}
 module PTS.Process.File where
 
+import Control.Applicative hiding (Const)
 import Control.Arrow (second)
 
 import Control.Monad (when, unless)
@@ -23,7 +24,7 @@ import PTS.Statics
 import PTS.Syntax
 import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 
-import System.FilePath ((</>), (<.>), joinPath)
+import System.FilePath ((</>), (<.>), joinPath, takeExtension)
 import System.Directory (doesFileExist)
 
 import Text.PrettyPrint.HughesPJ
@@ -39,18 +40,32 @@ deliterate text = do
 runProcessFile action state opt =
   evalStateT (runErrorsT (runReaderT (runConsoleLogT action (optDebugType opt)) opt)) state 
 
-processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState (Map.Map ModuleName (Module M), [ModuleName], Bindings M) m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module M))
-processFile file = do
+setLiterateFromName fileName =
+  case (takeExtension fileName) of
+    ".lpts" -> setLiterate True
+    ".pts" -> setLiterate False
+    _ -> id -- Keep setting from cmd line.
+
+processFileInt fileName = do
+  local (setLiterateFromName fileName) $ processFileInt' fileName
+
+processFileInt' file = do
   outputLine $ "process file " ++ file
   text <- liftIO (readFile file)
   text <- deliterate text
   File maybeName stmts <- parseFile file text
   processStmts (lines text, stmts)
   (cache, imports, bindings) <- get
-  let contents = [(n, (False, t, v)) | (n, (True, t, v)) <- bindings]
-  return (do
-    name <- maybeName
-    return (Module imports name contents))
+  return (maybeName, (cache, imports, bindings))
+
+processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module Eval))
+processFile file = do
+  (maybeName, rest) <- processFileInt file
+  return $ filterRet <$> maybeName <*> pure rest
+
+filterRet name (cache, imports, bindings) =
+  let contents = [(n, (False, t, v)) | (n, (True, t, v)) <- bindings] in
+    Module imports name contents
 
 processStmts (text, stmts) = do
   annotateCode text $ mapM_ processStmt stmts
