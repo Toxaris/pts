@@ -1,7 +1,15 @@
+-- Entry point for `cabal repl`.
+--
+-- Calling :browse should give a nice overview of the API for interactive use.
+--
+-- To this end, I try to have in scope just enough stuff to minimize qualified
+-- names there, and to monomorphise signatures for higher readability.
+
 module PTS.Interactive
            ( module PTS.Syntax.Term
            --, module PTS.Syntax -- too many parsing-related details
-           , module PTS.Statics
+           --, module PTS.Statics:
+           --, normalizeToSort
            , module PTS.Dynamics
            , module PTS.QuasiQuote
            , module PTS.Interactive
@@ -18,18 +26,14 @@ import PTS.Syntax.Term (Term(..), TypedTerm(..), TermStructure(..), BinOp(..))
 
 import PTS.Syntax
 
-import Control.Monad.Errors
-import Control.Monad.Environment
-import Control.Monad.Assertions (checkAssertions)
-
 import PTS.Dynamics
 import PTS.Statics
 import PTS.Instances
 import PTS.QuasiQuote
 import PTS.Error
-import PTS.Process.Main
 import PTS.Process.File
-import PTS.Options
+import PTS.Interactive.Runners
+
 import Data.Map (Map)
 import Data.Maybe
 
@@ -39,14 +43,8 @@ parseSimple input = parseTerm "REPL" input
 nbeClosed :: Term -> Term
 nbeClosed = nbe []
 
-processFileSimple
-  :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe (Module Eval)))
 processFileSimple f inst = runErrorsAndOpts inst (processFile f)
-
-processFileSimpleInt
-  :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)))
 processFileSimpleInt f inst = runErrorsAndOpts inst (processFileInt f)
-
 processStmtSimple stmt inst = runErrorsAndOpts inst (processStmt stmt)
 
 -- r ^. _Right . _2 . _3
@@ -72,16 +70,3 @@ wrapTypecheckPull term =
 -- expectedType must already have been typechecked. XXX add wrapper which does that too?
 wrapTypecheckPush term expectedType =
   typecheckWrapper (typecheckPush term expectedType)
-
--- Monadic runners
-
--- Typechecking needs an environment monad to read bindings.
-typecheckWrapper action env inst =
-  runErrorsAndOpts inst $ runEnvironmentT action env
-
--- Instead, higher level actions need a state monad. But that does not hurt too much for typechecking.
-runErrorsAndOpts inst =
-  withEmptyState . runErrorsT . checkAssertions . runOptMonads (optionsForInstance inst)
-
-optionsForInstance Nothing = defaultOptions
-optionsForInstance (Just inst) = setInstance inst $ optionsForInstance Nothing
