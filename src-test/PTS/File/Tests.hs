@@ -9,7 +9,8 @@ import Control.Monad.Errors
 import qualified Data.Map as Map
 
 import PTS.Error (showErrors)
-import PTS.Process.File (runOptMonads, withEmptyState, processFile)
+import PTS.Process.File (processFile)
+import PTS.Process.Main (runOptMonads, withEmptyState)
 import PTS.Options (Options, defaultOptions, optPath, optLiterate, optQuiet)
 
 import System.Directory (findFile)
@@ -18,14 +19,12 @@ import Test.Framework (Test, testGroup, buildTest)
 import Test.Framework.Providers.HUnit (testCase)
 import Test.HUnit (assertFailure)
 
-runProcessFile opt =
-  runErrorsT . withEmptyState . runOptMonads opt
 
 testFileWithOptions :: Options -> FilePath -> Test
 testFileWithOptions opt file = buildTest $ do
   let path = optPath opt
   file <- findFile path file >>= maybe (fail ("file not found: " ++ file)) return
-  result <- runProcessFile opt (collectAssertions (processFile file))
+  result <- withEmptyState . runErrorsT . runOptMonads opt . collectAssertions $ processFile file
   case result of
     Left e -> fail (showErrors e)
     Right (_, assertions) -> return $ testGroup file $

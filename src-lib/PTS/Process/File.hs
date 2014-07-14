@@ -37,11 +37,6 @@ deliterate text = do
   if flag then return . unlines . map deliterateLine . lines $ text
           else return text
 
-withEmptyState act = evalStateT act (Map.empty, [], [])
-
-runOptMonads opt action =
-  runReaderT (runConsoleLogT action (optDebugType opt)) opt
-
 setLiterateFromName fileName =
   case (takeExtension fileName) of
     ".lpts" -> setLiterate True

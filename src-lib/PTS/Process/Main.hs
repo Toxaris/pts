@@ -39,14 +39,18 @@ processErrors result = do
     Right result -> do
       exitSuccess
 
+-- This shares the state across files.
+
 processJobs jobs = do
-  runErrorsT . withEmptyState $ mapM processJob jobs
+  withEmptyState . runErrorsT $ mapM processJob jobs
 
 processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m) => (Options, FilePath) -> m (Maybe (Module Eval))
 processJob (opt, file) = do
   let path = optPath opt
   file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
-  runOptMonadsWithAssertions opt (processFile file)
+  checkAssertions . runOptMonads opt $ processFile file
 
-runOptMonadsWithAssertions opt =
-  checkAssertions . runOptMonads opt
+withEmptyState act = evalStateT act (Map.empty, [], [])
+
+runOptMonads opt action =
+  runReaderT (runConsoleLogT action (optDebugType opt)) opt

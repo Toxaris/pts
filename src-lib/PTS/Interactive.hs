@@ -20,6 +20,7 @@ import PTS.Syntax
 
 import Control.Monad.Errors
 import Control.Monad.Environment
+import Control.Monad.Assertions (checkAssertions)
 
 import PTS.Dynamics
 import PTS.Statics
@@ -40,13 +41,13 @@ nbeClosed = nbe []
 
 processFileSimple
   :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe (Module Eval)))
-processFileSimple f inst = runErrorsAndOptsWithEmptyState inst (processFile f)
+processFileSimple f inst = runErrorsAndOpts inst (processFile f)
 
 processFileSimpleInt
   :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)))
-processFileSimpleInt f inst = runErrorsAndOptsWithEmptyState inst (processFileInt f)
+processFileSimpleInt f inst = runErrorsAndOpts inst (processFileInt f)
 
-processStmtSimple stmt inst = runErrorsAndOptsWithEmptyState inst (processStmt stmt)
+processStmtSimple stmt inst = runErrorsAndOpts inst (processStmt stmt)
 
 -- r ^. _Right . _2 . _3
 getBindings :: Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)) -> Bindings Eval
@@ -78,12 +79,9 @@ wrapTypecheckPush term expectedType =
 typecheckWrapper action env inst =
   runErrorsAndOpts inst $ runEnvironmentT action env
 
--- Instead, higher level actions need a state monad.
-runErrorsAndOptsWithEmptyState inst =
-  withEmptyState . runErrorsAndOpts inst
-
+-- Instead, higher level actions need a state monad. But that does not hurt too much for typechecking.
 runErrorsAndOpts inst =
-  runErrorsT . runOptMonadsWithAssertions (optionsForInstance inst)
+  withEmptyState . runErrorsT . checkAssertions . runOptMonads (optionsForInstance inst)
 
 optionsForInstance Nothing = defaultOptions
 optionsForInstance (Just inst) = setInstance inst $ optionsForInstance Nothing
