@@ -286,12 +286,12 @@ typecheckPull t = case structure t of
     return (MkTypedTerm (Int i) int')
 
   -- IntOp
-  IntOp opName opFunction t1 t2 -> debug "typecheckPull IntOp" t $ do
+  IntOp opFunction t1 t2 -> debug "typecheckPull IntOp" t $ do
     integerType <- typecheckPull (mkConst int)
     -- Both arguments to any IntOp have to be Ints, so typecheckPush an Int in there.
     t1'@(MkTypedTerm _ tt1) <- typecheckPush t1 integerType
     t2'@(MkTypedTerm _ tt2) <- typecheckPush t2 integerType
-    return (MkTypedTerm (IntOp opName opFunction t1' t2') integerType)
+    return (MkTypedTerm (IntOp opFunction t1' t2') integerType)
 
   -- IfZero
   IfZero condition thenTerm elseTerm -> debug "typecheckPull IfZero" t $ do
@@ -419,12 +419,12 @@ typecheckPush t q = case structure t of
     return (MkTypedTerm (Int i) int')
 
   -- IntOp
-  IntOp opName opFunction t1 t2 -> debugPush "typecheckPush IntOp" t q $ do
+  IntOp opFunction t1 t2 -> debugPush "typecheckPush IntOp" t q $ do
     integerType <- typecheckPull (mkConst int)
     bidiExpected integerType q t "An integer operation is not expected to be one."
     typedT1 <- typecheckPush t1 integerType
     typedT2 <- typecheckPush t2 integerType
-    return (MkTypedTerm (IntOp opName opFunction typedT1 typedT2) integerType)
+    return (MkTypedTerm (IntOp opFunction typedT1 typedT2) integerType)
 
   -- IfZero
   IfZero t1 t2 t3 -> debugPush "typecheckPush IfZero" t q $ do

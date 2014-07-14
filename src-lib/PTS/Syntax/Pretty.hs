@@ -66,6 +66,12 @@ data PrettyChain
   | Atomic Doc
   | Composite Priority Doc
 
+instance Pretty BinOp where
+  pretty _ Add = text "add"
+  pretty _ Sub = text "sub"
+  pretty _ Mul = text "mul"
+  pretty _ Div = text "div"
+
 type Priority = Int
 
 instance Pretty PrettyChain where
@@ -99,7 +105,7 @@ prettyAlgebra :: PreAlgebra (Names, PrettyChain) PrettyChain
 prettyAlgebra (Int n) = Atomic $
   integer n
 
-prettyAlgebra (IntOp n _ (_, a) (_, b)) = Composite pApp $
+prettyAlgebra (IntOp n (_, a) (_, b)) = Composite pApp $
   pretty 0 n <+> pretty pAppR a <+> pretty pAppR b
 
 prettyAlgebra (IfZero (_, c) (_, t) (_, e)) = Composite pIf0 $
