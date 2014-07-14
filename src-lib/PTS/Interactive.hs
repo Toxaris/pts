@@ -40,12 +40,15 @@ import Data.Maybe
 parseSimple :: String -> Either [PTSError] Term
 parseSimple input = parseTerm "REPL" input
 
+parseStSimple :: String -> Either [PTSError] Stmt
+parseStSimple input = parseStmt "REPL" input
+
 nbeClosed :: Term -> Term
 nbeClosed = nbe []
 
-processFileSimple f inst = runErrorsAndOpts inst (processFile f)
-processFileSimpleInt f inst = runErrorsAndOpts inst (processFileInt f)
-processStmtSimple stmt inst = runErrorsAndOpts inst (processStmt stmt)
+processFileSimple inst f = runErrorsAndOpts inst (processFile f)
+processFileSimpleInt inst f = runErrorsAndOpts inst (processFileInt f)
+processStmtSimple inst stmt = runErrorsAndOptsGetState inst (processStmt stmt)
 
 -- r ^. _Right . _2 . _3
 getBindings :: Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)) -> Bindings Eval
@@ -53,20 +56,20 @@ getBindings (Right (_, (_, _, bindings))) = bindings
 getBindings _ = []
 
 wrapTypecheckPull ::
-  Term
+  Maybe PTS
+  -> Term
   -> Bindings Eval -- Env Name (Binding Eval)
-  -> Maybe PTS
   -> IO (Either [PTSError] TypedTerm)
 wrapTypecheckPush ::
-  Term
+  Maybe PTS
+  -> Term
   -> TypedTerm
   -> Bindings Eval
-  -> Maybe PTS
   -> IO (Either [PTSError] TypedTerm)
 
-wrapTypecheckPull term =
-  typecheckWrapper (typecheckPull term)
+wrapTypecheckPull inst term =
+  typecheckWrapper inst (typecheckPull term)
 
 -- expectedType must already have been typechecked. XXX add wrapper which does that too?
-wrapTypecheckPush term expectedType =
-  typecheckWrapper (typecheckPush term expectedType)
+wrapTypecheckPush inst term expectedType =
+  typecheckWrapper inst (typecheckPush term expectedType)
