@@ -33,7 +33,7 @@ equivTerm env' t1 t2 = runEval (envToNames env) $ do
  where env = dropTypes env'
 
 equiv :: Value Eval -> Value Eval -> Eval Bool
-equiv (Function n v1 f) (Function _ v1' f') = do
+equiv (Function n v1 (ValueFunction f)) (Function _ v1' (ValueFunction f')) = do
   r1 <- equiv v1 v1'
   n'   <- fresh n
   v2   <- f   (ResidualVar n')
@@ -44,7 +44,7 @@ equiv (Number n) (Number n') = do
   return (n == n')
 equiv (Constant c) (Constant c') = do
   return (c == c')
-equiv (PiType n v1 f) (PiType _ v1' f') = do
+equiv (PiType n v1 (ValueFunction f)) (PiType _ v1' (ValueFunction f')) = do
   r1   <- equiv v1 v1'
   n'   <- fresh n
   v2   <- f   (ResidualVar n')
@@ -85,7 +85,7 @@ fresh n = do
   return n'
 
 reify :: Value Eval -> Eval Term
-reify (Function n v1 f) = do
+reify (Function n v1 (ValueFunction f)) = do
   e1 <- reify v1
   n' <- fresh n
   v2 <- f (ResidualVar n')
@@ -95,7 +95,7 @@ reify (Number n) = do
   return (mkInt n)
 reify (Constant c) = do
   return (mkConst c)
-reify (PiType n v1 f) = do
+reify (PiType n v1 (ValueFunction f)) = do
   e1 <- reify v1
   n' <- fresh n
   v2 <- f (ResidualVar n')
@@ -157,16 +157,16 @@ eval t env = case structure t of
     v1 <- eval e1 env
     v2 <- eval e2 env
     case v1 of
-      Function n t f -> do
+      Function n t (ValueFunction f) -> do
         f v2
       _ -> do
         return (ResidualApp v1 v2)
   Lam n e1 e2 -> do
     v1 <- eval e1 env
-    return (Function n v1 (\v -> eval e2 ((n, v) : env)))
+    return (Function n v1 (ValueFunction (\v -> eval e2 ((n, v) : env))))
   Pi n e1 e2 -> do
     v1 <- eval e1 env
-    return (PiType n v1 (\v -> eval e2 ((n, v) : env)))
+    return (PiType n v1 (ValueFunction (\v -> eval e2 ((n, v) : env))))
   Pos _ e -> do
     eval e env
   Infer _ -> error "Encountered type inference marker during evaluation. You either have an underscore in your code that cannnot be decided or you have discovered a bug in the interpreter."
