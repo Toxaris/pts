@@ -66,13 +66,13 @@ arbitraryIntOp = do
 
   t1      <-  resize s1 arbitrary
   t2      <-  resize s2 arbitrary
-  (n, f)  <-  elements
-                [  (read "add", Add)
-                ,  (read "sub", Sub)
-                ,  (read "mul", Mul)
-                ,  (read "div", Div)
+  op      <-  elements
+                [  Add
+                ,  Sub
+                ,  Mul
+                ,  Div
                 ]
-  return (mkIntOp n f t1 t2)
+  return (mkIntOp op t1 t2)
 
 arbitraryIfZero = do
   (s1, s2, s3) <- distributeSize

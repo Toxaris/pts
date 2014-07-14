@@ -12,7 +12,7 @@ import PTS.Syntax.Substitution (freshCommonVar)
 data Diff
   = DEqual Term
   | DDifferent Term Term
-  | DIntOp Name Diff Diff
+  | DIntOp BinOp Diff Diff
   | DIfZero Diff Diff Diff
   | DApp Diff Diff
   | DLam Name Diff Diff
@@ -29,9 +29,9 @@ diff t1 t2 = case (structure t1, structure t2) of
     |   n1 == n2   ->  DEqual t1
     |   otherwise  ->  DDifferent t1 t2
 
-  (IntOp n1 _ x1 y1, IntOp n2 _ x2 y2)
-    |   n1 == n2   ->  let x = diff x1 x2; y = diff y1 y2 in
-                         if allEqual [x, y] then DEqual t1 else DIntOp n1 x y
+  (IntOp op1 x1 y1, IntOp op2 x2 y2)
+    |   op1 == op2 ->  let x = diff x1 x2; y = diff y1 y2 in
+                         if allEqual [x, y] then DEqual t1 else DIntOp op1 x y
     |   otherwise  ->  DDifferent t1 t2
 
   (IfZero n1 x1 y1, IfZero n2 x2 y2)

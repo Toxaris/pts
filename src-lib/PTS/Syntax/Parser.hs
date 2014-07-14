@@ -61,7 +61,7 @@ setPos f p1 x p2 = f (Position (sourceName p1) (sourceLine p1) (sourceLine p2) (
     -- PTS PARSER --
      -----------------
 
-intop n f x = mkIntOp n f <$> (keyword (show n) *> x) <*> (x <?> "second argument of '" ++ show n ++ "'")
+intop n f x = mkIntOp f <$> (keyword n *> x) <*> (x <?> "second argument of '" ++ n ++ "'")
 
 expr = term simple rec mkPos "expression" where
   simple = withPos mkPos $ asum
@@ -74,10 +74,10 @@ expr = term simple rec mkPos "expression" where
     , mkIfZero <$> (keyword "if0" *> expr)
              <*> (keyword "then" *> expr)
              <*> (keyword "else" *> expr)
-    , intop (read "add") Add simple
-    , intop (read "sub") Sub simple
-    , intop (read "mul") Mul simple
-    , intop (read "div") Div simple
+    , intop "add" Add simple
+    , intop "sub" Sub simple
+    , intop "mul" Mul simple
+    , intop "div" Div simple
     , mkConst <$> const
     , mkUnquote <$> unquote
     , mkInfer <$> infer

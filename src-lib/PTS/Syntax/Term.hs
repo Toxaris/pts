@@ -95,14 +95,9 @@ evalOp Div = safeDiv
     safeDiv x 0 = Nothing
     safeDiv x y = Just $ div x y
 
--- XXX outdated.
-
--- the string in IntOp is an identifier for the function. It is necessary
--- to check equivalence of terms (the functions cannot be directly compared)
-
 data TermStructure alpha
   = Int     Integer
-  | IntOp   Name BinOp alpha alpha
+  | IntOp   BinOp alpha alpha
   | IfZero  alpha alpha alpha
   | Var     Name
   | Const   C
@@ -144,7 +139,7 @@ mkTerm t = result where
 
 -- smart constructors
 mkInt i            =  mkTerm (Int i)
-mkIntOp n f t1 t2  =  mkTerm (IntOp n f t1 t2)
+mkIntOp f t1 t2    =  mkTerm (IntOp f t1 t2)
 mkIfZero t1 t2 t3  =  mkTerm (IfZero t1 t2 t3)
 mkVar n            =  mkTerm (Var n)
 mkConst c          =  mkTerm (Const c)

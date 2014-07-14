@@ -88,7 +88,7 @@ instance Lift Name where
 
 instance Lift Term where
   lift (MkTerm (Int     n))              =  con 'MkTerm  [con 'Int     [lift n]]
-  lift (MkTerm (IntOp   v  op  e1  e2))  =  con 'MkTerm  [con 'IntOp   [lift v,  lift op,  lift e1,  lift e2]]
+  lift (MkTerm (IntOp   op  e1  e2))     =  con 'MkTerm  [con 'IntOp   [lift op,  lift e1,  lift e2]]
   lift (MkTerm (IfZero  c  t   e))       =  con 'MkTerm  [con 'IfZero  [lift c,  lift t,   lift e]]
   lift (MkTerm (Var     v))              =  con 'MkTerm  [con 'Var     [lift v]]
   lift (MkTerm (Const   c))              =  con 'MkTerm  [con 'Const   [lift c]]
