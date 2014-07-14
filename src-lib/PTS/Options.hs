@@ -16,6 +16,8 @@ import Text.PrettyPrint.HughesPJ hiding (render)
 
 import PTS.Instances
 
+import Paths_pts (getDataFileName)
+
 -- options record
 data Options = Options
   { optColumns :: Int
@@ -66,6 +68,7 @@ data Flag
   | Local (Options -> Options)
   | FilePath FilePath
   | ShowInsts
+  | LocateEmacsMode
 
 -- option descriptions
 options =
@@ -76,6 +79,7 @@ options =
   , Option ['q'] ["quiet"]                (NoArg  handleQuiet            ) "don't print so much"
   , Option ['i'] []                       (OptArg handlePath     "paths" ) "add paths to search path, or reset search path"
   , Option ['e'] ["enumerate-instances"]  (NoArg  handleShowInsts        ) "enumerate built-in pure-type-system instances"
+  , Option []    ["locate-emacs-mode"]    (NoArg  handleLocateEmacsMode  ) "locate the bundled emacs-mode"
   , Option "?h"  ["help"]                 (NoArg  handleHelp             ) "display this help"
   ]
 
@@ -115,6 +119,8 @@ handlePath (Just p) = Local (extendPath p)
 
 handleShowInsts    = ShowInsts
 
+handleLocateEmacsMode = LocateEmacsMode
+
 -- order requirements
 argOrder = ReturnInOrder FilePath
 
@@ -140,6 +146,10 @@ processFlagsLocal  opt (_          : flags) = processFlagsLocal opt flags
 processFlagsShowInsts []              = return ()
 processFlagsShowInsts (ShowInsts : _) = liftIO printInstances
 processFlagsShowInsts (_ : rest)      = processFlagsShowInsts rest
+
+processFlagsLocateEmacsMode []                    = return ()
+processFlagsLocateEmacsMode (LocateEmacsMode : _) = liftIO locateEmacsMode
+processFlagsLocateEmacsMode (_ : rest)            = processFlagsLocateEmacsMode rest
 
 printHelp = putStrLn (usageInfo (render 80 header) options) where
   header =
@@ -169,6 +179,11 @@ printInstances = putStrLn (render 80 info) where
                      text "Synonyms:" : (punctuate (text ",") $ map text $ tail $ name i)))
            | i <- instances ])
 
+locateEmacsMode :: IO ()
+locateEmacsMode = do
+  path <- getDataFileName "emacs"
+  putStr path
+
 -- printing
 render n = renderStyle (Style PageMode n 1)
 
@@ -180,6 +195,7 @@ parseCommandLine handler = do
   mapM_ (fail . ("Syntax Error in command line: " ++)) errors
   processFlagsHelp flags
   processFlagsErrors flags
+  processFlagsLocateEmacsMode flags
   processFlagsShowInsts flags
   global <- processFlagsGlobal defaultOptions flags
   jobs <- processFlagsLocal global flags

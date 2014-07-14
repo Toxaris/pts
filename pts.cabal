@@ -13,6 +13,7 @@ Extra-source-files:  examples/Arithmetics.lpts
                      examples/ChurchNumbers.lpts
                      examples/Functions.lpts
                      examples/Inference.lpts
+Data-files:          emacs/pts-mode.el
 Cabal-version:       >= 1.8
 
 Source-Repository head
@@ -65,6 +66,7 @@ Library
                        Control.Monad.Errors
                        Control.Monad.Errors.Class
                        Control.Monad.Log
+  Other-modules:       Paths_pts
   -- Flags useful for heap profiling. They might be redundant with
   -- --enable-library-profiling.
   -- Ghc-options: -fprof-auto -fno-prof-count-entries
