@@ -44,10 +44,10 @@ data TypedTerm = MkTypedTerm (TermStructure TypedTerm) TypedTerm
   deriving (Data, Typeable)
 
 instance Show TypedTerm where
-  showsPrec d t @ (MkTypedTerm struct typ) =
+  showsPrec d t@(MkTypedTerm struct typ) =
     showParen (d > app_prec) $
       showString "MkTypedTerm " . showsPrec (app_prec + 1) struct .
-        if (loops t)
+        if loops t
          then showString " <self>" -- This is the only non-default behavior.
          else showString " " . showsPrec (app_prec + 1) typ
    where
