@@ -37,7 +37,7 @@ deliterate text = do
   if flag then return . unlines . map deliterateLine . lines $ text
           else return text
 
-runMainState act = evalStateT act (Map.empty, [], [])
+withEmptyState act = evalStateT act (Map.empty, [], [])
 
 runOptMonads opt action =
   runReaderT (runConsoleLogT action (optDebugType opt)) opt

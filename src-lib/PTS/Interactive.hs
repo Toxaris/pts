@@ -80,7 +80,7 @@ typecheckWrapper action env inst =
 
 -- Instead, higher level actions need a state monad.
 runMoreMonads inst =
-  runMainState . runErrorsAndOpts inst
+  withEmptyState . runErrorsAndOpts inst
 
 runErrorsAndOpts inst =
   runErrorsT . simpleRunMonads (optionsForInstance inst)

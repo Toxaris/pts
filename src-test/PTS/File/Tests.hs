@@ -9,7 +9,7 @@ import Control.Monad.Errors
 import qualified Data.Map as Map
 
 import PTS.Error (showErrors)
-import PTS.Process.File (runOptMonads, runMainState, processFile)
+import PTS.Process.File (runOptMonads, withEmptyState, processFile)
 import PTS.Options (Options, defaultOptions, optPath, optLiterate, optQuiet)
 
 import System.Directory (findFile)
@@ -19,7 +19,7 @@ import Test.Framework.Providers.HUnit (testCase)
 import Test.HUnit (assertFailure)
 
 runProcessFile opt =
-  runErrorsT . runMainState . runOptMonads opt
+  runErrorsT . withEmptyState . runOptMonads opt
 
 testFileWithOptions :: Options -> FilePath -> Test
 testFileWithOptions opt file = buildTest $ do

@@ -40,7 +40,7 @@ processErrors result = do
       exitSuccess
 
 processJobs jobs = do
-  runErrorsT . runMainState $ mapM processJob jobs
+  runErrorsT . withEmptyState $ mapM processJob jobs
 
 processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m) => (Options, FilePath) -> m (Maybe (Module Eval))
 processJob (opt, file) = do
