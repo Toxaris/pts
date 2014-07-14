@@ -40,12 +40,14 @@ deliterate text = do
 runProcessFile action state opt =
   evalStateT (runErrorsT (runReaderT (runConsoleLogT action (optDebugType opt)) opt)) state 
 
-looksLiterate =
-  (".l" ==) . take 2 . takeExtension
+setLiterateFromName fileName =
+  case (takeExtension fileName) of
+    ".lpts" -> setLiterate True
+    ".pts" -> setLiterate False
+    _ -> id -- Keep setting from cmd line.
 
 processFileInt fileName = do
-  let literate = looksLiterate fileName
-  local (setLiterate literate) $ processFileInt' fileName
+  local (setLiterateFromName fileName) $ processFileInt' fileName
 
 processFileInt' file = do
   outputLine $ "process file " ++ file
