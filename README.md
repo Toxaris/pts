@@ -40,7 +40,9 @@ your `.emacs`:
 ```
 
 This assumes that `pts` is on your path and calls it to find the
-emacs mode.
+emacs mode. Keybindings in pts-mode:
+
+ - <kbd>C-c</kbd> <kbd>C-l</kbd> check types and assertions in current buffer
 
 ## Contributing
 
