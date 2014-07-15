@@ -16,6 +16,8 @@ import Text.PrettyPrint.HughesPJ hiding (render)
 
 import PTS.Instances
 
+import Paths_pts (getDataFileName)
+
 -- options record
 data Options = Options
   { optColumns :: Int
@@ -65,7 +67,8 @@ data Flag
   | Global (Options -> Options)
   | Local (Options -> Options)
   | FilePath FilePath
-  | ShowInsts
+  | ShowInsts Bool
+  | LocateEmacsMode
 
 -- option descriptions
 options =
@@ -75,7 +78,8 @@ options =
   , Option ['d'] ["debug"]                (ReqArg handleDebug    "option") "activate specified debug options"
   , Option ['q'] ["quiet"]                (NoArg  handleQuiet            ) "don't print so much"
   , Option ['i'] []                       (OptArg handlePath     "paths" ) "add paths to search path, or reset search path"
-  , Option ['e'] ["enumerate-instances"]  (NoArg  handleShowInsts        ) "enumerate built-in pure-type-system instances"
+  , Option ['e'] ["enumerate-instances"]  (OptArg handleShowInsts "format") "enumerate built-in pure-type-system instances"
+  , Option []    ["locate-emacs-mode"]    (NoArg  handleLocateEmacsMode  ) "locate the bundled emacs-mode"
   , Option "?h"  ["help"]                 (NoArg  handleHelp             ) "display this help"
   ]
 
@@ -113,7 +117,11 @@ handleQuiet        = Global (setQuiet True)
 handlePath Nothing = Local (setPath [])
 handlePath (Just p) = Local (extendPath p)
 
-handleShowInsts    = ShowInsts
+handleShowInsts Nothing = ShowInsts False
+handleShowInsts (Just "machine-readable") = ShowInsts True
+handleShowInsts (Just other) = Error ("Error: enumerate-instances options expects 'machine-readable' or nothing instead of " ++ other)
+
+handleLocateEmacsMode = LocateEmacsMode
 
 -- order requirements
 argOrder = ReturnInOrder FilePath
@@ -138,8 +146,13 @@ processFlagsLocal  opt (FilePath p : flags) = fmap ((opt, p) :) (processFlagsLoc
 processFlagsLocal  opt (_          : flags) = processFlagsLocal opt flags
 
 processFlagsShowInsts []              = return ()
-processFlagsShowInsts (ShowInsts : _) = liftIO printInstances
+processFlagsShowInsts (ShowInsts False : _) = liftIO printInstances
+processFlagsShowInsts (ShowInsts True : _) = liftIO printInstancesMachineReadable
 processFlagsShowInsts (_ : rest)      = processFlagsShowInsts rest
+
+processFlagsLocateEmacsMode []                    = return ()
+processFlagsLocateEmacsMode (LocateEmacsMode : _) = liftIO locateEmacsMode
+processFlagsLocateEmacsMode (_ : rest)            = processFlagsLocateEmacsMode rest
 
 printHelp = putStrLn (usageInfo (render 80 header) options) where
   header =
@@ -158,6 +171,10 @@ supported = fsep $ concat
        "(and synonyms)"
   ]
 
+printInstancesMachineReadable :: IO ()
+printInstancesMachineReadable = putStrLn $ render 80 $ fsep
+  [ text n | i <- instances, n <- name i ]
+
 printInstances :: IO ()
 printInstances = putStrLn (render 80 info) where
   info = text "Available instances:" $$ text "" $$
@@ -168,6 +185,11 @@ printInstances = putStrLn (render 80 info) where
                    (fsep $
                      text "Synonyms:" : (punctuate (text ",") $ map text $ tail $ name i)))
            | i <- instances ])
+
+locateEmacsMode :: IO ()
+locateEmacsMode = do
+  path <- getDataFileName "emacs"
+  putStr path
 
 -- printing
 render n = renderStyle (Style PageMode n 1)
@@ -180,6 +202,7 @@ parseCommandLine handler = do
   mapM_ (fail . ("Syntax Error in command line: " ++)) errors
   processFlagsHelp flags
   processFlagsErrors flags
+  processFlagsLocateEmacsMode flags
   processFlagsShowInsts flags
   global <- processFlagsGlobal defaultOptions flags
   jobs <- processFlagsLocal global flags
