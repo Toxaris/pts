@@ -1,4 +1,5 @@
 {-# LANGUAGE ExistentialQuantification, FlexibleContexts, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE CPP #-}
 module PTS.Options where
 
 import Control.Monad (when)
@@ -25,7 +26,9 @@ data Options = Options
   , optLiterate :: Bool
   , optShowFullTerms :: Bool
   , optDebugQuote :: Bool
+#ifdef DEBUG_TYPING
   , optDebugType :: Bool
+#endif
   , optQuiet :: Bool
   , optPath :: [FilePath]
   }
@@ -44,17 +47,27 @@ defaultOptions = Options
   , optLiterate = False
   , optShowFullTerms = False
   , optDebugQuote = False
+#ifdef DEBUG_TYPING
   , optDebugType = False
+#endif
   , optQuiet = False
   , optPath = ["."]
   }
+
+#ifndef DEBUG_TYPING
+optDebugType :: Options -> Bool
+optDebugType _ = False
+#endif
+
 
 setColumns    x options = options {optColumns = x}
 setInstance   x options = options {optInstance = x}
 setLiterate   x options = options {optLiterate = x}
 setDebugTerms x options = options {optShowFullTerms = x}
 setDebugQuote x options = options {optDebugQuote = x}
+#ifdef DEBUG_TYPING
 setDebugType  x options = options {optDebugType = x}
+#endif
 setQuiet      x options = options {optQuiet = x}
 setPath       x options = options {optPath = x}
 
@@ -108,9 +121,14 @@ handleLiterate arg = case fmap (map toLower) arg of
 
 handleDebug arg    = case map toLower arg of
                        "toplevel"    -> Local  (setDebugTerms True       )
-                       "typing"      -> Local  (setDebugType  True       )
                        "quoting"     -> Local  (setDebugQuote True       )
+#ifdef DEBUG_TYPING
+                       "typing"      -> Local  (setDebugType  True       )
                        _             -> Error  ("Error: debug option expects 'toplevel', 'typing' or 'quoting' instead of " ++ arg)
+#else
+                       "typing"      -> Error  ("Error: this version of PTS was compiled without support for --debug=typing")
+                       _             -> Error  ("Error: debug option expects 'toplevel' or 'quoting' instead of " ++ arg)
+#endif
 
 handleQuiet        = Global (setQuiet True)
 

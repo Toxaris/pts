@@ -1,4 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts, PatternGuards, FlexibleInstances #-}
+{-# LANGUAGE CPP #-}
 module PTS.Statics.Typing where
 
 import Prelude (fst, snd, String)
@@ -96,6 +97,9 @@ safebind x t b f = do
 
 debug :: (MonadEnvironment Name (Binding Eval) m, MonadLog m) => String -> Term -> m TypedTerm -> m TypedTerm
 debug n t result = do
+#ifndef LOGGING
+  result
+#else
   enter n
   ctx <- getEnvironment
   -- log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
@@ -105,9 +109,13 @@ debug n t result = do
   log $ "         : " ++ showPretty (typeOf x)
   exit
   return x
+#endif
 
 debugPush :: (MonadEnvironment Name (Binding Eval) m, MonadLog m) => String -> Term -> TypedTerm -> m TypedTerm -> m TypedTerm
 debugPush n t q result = do
+#ifndef LOGGING
+  result
+#else
   enter n
   ctx <- getEnvironment
   log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
@@ -118,6 +126,7 @@ debugPush n t q result = do
   log $ "         : " ++ showPretty (typeOf x)
   exit
   return x
+#endif
 
 
 -- error messages and generic error checking
@@ -222,7 +231,9 @@ typecheckPull t = case structure t of
 
   Var x -> debug "typecheckPull Var" t $ do
     ctx <- getEnvironment
+#ifdef LOGGING
     log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
+#endif
     xt <- lookupType x
     case xt of
       Just xt -> do
