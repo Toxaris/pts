@@ -42,7 +42,7 @@ processErrors result = do
 -- This shares the state across files.
 
 processJobs jobs = do
-  withEmptyState . runErrorsT $ mapM processJob jobs
+  runErrorsT . withEmptyState $ mapM processJob jobs
 
 processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m) => (Options, FilePath) -> m (Maybe (Module Eval))
 processJob (opt, file) = do

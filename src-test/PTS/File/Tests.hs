@@ -24,7 +24,7 @@ testFileWithOptions :: Options -> FilePath -> Test
 testFileWithOptions opt file = buildTest $ do
   let path = optPath opt
   file <- findFile path file >>= maybe (fail ("file not found: " ++ file)) return
-  result <- withEmptyState . runErrorsT . runOptMonads opt . collectAssertions $ processFile file
+  result <- runErrorsT . withEmptyState . runOptMonads opt . collectAssertions $ processFile file
   case result of
     Left e -> fail (showErrors e)
     Right (_, assertions) -> return $ testGroup file $

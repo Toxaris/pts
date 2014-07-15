@@ -23,15 +23,15 @@ typecheckWrapper inst action env =
 runErrorsAndOpts inst | False =
   const returnsIO
 runErrorsAndOpts inst =
-  withEmptyState . errorsAndOpts inst
+  runErrorsT . withEmptyState . runAssertAndOptMonads inst
 -- XXX Consider replacing runErrorsAndOpts with runErrorsAndOptsGetState
 
 runErrorsAndOptsGetState inst | False =
   const returnsIO
 runErrorsAndOptsGetState inst =
-  observeFinalState . errorsAndOpts inst
+  runErrorsT . observeFinalState . runAssertAndOptMonads inst
 
-errorsAndOpts inst = runErrorsT . checkAssertions . runOptMonads (optionsForInstance inst)
+runAssertAndOptMonads inst = checkAssertions . runOptMonads (optionsForInstance inst)
 
 returnsIO :: IO a
 returnsIO = undefined
