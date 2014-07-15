@@ -96,6 +96,8 @@ safebind x t b f = do
 
 debug :: (MonadEnvironment Name (Binding Eval) m, MonadLog m) => String -> Term -> m TypedTerm -> m TypedTerm
 debug n t result = do
+  result
+  {-
   enter n
   ctx <- getEnvironment
   -- log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
@@ -105,9 +107,12 @@ debug n t result = do
   log $ "         : " ++ showPretty (typeOf x)
   exit
   return x
+  -}
 
 debugPush :: (MonadEnvironment Name (Binding Eval) m, MonadLog m) => String -> Term -> TypedTerm -> m TypedTerm -> m TypedTerm
 debugPush n t q result = do
+  result
+  {-
   enter n
   ctx <- getEnvironment
   log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
@@ -118,6 +123,7 @@ debugPush n t q result = do
   log $ "         : " ++ showPretty (typeOf x)
   exit
   return x
+  -}
 
 
 -- error messages and generic error checking

@@ -52,6 +52,7 @@ instance MonadState s m => MonadState s (ConsoleLogT m) where
   put s = ConsoleLogT (lift (put s))
 
 instance MonadIO m => MonadLog (ConsoleLogT m) where
+{-
   enter text = do
     (enabled, trace) <- ConsoleLogT $ get
     log $ " >>> " ++ text
@@ -70,7 +71,10 @@ instance MonadIO m => MonadLog (ConsoleLogT m) where
     (enabled, trace) <- get
     when enabled $
       liftIO $ putStrLn $ replicate (length trace) '-' ++ " " ++ text
-
+-}
+  enter _ = return ()
+  exit = return ()
+  log _ = return ()
   stacktrace = ConsoleLogT $ do
     (_, trace) <- get
     return trace
