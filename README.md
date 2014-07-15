@@ -34,9 +34,11 @@ your `.emacs`:
 
 ```
 (let ((pts-mode-path (shell-command-to-string "pts --locate-emacs-mode")))
-  (when (file-exists-p pts-mode-path)
-    (add-to-list 'load-path pts-mode-path)
-    (require 'pts-mode)))
+  (if (file-exists-p pts-mode-path)
+      (progn
+	(add-to-list 'load-path pts-mode-path)
+	(require 'pts-mode))
+    (message "Loading PTS returned an invalid path: %s" pts-mode-path)))
 ```
 
 This assumes that `pts` is on your path and calls it to find the
