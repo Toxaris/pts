@@ -227,7 +227,12 @@ typecheckPull t = case structure t of
     pts <- asks optInstance
     case axioms pts c of
       Just t  ->  return (MkTypedTerm (Const c) t)
-      _       ->  prettyFail $ text "Unknown constant:" <+> pretty 0 c
+      _       ->
+              if sorts pts c
+                then
+                  prettyFail $ text "Constant without type:" <+> pretty 0 c
+                else
+                  prettyFail $ text "Unknown constant:" <+> pretty 0 c
 
   Var x -> debug "typecheckPull Var" t $ do
     ctx <- getEnvironment
@@ -283,6 +288,8 @@ typecheckPull t = case structure t of
       newb'@(MkTypedTerm _ tb)  <- typecheckPull newb
       env <- getEnvironment
       let tb' = nbe env (strip tb)
+      -- XXX This computes a sort of something the user did not write.
+      -- So this should be properly annotated in the output.
       tb''@(MkTypedTerm _ s2)  <- typecheckPull tb'
       s2' <- normalizeToSort s2 tb' (text "in lambda abstraction") (text "as type of body")
 
