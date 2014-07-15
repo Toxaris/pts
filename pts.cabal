@@ -20,6 +20,11 @@ Source-Repository head
   location:            git://github.com/Toxaris/pts.git
   branch:              master
 
+Flag debug-typing
+  Description:         Enable the --debug=typing flag.
+  Default:             False
+  Manual:              True
+
 Library
   Hs-source-dirs:      src-lib
   Build-depends:       base < 5,
@@ -68,6 +73,9 @@ Library
   -- Flags useful for heap profiling. They might be redundant with
   -- --enable-library-profiling.
   -- Ghc-options: -fprof-auto -fno-prof-count-entries
+
+  if flag(debug-typing)
+    CPP-Options: -DDEBUG_TYPING
 
 Executable pts
   Hs-source-dirs:      src-exec
