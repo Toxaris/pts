@@ -67,7 +67,7 @@ data Flag
   | Global (Options -> Options)
   | Local (Options -> Options)
   | FilePath FilePath
-  | ShowInsts
+  | ShowInsts Bool
   | LocateEmacsMode
 
 -- option descriptions
@@ -78,7 +78,7 @@ options =
   , Option ['d'] ["debug"]                (ReqArg handleDebug    "option") "activate specified debug options"
   , Option ['q'] ["quiet"]                (NoArg  handleQuiet            ) "don't print so much"
   , Option ['i'] []                       (OptArg handlePath     "paths" ) "add paths to search path, or reset search path"
-  , Option ['e'] ["enumerate-instances"]  (NoArg  handleShowInsts        ) "enumerate built-in pure-type-system instances"
+  , Option ['e'] ["enumerate-instances"]  (OptArg handleShowInsts "format") "enumerate built-in pure-type-system instances"
   , Option []    ["locate-emacs-mode"]    (NoArg  handleLocateEmacsMode  ) "locate the bundled emacs-mode"
   , Option "?h"  ["help"]                 (NoArg  handleHelp             ) "display this help"
   ]
@@ -117,7 +117,9 @@ handleQuiet        = Global (setQuiet True)
 handlePath Nothing = Local (setPath [])
 handlePath (Just p) = Local (extendPath p)
 
-handleShowInsts    = ShowInsts
+handleShowInsts Nothing = ShowInsts False
+handleShowInsts (Just "machine-readable") = ShowInsts True
+handleShowInsts (Just other) = Error ("Error: enumerate-instances options expects 'machine-readable' or nothing instead of " ++ other)
 
 handleLocateEmacsMode = LocateEmacsMode
 
@@ -144,7 +146,8 @@ processFlagsLocal  opt (FilePath p : flags) = fmap ((opt, p) :) (processFlagsLoc
 processFlagsLocal  opt (_          : flags) = processFlagsLocal opt flags
 
 processFlagsShowInsts []              = return ()
-processFlagsShowInsts (ShowInsts : _) = liftIO printInstances
+processFlagsShowInsts (ShowInsts False : _) = liftIO printInstances
+processFlagsShowInsts (ShowInsts True : _) = liftIO printInstancesMachineReadable
 processFlagsShowInsts (_ : rest)      = processFlagsShowInsts rest
 
 processFlagsLocateEmacsMode []                    = return ()
@@ -167,6 +170,10 @@ supported = fsep $ concat
   ,  map text $ words
        "(and synonyms)"
   ]
+
+printInstancesMachineReadable :: IO ()
+printInstancesMachineReadable = putStrLn $ render 80 $ fsep
+  [ text n | i <- instances, n <- name i ]
 
 printInstances :: IO ()
 printInstances = putStrLn (render 80 info) where
