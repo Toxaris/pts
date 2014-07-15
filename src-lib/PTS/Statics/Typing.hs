@@ -231,7 +231,9 @@ typecheckPull t = case structure t of
 
   Var x -> debug "typecheckPull Var" t $ do
     ctx <- getEnvironment
+#ifdef LOGGING
     log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
+#endif
     xt <- lookupType x
     case xt of
       Just xt -> do
