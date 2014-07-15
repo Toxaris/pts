@@ -67,7 +67,7 @@ Library
                        Control.Monad.Log
   -- Flags useful for heap profiling. They might be redundant with
   -- --enable-library-profiling.
-  -- Ghc-options: -fprof-auto -fno-prof-count-entries
+  Ghc-prof-options: -fprof-auto -fno-prof-count-entries
 
 Executable pts
   Hs-source-dirs:      src-exec
@@ -75,7 +75,7 @@ Executable pts
   Build-depends:       base < 5,
                        pts
   -- Flags useful for heap profiling:
-  -- Ghc-options: -fprof-auto -fno-prof-count-entries -rtsopts
+  Ghc-prof-options: -fprof-auto -fno-prof-count-entries -rtsopts
 
   -- Build-tools:
 
