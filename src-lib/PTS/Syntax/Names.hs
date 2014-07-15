@@ -69,13 +69,22 @@ type NamesMap = Map.Map (Char, String) Int
 -- Merge with fresh, this is just a state monad.
 freshvarlMap :: NamesMap -> Name -> (Name, NamesMap)
 freshvarlMap names n =
-  case raw `Map.lookup` names of
-    Nothing -> (n, Map.insert raw (getIdx n) names)
-    Just idx ->
-      let newIdx = idx + 1 in
-        (IndexName newIdx rawC rawN, Map.insert raw newIdx names)
+  (case oldLookup of
+     Nothing -> n
+     Just idx ->
+       let
+         -- Here we reupdate the index, because insertLookupWithKey
+         -- returns the old content. However, that's still cheap,
+         -- especially compared to doing a new lookup.
+         newIdx = transformIdx idx
+       in IndexName newIdx rawC rawN
+  , newNames)
     where
       raw@(rawC, rawN) = rawName n
+      oldIdx = getIdx n
+      transformIdx = (+1)
+      updateVal key badReplacementValue oldValue = transformIdx oldValue
+      (oldLookup, newNames) = Map.insertLookupWithKey updateVal raw oldIdx names
 
 rawName (PlainName c text)   = (c, text)
 rawName (IndexName _ c text) = (c, text)
