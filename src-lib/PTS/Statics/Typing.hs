@@ -97,7 +97,7 @@ safebind x t b f = do
 
 debug :: (MonadEnvironment Name (Binding Eval) m, MonadLog m) => String -> Term -> m TypedTerm -> m TypedTerm
 debug n t result = do
-#ifndef LOGGING
+#ifndef DEBUG_TYPING
   result
 #else
   enter n
@@ -113,7 +113,7 @@ debug n t result = do
 
 debugPush :: (MonadEnvironment Name (Binding Eval) m, MonadLog m) => String -> Term -> TypedTerm -> m TypedTerm -> m TypedTerm
 debugPush n t q result = do
-#ifndef LOGGING
+#ifndef DEBUG_TYPING
   result
 #else
   enter n
@@ -236,7 +236,7 @@ typecheckPull t = case structure t of
 
   Var x -> debug "typecheckPull Var" t $ do
     ctx <- getEnvironment
-#ifdef LOGGING
+#ifdef DEBUG_TYPING
     log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
 #endif
     xt <- lookupType x
