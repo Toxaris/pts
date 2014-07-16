@@ -49,7 +49,7 @@ canonicalize the text.
 
 Currently working example:
 
-    wrapTypecheckPull [pts|lambda x : * . x|] [] Nothing
+    wrapTypecheckPull Nothing [pts|lambda x : * . x|] []
 
 To apply pretty-printing to the term without needing to unwrap it, prepend:
 
@@ -57,22 +57,24 @@ To apply pretty-printing to the term without needing to unwrap it, prepend:
 
 Alternatively:
 
-    wrapTypecheckPull [pts|*|] [] Nothing & mapped . mapped %~ showPretty
+    wrapTypecheckPull Nothing [pts|*|] [] & mapped . mapped %~ showPretty
+
+Instead of `Nothing`, you can pass `Just ptsInst` where `ptsInst` is the name of
+a PTS instance (of type `PTS`).
+
+Since the prettyprinter hides types, consider using `showPretty . typeOf` if you
+want to see a type.
 
 # Loading modules
 
 You can use:
 
-    r <- processFileSimple "path/to/file"
+    r <- processFileSimple Nothing "path/to/file"
 
 The output value will be interesting only if the source contains a module and
 some exports. To see internals, use instead:
 
-    r <- processFileSimpleInt "path/to/file"
-
-Be careful though! Calling `show` on the result will easily loop with cyclic
-terms, such as (by default) the constant `**` (which has itself as type in
-Fomega*, the default PTS instance).
+    r <- processFileSimpleInt Nothing "path/to/file"
 
 Either way, the code will autodetect whether to use literate parsing based on
 the extension.
@@ -81,6 +83,20 @@ the extension.
 
 A pretty crude approach is this:
 
-    q <- wrapTypecheckPull [pts|eval|] (getBindings r) Nothing
+    q <- wrapTypecheckPull Nothing [pts|eval|] (getBindings r)
 
-if `r` was bound as above.
+if `r` was bound as above and it contains a symbol named `eval`.
+
+To see its type (using lenses), you might need something like:
+
+    wrapTypecheckPull Nothing [pts|eval|] (getBindings r) & mapped . mapped %~ showPretty . typeOf
+
+# Looking at the effect of statements
+
+In progress. Currently:
+
+    traverse (processStmtSimple Nothing) $ parseStSimple "a = **;"
+
+To lens out the interesting part, we need a setter to `fmap` on `IO` and a getter to reach the interesting part:
+
+    (traverse (processStmtSimple Nothing) $ parseStSimple "a = **;") & mapped %~ (^. _Right . _2 . _3)

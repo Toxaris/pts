@@ -1,15 +1,23 @@
+-- Entry point for `cabal repl`.
+--
+-- Calling :browse should give a nice overview of the API for interactive use.
+--
+-- To this end, I try to have in scope just enough stuff to minimize qualified
+-- names there, and to monomorphise signatures for higher readability.
+--
+-- Moreover, I use qualified imports just to have shorter names in :browse.
+
 module PTS.Interactive
-           ( module PTS.Syntax.Term
+           ( module PTS.Interactive -- Everything defined here.
+           , module PTS.Syntax.Term
            --, module PTS.Syntax -- too many parsing-related details
-           , module PTS.Statics
+           --, module PTS.Statics -- we export wrapped functions
            , module PTS.Dynamics
            , module PTS.QuasiQuote
-           , module PTS.Interactive
            , showPretty
-           -- From PTS.Instances
-           , PTS
-           , coc
-           , fomegastar
+           -- Qualified names from PTS.Instances
+           , Instances.coc
+           , Instances.fomegastar
            ) where
 
 -- ASTs
@@ -18,55 +26,55 @@ import PTS.Syntax.Term (Term(..), TypedTerm(..), TermStructure(..), BinOp(..))
 
 import PTS.Syntax
 
-import Control.Monad.Errors
-import Control.Monad.Environment
-
-import PTS.Dynamics
 import PTS.Statics
-import PTS.Instances
 import PTS.QuasiQuote
+
 import PTS.Error
-import PTS.Process.Main
+
 import PTS.Process.File
-import PTS.Options
+import PTS.Interactive.Runners
+
+import qualified PTS.Instances as Instances
+import PTS.Dynamics
+import qualified PTS.Dynamics.Value as Value
+import qualified PTS.Dynamics.Evaluation as Evaluation
+
 import Data.Map (Map)
 import Data.Maybe
 
-parseSimple :: String -> Either [PTSError] Term
+parseSimple :: String -> Either Errors Term
 parseSimple input = parseTerm "REPL" input
+
+parseStSimple :: String -> Either Errors Stmt
+parseStSimple input = parseStmt "REPL" input
 
 nbeClosed :: Term -> Term
 nbeClosed = nbe []
 
-optionsForInstance Nothing = defaultOptions
-optionsForInstance (Just inst) = setInstance inst $ optionsForInstance Nothing
+processFileSimple inst f = runErrorsAndOpts inst (processFile f)
+processFileSimpleInt inst f = runErrorsAndOpts inst (processFileInt f)
+processStmtSimple inst stmt = runErrorsAndOptsGetState inst (processStmt stmt)
 
-processFileSimple
-  :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe (Module Eval)))
-processFileSimple f inst = runErrorsT . runMainState $ simpleRunMonads processFile f (optionsForInstance inst)
-
-processFileSimpleInt
-  :: FilePath -> Maybe PTS -> IO (Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)))
-processFileSimpleInt f inst = runErrorsT . runMainState $ simpleRunMonads processFileInt f (optionsForInstance inst)
-
--- r ^. _Right . _2 . _3
-getBindings :: Either [PTSError] (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)) -> Bindings Eval
+-- With lens, this is r ^. _Right . _2 . _3
+getBindings :: Either Errors (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)) -> Bindings Eval
 getBindings (Right (_, (_, _, bindings))) = bindings
 getBindings _ = []
 
 wrapTypecheckPull ::
-  Term
-  -> Bindings Eval -- Env Name (Binding Eval)
-  -> Maybe PTS
-  -> IO (Either [PTSError] TypedTerm)
+  Maybe Instances.PTS
+  -> Term
+  -> Bindings Eval
+  -> IO (Either Errors TypedTerm)
 wrapTypecheckPush ::
-  Term
+  Maybe Instances.PTS
+  -> Term
   -> TypedTerm
   -> Bindings Eval
-  -> Maybe PTS
-  -> IO (Either [PTSError] TypedTerm)
+  -> IO (Either Errors TypedTerm)
 
-wrapTypecheckPull term env inst = runErrorsT (simpleRunMonads (runEnvironmentT (typecheckPull term)) env (optionsForInstance inst))
+wrapTypecheckPull inst term =
+  typecheckWrapper inst (typecheckPull term)
 
 -- expectedType must already have been typechecked. XXX add wrapper which does that too?
-wrapTypecheckPush term expectedType env inst = runErrorsT (simpleRunMonads (runEnvironmentT (typecheckPush term expectedType)) env (optionsForInstance inst))
+wrapTypecheckPush inst term expectedType =
+  typecheckWrapper inst (typecheckPush term expectedType)

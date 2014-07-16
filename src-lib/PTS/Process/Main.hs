@@ -27,32 +27,31 @@ infixl 2 >>>
 (>>>) = flip (.)
 
 main = do
-  success <- runMainErrors $ parseCommandLine processJobs
-  if success
-    then exitSuccess
-    else exitFailure
+  result <- parseCommandLine processJobs
+  processErrors result
 
-runMainErrors act = do
-  result <- runErrorsT act
+processErrors result = do
   case result of
     Left errors -> do
       liftIO $ hFlush stdout
       liftIO $ hPutStrLn stderr $ showErrors $ errors
-      return False
+      exitFailure
     Right result -> do
-      return True
+      exitSuccess
 
-runMainState act = evalStateT act (Map.empty, [], [])
+-- This shares the state across files.
 
 processJobs jobs = do
-  runMainState $ mapM_ processJob jobs
+  runErrorsT . withEmptyState $ mapM processJob jobs
 
-processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m) => (Options, FilePath) -> m ()
+processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m) => (Options, FilePath) -> m (Maybe (Module Eval))
 processJob (opt, file) = do
   let path = optPath opt
   file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
-  mod <- simpleRunMonads processFile file opt
-  return ()
+  checkAssertions . runOptMonads opt $ processFile file
 
-simpleRunMonads processor file opt =
-  checkAssertions (runReaderT (runConsoleLogT (processor file) (optDebugType opt)) opt)
+initState = (Map.empty, [], [])
+withEmptyState act = evalStateT act initState
+
+runOptMonads opt action =
+  runReaderT (runConsoleLogT action (optDebugType opt)) opt

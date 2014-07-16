@@ -37,9 +37,6 @@ deliterate text = do
   if flag then return . unlines . map deliterateLine . lines $ text
           else return text
 
-runProcessFile action state opt =
-  evalStateT (runErrorsT (runReaderT (runConsoleLogT action (optDebugType opt)) opt)) state 
-
 setLiterateFromName fileName =
   case (takeExtension fileName) of
     ".lpts" -> setLiterate True
