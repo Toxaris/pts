@@ -40,6 +40,7 @@ import qualified PTS.Dynamics.Value as Value
 import qualified PTS.Dynamics.Evaluation as Evaluation
 
 import Data.Map (Map)
+import Data.Monoid (mempty)
 import Data.Maybe
 
 parseSimple :: String -> Either Errors Term
@@ -49,7 +50,7 @@ parseStSimple :: String -> Either Errors Stmt
 parseStSimple input = parseStmt "REPL" input
 
 nbeClosed :: Term -> Term
-nbeClosed = nbe []
+nbeClosed = nbe mempty
 
 processFileSimple inst f = runErrorsAndOpts inst (processFile f)
 processFileSimpleInt inst f = runErrorsAndOpts inst (processFileInt f)
@@ -58,7 +59,7 @@ processStmtSimple inst stmt = runErrorsAndOptsGetState inst (processStmt stmt)
 -- With lens, this is r ^. _Right . _2 . _3
 getBindings :: Either Errors (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)) -> Bindings Eval
 getBindings (Right (_, (_, _, bindings))) = bindings
-getBindings _ = []
+getBindings _ = mempty
 
 wrapTypecheckPull ::
   Maybe Instances.PTS

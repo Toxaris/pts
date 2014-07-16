@@ -39,7 +39,7 @@ processErrors result = do
     Right result -> do
       exitSuccess
 
--- This shares the state across files.
+runMainState act = evalStateT act (Map.empty, [], Map.empty)
 
 processJobs jobs = do
   runErrorsT . withEmptyState $ mapM processJob jobs
@@ -50,7 +50,7 @@ processJob (opt, file) = do
   file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
   checkAssertions . runOptMonads opt $ processFile file
 
-initState = (Map.empty, [], [])
+initState = (Map.empty, [], Map.empty)
 withEmptyState act = evalStateT act initState
 
 runOptMonads opt action =

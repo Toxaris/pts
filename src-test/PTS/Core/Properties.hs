@@ -1,5 +1,6 @@
 module PTS.Core.Properties where
 
+import Data.Monoid (mempty)
 import Data.Set
 
 import Test.Property
@@ -23,7 +24,7 @@ transitive :: (Arbitrary a, Show a) => Relation a -> Property (a -> a -> a -> Bo
 transitive (~~) = property $
   \x y z -> x ~~ y && y ~~ z ==> x ~~ z
 
-equivClosedTerm = equivTerm []
+equivClosedTerm = equivTerm mempty
 
 alphaEquivalenceReflexive :: Property (Term -> Bool)
 alphaEquivalenceReflexive = reflexive equivClosedTerm

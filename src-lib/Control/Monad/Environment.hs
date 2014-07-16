@@ -8,6 +8,7 @@ import Data.Function (($))
 import Data.List (map)
 import qualified Data.List as List (lookup)
 import Data.Ord (Ord)
+import qualified Data.Map as Map
 import Data.Set (Set, fromList)
 import Data.Tuple (fst)
 
@@ -34,7 +35,7 @@ instance MonadEnvironment k v m => MonadEnvironment k v (ReaderT r m) where
   keys = lift keys
   getEnvironment = lift getEnvironment
 
-type Env k v = [(k, v)]
+type Env k v = Map.Map k v
 
 newtype EnvironmentT k v m a = EnvironmentT (ReaderT (Env k v) m a)
   deriving (Functor, Applicative, Monad, MonadError e, MonadErrors e, MonadState s, MonadTrans, MonadIO)
@@ -45,13 +46,13 @@ runEnvironmentT (EnvironmentT p) = runReaderT p
 mapEnvironmentT f (EnvironmentT p) = EnvironmentT (mapReaderT f p)
 
 instance (Eq k, Ord k, Monad m) => MonadEnvironment k v (EnvironmentT k v m) where
-  bind k v (EnvironmentT p) = EnvironmentT (local ((k, v) : ) p)
+  bind k v (EnvironmentT p) = EnvironmentT (local (Map.insert k v) p)
   lookup k = EnvironmentT $ do
     env <- ask
-    return $ List.lookup k $ env
+    return $ Map.lookup k $ env
   keys = EnvironmentT $ do
     env <- ask
-    return $ fromList $ map fst env
+    return $ Map.keysSet $ env
   getEnvironment = EnvironmentT $ do
     ask
 

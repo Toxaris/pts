@@ -18,6 +18,7 @@ import Data.Function (($))
 import Data.Int (Int)
 import Data.List (map, null, replicate, (++))
 import Data.Maybe
+import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Tuple (fst, snd)
@@ -118,7 +119,7 @@ debugPush n t q result = do
 #else
   enter n
   ctx <- getEnvironment
-  log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
+  log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- Map.assocs ctx]
   log $ "Subject: " ++ showPretty t
   log $ "Push type: " ++ showPretty q
   x <- result
@@ -237,7 +238,7 @@ typecheckPull t = case structure t of
   Var x -> debug "typecheckPull Var" t $ do
     ctx <- getEnvironment
 #ifdef DEBUG_TYPING
-    log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
+    log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- Map.assocs ctx]
 #endif
     xt <- lookupType x
     case xt of
