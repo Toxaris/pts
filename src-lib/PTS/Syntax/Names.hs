@@ -21,7 +21,7 @@ parts (ModuleName xs) = xs
 
 data Name
   = PlainName String
-  | IndexName String Int
+  | IndexName Int String
   | MetaName String
   deriving (Eq, Ord, Data, Typeable)
 
@@ -29,7 +29,7 @@ type Names = Set Name
 
 instance Show Name where
   showsPrec _ (PlainName text) = showString text
-  showsPrec _ (IndexName text i) = showString text . shows i
+  showsPrec _ (IndexName i text) = showString text . shows i
   showsPrec _ (MetaName text) = showChar '$' . showString text
 
 instance Read Name where
@@ -40,7 +40,7 @@ instance Read Name where
 
     indexName text index (c:cs) | isDigit c = indexName text (c : index) cs
     indexName text index (c:cs) | isAlphaNum c = plainName (index ++ text) cs
-    indexName text index rest = (IndexName (reverse text) (read (reverse index)), rest)
+    indexName text index rest = (IndexName (read (reverse index)) (reverse text), rest)
 
   readsPrec _ ('$':c:cs) | isLower c = [metaName [c] cs] where
     metaName text (c:cs) | isAlphaNum c = metaName (c : text) cs
@@ -49,8 +49,8 @@ instance Read Name where
   readsPrec _ _ = []
 
 nextIndex :: Name -> Name
-nextIndex (PlainName text) = IndexName text 0
-nextIndex (IndexName text index) = IndexName text (index + 1)
+nextIndex (PlainName text) = IndexName 0 text
+nextIndex (IndexName index text) = IndexName (index + 1) text
 
 freshvarl :: Names -> Name -> Name
 freshvarl xs x
