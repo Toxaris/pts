@@ -82,8 +82,8 @@ instance Lift C where
   lift (C n) = con 'C [lift n]
 
 instance Lift Name where
-  lift (PlainName  s)    = con 'PlainName [lift s]
-  lift (IndexName  i s)  = con 'IndexName [lift i, lift s]
+  lift (PlainName  c s)    = con 'PlainName [lift c, lift s]
+  lift (IndexName  i c s)  = con 'IndexName [lift i, lift c, lift s]
   lift (MetaName s)      = var (TH.mkName s)
 
 instance Lift Term where
