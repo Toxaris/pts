@@ -65,6 +65,15 @@ a PTS instance (of type `PTS`).
 Since the prettyprinter hides types, consider using `showPretty . typeOf` if you
 want to see a type.
 
+To typecheck a term against a given expected type, you can use
+`wrapTypecheckPush` or the more convenient variant `wrapTypecheckPushUntyped`.
+For instance, we can typecheck `lambda x. x` against `* -> *`: thanks to
+bidirectional typechecking, we do not need to annotate `x` with its type, yet
+the typechecker will add this annotation. To wit:
+
+	> wrapTypecheckPushUntyped (Just Instances.uu) [pts|lambda x. x|] [pts|* -> *|] [] & mapped . mapped %~ showPretty
+	Right "lambda x : * . x"
+
 # Loading modules
 
 You can use:

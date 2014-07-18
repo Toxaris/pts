@@ -71,10 +71,19 @@ wrapTypecheckPush ::
   -> TypedTerm
   -> Bindings Eval
   -> IO (Either Errors TypedTerm)
+wrapTypecheckPushUntyped ::
+  Maybe Instances.PTS
+     -> Term
+     -> Term
+     -> Bindings Eval
+     -> IO (Either Errors TypedTerm)
 
 wrapTypecheckPull inst term =
   typecheckWrapper inst (typecheckPull term)
 
--- expectedType must already have been typechecked. XXX add wrapper which does that too?
+-- expectedType must already have been typechecked. `typecheckPushUntyped` does that for you.
 wrapTypecheckPush inst term expectedType =
   typecheckWrapper inst (typecheckPush term expectedType)
+
+wrapTypecheckPushUntyped inst term untypedExpectedType =
+  typecheckWrapper inst (typecheckPushUntyped term untypedExpectedType)

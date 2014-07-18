@@ -463,3 +463,6 @@ typecheckPush t q = case structure t of
 
   Infer _ -> do
     prettyFail $ text "Attempted to push a type on an underscore. Most likely there is an underscore at a position where type inference is impossible. The offending underscore is" <+> pretty 0 t <+> text "which is supposed to have type" <+> pretty 0 q
+
+typecheckPushUntyped term untypedExpectedType =
+  typecheckPush term =<< typecheckPull untypedExpectedType
