@@ -46,6 +46,30 @@ emacs mode. Keybindings in pts-mode:
 
  - <kbd>C-c</kbd> <kbd>C-l</kbd> check types and assertions in current buffer
 
+## Ctags support
+
+If you use exuberant ctags, you can add to your `.ctags` the following block:
+
+```
+--langdef=LPTS
+--langmap=LPTS:.lpts
+--regex-LPTS=/^>[ \t]*([^][ \t.:=;()$]+)[ \t]*(\([^()]*\)[ \t]*)*([:=]|$)/\1/v,values/
+--regex-LPTS=/^>[ \t]*export ([^][ \t.:=;()$]+)[ \t]*;/\1/e,exports/
+--regex-LPTS=/^>[ \t]*module ([^][ \t.:=;()$]+)[ \t]*;/\1/m,modules/
+--langdef=PTS
+--langmap=PTS:.pts
+--regex-PTS=/^[ \t]*([^][ \t.:=;()$]+)[ \t]*(\([^()]*\)[ \t]*)*([:=]|$)/\1/v,values/
+--regex-PTS=/^[ \t]*export ([^][ \t.:=;()$]+)[ \t]*;/\1/e,exports/
+--regex-PTS=/^[ \t]*module ([^][ \t.:=;()$]+)[ \t]*;/\1/m,modules/
+```
+
+You can then run ctags to produce Emacs tags with a command line similar to the
+following:
+
+```
+ctags -e $(find . -name '*.pts' -o -name '*.lpts')
+```
+
 ## Contributing
 
 I am happy to receive pull requests. Note that I assume that I
