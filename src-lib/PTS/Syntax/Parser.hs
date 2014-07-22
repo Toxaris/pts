@@ -37,10 +37,6 @@ term simple rec pos msg = result where
   result = combine <$> getPosition <*> simple <*> many ((,) <$> rec <*> getPosition)
   combine p = foldl' (\x (f, q) -> setPos pos p (f x) q)
 
--- right-recursive syntax pattern: "lambda ident : qualifier . body"
-abs cons lambda ident colon qualifier dot body
-  = cons <$> try (lambda *> ident) <*> inferredOrExplicitType <*> (dot *> body)
-
 -- left-recursive syntax pattern: "x -> y"
 arr cons arrow simple = flip cons <$> (arrow *> simple)
 
@@ -67,8 +63,6 @@ expr = term simple rec mkPos "expression" where
   simple = withPos mkPos $ asum
     [ termParens expr
     , brackets expr
-    , abs mkLam lambda identOrMeta colon1 expr dot expr
-    , abs mkPi  pi     identOrMeta colon1 expr dot expr
     , multAbs mkLam lambda
     , multAbs mkPi pi
     , mkIfZero <$> (keyword "if0" *> expr)
@@ -90,7 +84,7 @@ expr = term simple rec mkPos "expression" where
 
 -- parse abstractions with multiple parameters, like this:
 -- lambda (x1 : e1) (x2 x3 : e2) . e
-multAbs constructor parser = desugarArgs constructor <$> (parser *> args) <*> (dot *> expr)
+multAbs constructor parser = desugarArgs constructor <$> (parser *> argsOrArgGroup) <*> (dot *> expr)
 
 unquote = char '$' *> asum
   [ var mkVar ident
@@ -111,9 +105,14 @@ inferredOrExplicitType = (colon1 *> expr) <|> (mkInfer <$> nextInfer)
 
 argGroup = (,) <$> names <*> inferredOrExplicitType
 
+argsOrArgGroup = asum
+  [ return <$> argGroup
+  , args
+  ]
+
 file = File <$> optionMaybe (keyword "module" *> modname <* semi) <*> stmts
 
-names = many ident
+names = many1 identOrMeta
 
      ----------------
     -- LINE PRAGMAS --

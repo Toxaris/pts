@@ -16,7 +16,7 @@ actually guaranteed since there is no unification.
 There is syntactic sugar:
 > assert (lambda f : Int -> Int . f 1) (lambda x . add 1 x) = 2;
 
-> assert (lambda f : Int -> Int -> Int . f 2 3) (lambda (x y) . add x y) = 5;
+> assert (lambda f : Int -> Int -> Int . f 2 3) (lambda x y . add x y) = 5;
 
 > double (X : *) (f : X -> X) (x : X) = f (f x);
 
