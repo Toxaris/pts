@@ -76,9 +76,9 @@ processStmt (Term t) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
   (_, _, env) <- get
-  MkTypedTerm _ q <- runEnvironmentT (typecheckPull t) env
+  t@(MkTypedTerm _ q) <- runEnvironmentT (typecheckPull t) env
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
-  let x = nbe env t
+  let x = nbe env (strip t)
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
 
 processStmt (Bind n args Nothing body) = recover () $ do
@@ -89,9 +89,9 @@ processStmt (Bind n args Nothing body) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   (_, _, env) <- get
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
-  MkTypedTerm _ q <- runEnvironmentT (typecheckPull t) env
+  t@(MkTypedTerm _ q) <- runEnvironmentT (typecheckPull t) env
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
-  let v = evalTerm env t
+  let v = evalTerm env (strip t)
   modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (False, v, q)) :)
 
 processStmt (Bind n args (Just body') body) = recover () $ do
@@ -120,9 +120,9 @@ processStmt (Bind n args (Just body') body) = recover () $ do
                          $$ text "     found:" <+> pretty 0 q'
 
   -- use declared type to typecheck push
-  MkTypedTerm _ q <- runEnvironmentT (typecheckPush t qq) env
+  t@(MkTypedTerm _ q) <- runEnvironmentT (typecheckPush t qq) env
 
-  let v = evalTerm env t
+  let v = evalTerm env (strip t)
   modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (False, v, q)) :)
 
 processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ do
