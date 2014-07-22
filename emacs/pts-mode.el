@@ -148,7 +148,7 @@ data if you want to preserve them."
   (let ((old-point (point)))
     (save-excursion
       (beginning-of-line)
-      (and (search-forward-regexp "\\=\\(?:> \\)?import\\s-+\\(\\w+\\(?:\\.\\w+\\)*\\)\\s-+\\(;\\|$\\)" nil t)
+      (and (search-forward-regexp "\\=\\(?:> \\)?import\\s-+\\(\\w+\\(?:\\.\\w+\\)*\\)\\s-*\\(;\\|$\\)" nil t)
            (<= old-point (point))
            (match-string 1)))))
 
