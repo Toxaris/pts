@@ -130,13 +130,13 @@ showDiff p (DPi n q b True True) = prio 0 p
 
 showDiff p (DPi n q b True False) = prio 1 p
                          ("Pi " ++ show n  ++ " : " ++ q1 ++ " .  " ++ b1,
-                          "   " ++ show n2 ++ "   " ++ q2 ++ " -> " ++ b2) where
+                          "   " ++      n2 ++ "   " ++ q2 ++ " -> " ++ b2) where
   (q1, q2) = showDiff 2 q
   (b1, b2) = showDiff 1 b
   n2 = replicate (length (show n)) ' '
 
 showDiff p (DPi n q b False True) = prio 1 p
-                         ("   " ++ show n1 ++ "   " ++ q1 ++ " -> " ++ b1,
+                         ("   " ++      n1 ++ "   " ++ q1 ++ " -> " ++ b1,
                           "Pi " ++ show n  ++ " : " ++ q2 ++ " .  " ++ b2) where
   (q1, q2) = showDiff 2 q
   (b1, b2) = showDiff 1 b
