@@ -346,7 +346,8 @@ typecheckPush t q = case structure t of
   Const c -> debugPush "typecheckPush Const" t q $ do
     pts <- asks optInstance
     case axioms pts c of
-      Just t  ->  return (MkTypedTerm (Const c) t)
+      Just ct -> do bidiExpected ct q t "Attempted to push the wrong type onto a constant."
+                    return (MkTypedTerm (Const c) ct)
       _       ->  prettyFail $ text "Unknown constant:" <+> pretty 0 c
 
   Var x -> debugPush "typecheckPush Var" t q $ do
