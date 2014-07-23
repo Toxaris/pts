@@ -10,6 +10,14 @@
   "Primitives of PTS, that is, reserved words with the same
   syntax as function calls. ")
 
+(defvar pts-reserved-words
+  (append pts-keywords pts-primitives)
+  "Reserved words of PTS.")
+
+(defvar pts-reserved-words-regexp
+  (concat "^\\(?:\\*+\\)\\|" (regexp-opt pts-reserved-words) "$")
+  "Regular expression to match PTS reserved words.")
+
 (defvar pts-interpunctuation
   '(?\. ?\: ?\; ?\=)
   "Interpunctuation characters of PTS, that is, non-space
@@ -66,6 +74,9 @@
   (modify-syntax-entry ?\/ "w 14")
   (modify-syntax-entry ?\* "w 23"))
 
+(defun pts-setup-tags ()
+  (put 'pts-mode 'find-tag-default-function 'pts-find-tag-default))
+
 (defun pts-module-name ()
   "Find the name of the PTS module in the current buffer.
 Returns nil if no module name is found."
@@ -116,10 +127,41 @@ Asks the user if the PTS instance is not known."
                           relative-down))))
     (compile command)))
 
+(defun pts-variable-name-at-point ()
+  "Check whether point is inside a PTS variable name.
+If point is inside a PTS variable name, return the
+name as a string. Otherwise, return nil.
+  This function modifies the match data that `match-beginning',
+`match-end' and `match-data' access; save and restore the match
+data if you want to preserve them."
+  (let ((candidate (thing-at-point 'symbol)))
+    (unless (string-match pts-reserved-words-regexp candidate)
+      candidate)))
+
+(defun pts-module-import-at-point ()
+  "Check whether point is inside a PTS module import.
+If point is inside a PTS module import, return the name of the
+imported module module. Otherwise, return nil.
+  This function modifies the match data that `match-beginning',
+`match-end' and `match-data' access; save and restore the match
+data if you want to preserve them."
+  (let ((old-point (point)))
+    (save-excursion
+      (beginning-of-line)
+      (and (search-forward-regexp "\\=\\(?:> \\)?import\\s-+\\(\\w+\\(?:\\.\\w+\\)*\\)\\s-*\\(;\\|$\\)" nil t)
+           (<= old-point (point))
+           (match-string 1)))))
+
+(defun pts-find-tag-default ()
+  "Find default for `find-tag' etc."
+    (or (pts-module-import-at-point)
+        (pts-variable-name-at-point)))
+
 (define-derived-mode pts-mode fundamental-mode "pts"
   "Major mode for editing (literate) pts files."
   (pts-setup-fontlock)
-  (pts-setup-syntax-table))
+  (pts-setup-syntax-table)
+  (pts-setup-tags))
 
 (define-key pts-mode-map "\C-c\C-l" 'pts-process-file)
 
