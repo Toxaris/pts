@@ -26,6 +26,11 @@ Flag debug-typing
   Default:             False
   Manual:              True
 
+Flag pts-generators
+  Description:         Compile PTS code generators
+  Default:             False
+  Manual:              True
+
 Library
   Hs-source-dirs:      src-lib
   Build-depends:       base < 5,
@@ -95,12 +100,20 @@ Executable pts-nbe
   Main-is:             pts-nbe.hs
   Build-depends:       base < 5,
                        pts
+  if flag(pts-generators)
+    Buildable: True
+  else
+    Buildable: False
 
 Executable pts-quote
   Hs-source-dirs:      src-exec
   Main-is:             pts-quote.hs
   Build-depends:       base < 5,
                        pts
+  if flag(pts-generators)
+    Buildable: True
+  else
+    Buildable: False
 
 Test-suite tests
   Type: exitcode-stdio-1.0
