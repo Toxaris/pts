@@ -6,27 +6,26 @@ import Control.Monad.State
 
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as Set
+import qualified Data.Map as Map
 
 import PTS.Dynamics.Binding
 import PTS.Dynamics.Value
 import PTS.Syntax
+import PTS.Syntax.Names
 
 type Env m = [(Name, Value m)]
-
-envToNames :: Env m -> Names
-envToNames env = Set.fromList (map fst env)
 
 dropTypes :: Bindings m -> Env m
 dropTypes = map (\(x, (_, y, z)) -> (x, y))
 
-newtype Eval a = Eval (State Names a)
-  deriving (Functor, Monad, MonadState Names)
+newtype Eval a = Eval (State NamesMap a)
+  deriving (Functor, Monad, MonadState NamesMap)
 
-runEval :: Names -> Eval a -> a
+runEval :: NamesMap -> Eval a -> a
 runEval names (Eval p) = evalState p names
 
 equivTerm :: Bindings Eval -> Term -> Term -> Bool
-equivTerm env' t1 t2 = runEval (envToNames env) $ do
+equivTerm env' t1 t2 = runEval (envToNamesMap env) $ do
   v1 <- eval t1 env
   v2 <- eval t2 env
   equiv v1 v2
@@ -71,7 +70,7 @@ equiv _ _ = do
   return False
 
 nbe :: Bindings Eval -> Term -> Term
-nbe env' e = runEval (envToNames env) $ do
+nbe env' e = runEval (envToNamesMap env) $ do
   v   <- eval e env
   e'  <- reify v
   return e'
@@ -80,8 +79,8 @@ nbe env' e = runEval (envToNames env) $ do
 fresh :: Name -> Eval Name
 fresh n = do
   ns <- get
-  let n' = freshvarl ns n
-  put (Set.insert n' ns)
+  let (n', ns') = freshvarlMap ns n
+  put ns'
   return n'
 
 reify :: Value Eval -> Eval Term
@@ -118,7 +117,7 @@ reify (ResidualApp v1 v2) = do
   return (mkApp e1 e2)
 
 evalTerm :: Bindings Eval -> Term -> Value Eval
-evalTerm env' t = runEval (envToNames env) $ do
+evalTerm env' t = runEval (envToNamesMap env) $ do
   eval t env
  where env = dropTypes env'
 
