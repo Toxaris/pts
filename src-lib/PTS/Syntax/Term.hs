@@ -1,4 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction, DeriveFunctor, DeriveDataTypeable, StandaloneDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances #-}
 module PTS.Syntax.Term
   ( Term (..)
   , TypedTerm (..)
@@ -127,9 +128,16 @@ desugarArgs mk (((n : ns), t) : args) body = mk n t (desugarArgs mk ((ns, t) : a
 -- counter :: IORef Tag
 -- counter = unsafePerformIO (newIORef 0)
 
-mkTerm :: TermStructure Term -> Term
-mkTerm t = result where
-  result = MkTerm t
+class MakeTerm a b | a -> b, b -> a where
+  mkTerm :: TermStructure a -> b
+
+instance MakeTerm Term Term where
+  mkTerm t = result where
+    result = MkTerm t
+
+instance MakeTerm TypedTerm (TypedTerm -> TypedTerm) where
+  mkTerm t q = result where
+    result = MkTypedTerm t q
 
 -- mkTerm :: TermStructure -> Term
 -- mkTerm t = unsafePerformIO $ do

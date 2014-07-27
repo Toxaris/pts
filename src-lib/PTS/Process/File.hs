@@ -22,7 +22,6 @@ import PTS.Instances
 import PTS.Options
 import PTS.Statics
 import PTS.Syntax
-import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 
 import System.FilePath ((</>), (<.>), joinPath, takeExtension)
 import System.Directory (doesFileExist)

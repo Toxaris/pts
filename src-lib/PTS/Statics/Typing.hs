@@ -27,7 +27,6 @@ import PTS.Error
 import PTS.Instances
 import PTS.Options
 import PTS.Syntax
-import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 
 import Text.PrettyPrint.HughesPJ hiding (int)
 import Text.Show (Show (show))
@@ -174,11 +173,13 @@ normalizeToInt t' t context info = do
           in prettyFail $ msgNotInt context info t t'' int
 
 msgNotInt context info t t' int
-  = text "Type Error" <+> context <> text ": Types do not match." $$ nest 2 (
-    sep [text "Explanation:", nest 2 (text "The type of the" <+> info <+> text "should be beta-equivalent to" <+> pretty 0 (mkConst int) <> text ".")] $$
+  = let expected :: Term
+        expected = mkConst int in
+    text "Type Error" <+> context <> text ": Types do not match." $$ nest 2 (
+    sep [text "Explanation:", nest 2 (text "The type of the" <+> info <+> text "should be beta-equivalent to" <+> pretty 0 expected <> text ".")] $$
     sep [info <> text ":", nest 2 (pretty 0 t)] $$
     sep [text "Type of" <+> info <> text ":", nest 2 (pretty 0 t')] $$
-    sep [text "Expected Type:" <+> nest 2 (pretty 0 (mkConst int))])
+    sep [text "Expected Type:" <+> nest 2 (pretty 0 expected)])
 
 normalizeToPi t' t context info = do
   env <- getEnvironment
@@ -226,7 +227,7 @@ typecheckPull t = case structure t of
   Const c -> debug "typecheckPull Const" t $ do
     pts <- asks optInstance
     case axioms pts c of
-      Just t  ->  return (MkTypedTerm (Const c) t)
+      Just t  ->  return (mkConst c t)
       _       ->
               if sorts pts c
                 then
@@ -242,7 +243,7 @@ typecheckPull t = case structure t of
     xt <- lookupType x
     case xt of
       Just xt -> do
-        return (MkTypedTerm (Var x) xt)
+        return (mkVar x xt)
       Nothing ->
         fail $ "Unbound identifier: " ++ show x
 
@@ -259,7 +260,7 @@ typecheckPull t = case structure t of
 
       pts <- asks optInstance
       s3 <- prettyRelations pts s1' s2'
-      return (MkTypedTerm (Pi newx a' newb') s3)
+      return (mkPi newx a' newb' s3)
 
   -- application
   App t1 t2 -> debug "typecheckPull App" t $ do
@@ -280,7 +281,7 @@ typecheckPull t = case structure t of
     let tt2 = typeOf t2'
 
     -- TODO get rid of subst?
-    return (MkTypedTerm (App t1' t2') (typedSubst b' x t2'))
+    return (mkApp t1' t2' (typedSubst b' x t2'))
 
   -- abstraction
   Lam x a b -> debug "typecheckPull Abs" t $ do
@@ -303,12 +304,12 @@ typecheckPull t = case structure t of
       pts <- asks optInstance
       s3 <- prettyRelations pts s1' s2'
 
-      return (MkTypedTerm (Lam newx a' newb') (MkTypedTerm (Pi newx a' tb'') s3))
+      return (mkLam newx a' newb' (mkPi newx a' tb'' s3))
 
   -- Int
   Int i -> debug "typecheckPull Int" t $ do
     int' <- typecheckPull (mkConst int)
-    return (MkTypedTerm (Int i) int')
+    return (mkInt i int')
 
   -- IntOp
   IntOp opFunction t1 t2 -> debug "typecheckPull IntOp" t $ do
@@ -318,7 +319,7 @@ typecheckPull t = case structure t of
     let tt1 = typeOf t1'
     t2' <- typecheckPush t2 integerType
     let tt2 = typeOf t2'
-    return (MkTypedTerm (IntOp opFunction t1' t2') integerType)
+    return (mkIntOp opFunction t1' t2' integerType)
 
   -- IfZero
   IfZero condition thenTerm elseTerm -> debug "typecheckPull IfZero" t $ do
@@ -333,7 +334,7 @@ typecheckPull t = case structure t of
     typedElse <- typecheckPull elseTerm
     let elseType = typeOf typedElse
     normalizeToSame thenType elseType typedThen typedElse (text "in if0") (text "then branch") (text "else branch")
-    return (MkTypedTerm (IfZero typedCondition typedThen typedElse) thenType)
+    return (mkIfZero typedCondition typedThen typedElse thenType)
 
   -- Position information
   Pos p t -> do
@@ -358,14 +359,14 @@ typecheckPush t q = case structure t of
     pts <- asks optInstance
     case axioms pts c of
       Just ct -> do bidiExpected ct q t "Attempted to push the wrong type onto a constant."
-                    return (MkTypedTerm (Const c) ct)
+                    return (mkConst c ct)
       _       ->  prettyFail $ text "Unknown constant:" <+> pretty 0 c
 
   Var x -> debugPush "typecheckPush Var" t q $ do
     xt <- lookupType x
     case xt of
       Just xt -> do bidiExpected xt q t "A variable from the environment has an unexpected type."
-                    return (MkTypedTerm (Var x) xt)
+                    return (mkVar x xt)
       Nothing ->
         fail $ "Unbound identifier: " ++ show x
 
@@ -382,7 +383,7 @@ typecheckPush t q = case structure t of
 
       pts <- asks optInstance
       s3 <- prettyRelations pts s1' s2'
-      return (MkTypedTerm (Pi newx a' newb') s3)
+      return (mkPi newx a' newb' s3)
 
   -- application
   App f a -> debugPush "typecheckPush App" t q $ do
@@ -403,7 +404,7 @@ typecheckPush t q = case structure t of
         typedArgument <- typecheckPush a typeA
         -- 3. (B is actually the pushed term q)
         bidiExpected (typedSubst typeR a' typedArgument) q t "The function has an unexpected codomain."
-        return (MkTypedTerm (App typedFunction typedArgument) q)
+        return (mkApp typedFunction typedArgument q)
       _ -> do
         prettyFail $ text "In type checking a push application, found the term in function position to not be of a function type."
                   $$ text "Term in function position:" <+> pretty 0 f
@@ -418,11 +419,11 @@ typecheckPush t q = case structure t of
         expectedFunctionType@(Pi expectedName expectedDomain expectedCodomain) -> do
           let argumentType = expectedDomain
           safebind declaredName argumentType body $ \newArgumentName newBody -> do
-            typedNewBody <- typecheckPush newBody (typedSubst expectedCodomain expectedName (mkTypedTerm (Var newArgumentName) expectedDomain))
+            typedNewBody <- typecheckPush newBody (typedSubst expectedCodomain expectedName (mkVar newArgumentName expectedDomain))
             let newCodomain = typeOf typedNewBody
             let kind = typeOf newCodomain
-            return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
-                                (MkTypedTerm (Pi newArgumentName expectedDomain newCodomain) kind))
+            return (mkLam newArgumentName argumentType typedNewBody
+                          (mkPi newArgumentName expectedDomain newCodomain kind))
         _ -> prettyFail $ text "Expected a function type for" <+> pretty 0 t <+> text "but got" <+> pretty 0 q
     -- Domain is declared, check that it is correct.
     _       -> do
@@ -436,15 +437,15 @@ typecheckPush t q = case structure t of
           bidiExpected argumentType expectedDomain t "In a lambda abstraction, the declared argument type does not match the expected domain."
           --  2. does the body have the type of the expected codomain (typecheckPush in extended environment)
           safebind declaredName argumentType body $ \newArgumentName newBody -> do
-            typedNewBody <- typecheckPush newBody (typedSubst expectedCodomain expectedName (mkTypedTerm (Var newArgumentName) expectedDomain))
+            typedNewBody <- typecheckPush newBody (typedSubst expectedCodomain expectedName (mkVar newArgumentName expectedDomain))
             let newCodomain = typeOf typedNewBody
             let kind = typeOf newCodomain
             -- Both succeed, so return the term (=lambda) with its type (=pi).
-            -- This is a bit more cumbersome than expected, we actually want to just return a (MkTypedTerm t q).
+            -- This is a bit more cumbersome than expected, we actually want to just return a (mkTypedTerm t q).
             -- But the returned t is t with a new argument name and body,
             -- and the returned q is q with a new argument name and new codomain.
-            return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
-                                (MkTypedTerm (Pi newArgumentName expectedDomain newCodomain) kind))
+            return (mkLam newArgumentName argumentType typedNewBody
+                          (mkPi newArgumentName expectedDomain newCodomain kind))
         _ -> prettyFail $ text "Expected" <+> pretty 0 q <+> text "but found" <+> pretty 0 t
 
 
@@ -452,7 +453,7 @@ typecheckPush t q = case structure t of
   Int i -> debugPush "typecheckPush Int" t q $ do
     int' <- typecheckPull (mkConst int)
     bidiExpected int' q t "An integer literal is not expected to be one."
-    return (MkTypedTerm (Int i) int')
+    return (mkInt i int')
 
   -- IntOp
   IntOp opFunction t1 t2 -> debugPush "typecheckPush IntOp" t q $ do
@@ -460,7 +461,7 @@ typecheckPush t q = case structure t of
     bidiExpected integerType q t "An integer operation is not expected to be one."
     typedT1 <- typecheckPush t1 integerType
     typedT2 <- typecheckPush t2 integerType
-    return (MkTypedTerm (IntOp opFunction typedT1 typedT2) integerType)
+    return (mkIntOp opFunction typedT1 typedT2 integerType)
 
   -- IfZero
   IfZero t1 t2 t3 -> debugPush "typecheckPush IfZero" t q $ do
@@ -473,7 +474,7 @@ typecheckPush t q = case structure t of
     t3' <- typecheckPush t3 q
     let tt3 = typeOf t3'
     normalizeToSame tt2 tt3 t2' t3' (text "in if0") (text "then branch") (text "else branch")
-    return (MkTypedTerm (IfZero t1' t2' t3') tt2)
+    return (mkIfZero t1' t2' t3' tt2)
 
   -- Position information
   Pos p t -> do
