@@ -76,7 +76,8 @@ processStmt (Term t) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
   (_, _, env) <- get
-  t@(MkTypedTerm _ q) <- runEnvironmentT (typecheckPull t) env
+  t <- runEnvironmentT (typecheckPull t) env
+  let q = typeOf t
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let x = nbe env (strip t)
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
@@ -89,7 +90,8 @@ processStmt (Bind n args Nothing body) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   (_, _, env) <- get
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
-  t@(MkTypedTerm _ q) <- runEnvironmentT (typecheckPull t) env
+  t <- runEnvironmentT (typecheckPull t) env
+  let q = typeOf t
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let v = evalTerm env (strip t)
   modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (False, v, q)) :)
@@ -112,7 +114,8 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   (_, _, env) <- get
 
   -- typecheck type
-  qq@(MkTypedTerm _ q') <- runEnvironmentT (typecheckPull (nbe env t'')) env
+  qq <- runEnvironmentT (typecheckPull (nbe env t'')) env
+  let q' = typeOf qq
   case structure (nbe env (strip q')) of
     Const _ -> return ()
     _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
@@ -120,7 +123,8 @@ processStmt (Bind n args (Just body') body) = recover () $ do
                          $$ text "     found:" <+> pretty 0 q'
 
   -- use declared type to typecheck push
-  t@(MkTypedTerm _ q) <- runEnvironmentT (typecheckPush t qq) env
+  t <- runEnvironmentT (typecheckPush t qq) env
+  let q = typeOf t
 
   let v = evalTerm env (strip t)
   modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (False, v, q)) :)

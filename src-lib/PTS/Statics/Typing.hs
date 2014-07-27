@@ -248,11 +248,13 @@ typecheckPull t = case structure t of
 
   -- product
   Pi x a b -> debug "typecheckPull Fun" t $ do
-    a'@(MkTypedTerm _ s1) <- typecheckPull a
+    a' <- typecheckPull a
+    let s1 = typeOf a'
     s1' <- normalizeToSort s1 a (text "in product type") (text "as domain")
 
     safebind x a' b $ \newx newb -> do
-      newb'@(MkTypedTerm _ s2) <- typecheckPull newb
+      newb' <- typecheckPull newb
+      let s2 = typeOf newb'
       s2' <- normalizeToSort s2 newb (text "in product type") (text "as codomain")
 
       pts <- asks optInstance
@@ -261,7 +263,8 @@ typecheckPull t = case structure t of
 
   -- application
   App t1 t2 -> debug "typecheckPull App" t $ do
-    t1'@(MkTypedTerm _ tt1) <- typecheckPull t1
+    t1' <- typecheckPull t1
+    let tt1 = typeOf t1'
     Pi x a b <- normalizeToPi tt1 t1 (text "in application") (text "operator")
 
     -- TODO avoid rechecking
@@ -273,7 +276,8 @@ typecheckPull t = case structure t of
     -- t1 is a function from a -> b, so
     -- t2 better be of type a
     -- check that the argument t2 actually has the type we expect
-    t2'@(MkTypedTerm _ tt2) <- typecheckPush t2 a'
+    t2' <- typecheckPush t2 a'
+    let tt2 = typeOf t2'
 
     -- TODO get rid of subst?
     return (MkTypedTerm (App t1' t2') (typedSubst b' x t2'))
@@ -281,16 +285,19 @@ typecheckPull t = case structure t of
   -- abstraction
   Lam x a b -> debug "typecheckPull Abs" t $ do
     env2 <- getEnvironment
-    a'@(MkTypedTerm _ s1)  <- typecheckPull (nbe env2 a)
+    a'  <- typecheckPull (nbe env2 a)
+    let s1 = typeOf a'
     s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
 
     safebind x a' b $ \newx newb -> do
-      newb'@(MkTypedTerm _ tb)  <- typecheckPull newb
+      newb'  <- typecheckPull newb
+      let tb = typeOf newb'
       env <- getEnvironment
       let tb' = nbe env (strip tb)
       -- XXX This computes a sort of something the user did not write.
       -- So this should be properly annotated in the output.
-      tb''@(MkTypedTerm _ s2)  <- typecheckPull tb'
+      tb''  <- typecheckPull tb'
+      let s2 = typeOf tb''
       s2' <- normalizeToSort s2 tb' (text "in lambda abstraction") (text "as type of body")
 
       pts <- asks optInstance
@@ -307,8 +314,10 @@ typecheckPull t = case structure t of
   IntOp opFunction t1 t2 -> debug "typecheckPull IntOp" t $ do
     integerType <- typecheckPull (mkConst int)
     -- Both arguments to any IntOp have to be Ints, so typecheckPush an Int in there.
-    t1'@(MkTypedTerm _ tt1) <- typecheckPush t1 integerType
-    t2'@(MkTypedTerm _ tt2) <- typecheckPush t2 integerType
+    t1' <- typecheckPush t1 integerType
+    let tt1 = typeOf t1'
+    t2' <- typecheckPush t2 integerType
+    let tt2 = typeOf t2'
     return (MkTypedTerm (IntOp opFunction t1' t2') integerType)
 
   -- IfZero
@@ -319,8 +328,10 @@ typecheckPull t = case structure t of
     -- Then and else branch need to have the same type. We could typecheckPull
     -- the then branch and push the result into the else branch. This might be
     -- faster, but the asymmetry seems weird.
-    typedThen@(MkTypedTerm _ thenType) <- typecheckPull thenTerm
-    typedElse@(MkTypedTerm _ elseType) <- typecheckPull elseTerm
+    typedThen <- typecheckPull thenTerm
+    let thenType = typeOf typedThen
+    typedElse <- typecheckPull elseTerm
+    let elseType = typeOf typedElse
     normalizeToSame thenType elseType typedThen typedElse (text "in if0") (text "then branch") (text "else branch")
     return (MkTypedTerm (IfZero typedCondition typedThen typedElse) thenType)
 
@@ -360,11 +371,13 @@ typecheckPush t q = case structure t of
 
   -- product
   Pi x a b -> debugPush "typecheckPush Fun" t q $ do
-    a'@(MkTypedTerm _ s1) <- typecheckPull a
+    a' <- typecheckPull a
+    let s1 = typeOf a'
     s1' <- normalizeToSort s1 a (text "in product type") (text "as domain")
 
     safebind x a' b $ \newx newb -> do
-      newb'@(MkTypedTerm _ s2) <- typecheckPull newb
+      newb' <- typecheckPull newb
+      let s2 = typeOf newb'
       s2' <- normalizeToSort s2 newb (text "in product type") (text "as codomain")
 
       pts <- asks optInstance
@@ -405,7 +418,9 @@ typecheckPush t q = case structure t of
         expectedFunctionType@(Pi expectedName expectedDomain expectedCodomain) -> do
           let argumentType = expectedDomain
           safebind declaredName argumentType body $ \newArgumentName newBody -> do
-            typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody (typedSubst expectedCodomain expectedName (MkTypedTerm (Var newArgumentName) expectedDomain))
+            typedNewBody <- typecheckPush newBody (typedSubst expectedCodomain expectedName (mkTypedTerm (Var newArgumentName) expectedDomain))
+            let newCodomain = typeOf typedNewBody
+            let kind = typeOf newCodomain
             return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
                                 (MkTypedTerm (Pi newArgumentName expectedDomain newCodomain) kind))
         _ -> prettyFail $ text "Expected a function type for" <+> pretty 0 t <+> text "but got" <+> pretty 0 q
@@ -421,7 +436,9 @@ typecheckPush t q = case structure t of
           bidiExpected argumentType expectedDomain t "In a lambda abstraction, the declared argument type does not match the expected domain."
           --  2. does the body have the type of the expected codomain (typecheckPush in extended environment)
           safebind declaredName argumentType body $ \newArgumentName newBody -> do
-            typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody (typedSubst expectedCodomain expectedName (MkTypedTerm (Var newArgumentName) expectedDomain))
+            typedNewBody <- typecheckPush newBody (typedSubst expectedCodomain expectedName (mkTypedTerm (Var newArgumentName) expectedDomain))
+            let newCodomain = typeOf typedNewBody
+            let kind = typeOf newCodomain
             -- Both succeed, so return the term (=lambda) with its type (=pi).
             -- This is a bit more cumbersome than expected, we actually want to just return a (MkTypedTerm t q).
             -- But the returned t is t with a new argument name and body,
@@ -448,10 +465,13 @@ typecheckPush t q = case structure t of
   -- IfZero
   IfZero t1 t2 t3 -> debugPush "typecheckPush IfZero" t q $ do
     integerType <- typecheckPull (mkConst int)
-    t1'@(MkTypedTerm _ tt1) <- typecheckPush t1 integerType
+    t1' <- typecheckPush t1 integerType
+    let tt1 = typeOf t1'
     normalizeToInt tt1 t1' (text "in if0") (text "condition")
-    t2'@(MkTypedTerm _ tt2) <- typecheckPush t2 q
-    t3'@(MkTypedTerm _ tt3) <- typecheckPush t3 q
+    t2' <- typecheckPush t2 q
+    let tt2 = typeOf t2'
+    t3' <- typecheckPush t3 q
+    let tt3 = typeOf t3'
     normalizeToSame tt2 tt3 t2' t3' (text "in if0") (text "then branch") (text "else branch")
     return (MkTypedTerm (IfZero t1' t2' t3') tt2)
 
