@@ -286,7 +286,7 @@ typecheckPull t = case structure t of
   -- abstraction
   Lam x a b -> debug "typecheckPull Abs" t $ do
     env2 <- getEnvironment
-    a'  <- typecheckPull (nbe env2 a)
+    a'  <- typecheckPull a
     let s1 = typeOf a'
     s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
 
@@ -428,7 +428,7 @@ typecheckPush t q = case structure t of
     -- Domain is declared, check that it is correct.
     _       -> do
       env <- getEnvironment
-      argumentType <- typecheckPull (nbe env declaredDomain)
+      argumentType <- typecheckPull declaredDomain
       -- Check whether we actually expect a lambda abstraction, that is a Pi-type. Fail immediately otherwise.
       case structure' q of
         expectedFunctionType@(Pi expectedName expectedDomain expectedCodomain) -> do

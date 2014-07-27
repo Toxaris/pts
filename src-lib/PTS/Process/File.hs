@@ -113,7 +113,7 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   (_, _, env) <- get
 
   -- typecheck type
-  qq <- runEnvironmentT (typecheckPull (nbe env t'')) env
+  qq <- runEnvironmentT (typecheckPull t'') env
   let q' = typeOf qq
   case structure (nbe env (strip q')) of
     Const _ -> return ()
