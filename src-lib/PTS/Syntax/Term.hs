@@ -2,7 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances #-}
 module PTS.Syntax.Term
   ( Term (..)
-  , TypedTerm (..)
+  , TypedTerm
   , TermStructure (..)
   , Structure (structure)
   , structure'
