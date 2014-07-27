@@ -170,18 +170,3 @@ eval t env = case structure t of
     eval e env
   Infer _ -> error "Encountered type inference marker during evaluation. You either have an underscore in your code that cannnot be decided or you have discovered a bug in the interpreter."
   Unquote _ -> error "During evaluation, there should be no unquote left."
-
-{-
-data TermStructure alpha
-  = Int     Integer
-  | IntOp   BinOp alpha alpha
-  | IfZero  alpha alpha alpha
-  | Var     Name
-  | Const   C
-  | App     alpha alpha
-  | Lam     Name alpha alpha
-  | Pi      Name alpha alpha
-  | Pos     Position alpha
-  | Unquote alpha
-  deriving (Functor, Data, Typeable)
--}
