@@ -134,7 +134,7 @@ normalizeToSort t' t context info = do
   pts <- asks optInstance
   env <- getEnvironment
 
-  case structure (nbe env (strip t')) of
+  case structure (nbe env t') of
     Const s | sorts pts s  ->  return s
     _                      ->  prettyFail $ msgNotProperType context info t t'
 
@@ -145,13 +145,11 @@ msgNotProperType context info t t'
     sep [text "Type:", nest 2 (pretty 0 t')])
 
 normalizeToSame s' t' s t context info1 info2 = do
-  let stripS' = strip s'
-  let stripT' = strip t'
   env <- getEnvironment
-  if (equivTerm env (stripS') (stripT'))
+  if (equivTerm env s' t')
       then return ()
-      else let  s'' = nbe env (stripS')
-                t'' = nbe env (stripT')
+      else let  s'' = nbe env s'
+                t'' = nbe env t'
              in prettyFail $ msgNotSame context info1 info2 s t s'' t''
 
 msgNotSame context info1 info2 s t s' t'
@@ -165,11 +163,11 @@ msgNotSame context info1 info2 s t s' t'
 
 normalizeToInt :: (MonadLog m, Functor m, MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m) => TypedTerm -> TypedTerm -> Doc -> Doc -> m TypedTerm
 normalizeToInt t' t context info = do
-  let stripT' = strip t'
   env <- getEnvironment
-  if equivTerm env stripT' (mkConst int)
-    then typecheckPull (mkConst int)
-    else let t'' = nbe env stripT'
+  expected <- typecheckPull (mkConst int)
+  if equivTerm env t' expected
+    then return expected
+    else let t'' = nbe env t'
           in prettyFail $ msgNotInt context info t t'' int
 
 msgNotInt context info t t' int
@@ -183,7 +181,7 @@ msgNotInt context info t t' int
 
 normalizeToPi t' t context info = do
   env <- getEnvironment
-  let t'' = nbe env (strip t') in
+  let t'' = nbe env t' in
      case structure t'' of
        result@(Pi _ _ _)  ->  return result
        _                  ->  prettyFail $ msgNotPi context info t t''
@@ -207,7 +205,7 @@ bidiExpected actualType expectedType checkedTerm context = do
   let actualType' = strip actualType
   let expectedType' = strip expectedType
   env <- getEnvironment
-  if equivTerm env actualType' expectedType'
+  if equivTerm env actualType expectedType
      then return ()
      else do
        let (actual, expected) = showDiff 0 (diff actualType' expectedType')
@@ -294,7 +292,7 @@ typecheckPull t = case structure t of
       newb'  <- typecheckPull newb
       let tb = typeOf newb'
       env <- getEnvironment
-      let tb' = nbe env (strip tb)
+      let tb' = nbe env tb
       -- XXX This computes a sort of something the user did not write.
       -- So this should be properly annotated in the output.
       tb''  <- typecheckPull tb'

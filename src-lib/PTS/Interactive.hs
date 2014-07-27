@@ -48,7 +48,7 @@ parseSimple input = parseTerm "REPL" input
 parseStSimple :: String -> Either Errors Stmt
 parseStSimple input = parseStmt "REPL" input
 
-nbeClosed :: Term -> Term
+nbeClosed :: TypedTerm -> Term
 nbeClosed = nbe []
 
 processFileSimple inst f = runErrorsAndOpts inst (processFile f)

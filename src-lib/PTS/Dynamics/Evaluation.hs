@@ -24,7 +24,7 @@ newtype Eval a = Eval (State NamesMap a)
 runEval :: NamesMap -> Eval a -> a
 runEval names (Eval p) = evalState p names
 
-equivTerm :: Bindings Eval -> Term -> Term -> Bool
+equivTerm :: Bindings Eval -> TypedTerm -> TypedTerm -> Bool
 equivTerm env' t1 t2 = runEval (envToNamesMap env) $ do
   v1 <- eval t1 env
   v2 <- eval t2 env
@@ -69,7 +69,7 @@ equiv (ResidualApp v1 v2) (ResidualApp v1' v2') = do
 equiv _ _ = do
   return False
 
-nbe :: Bindings Eval -> Term -> Term
+nbe :: Bindings Eval -> TypedTerm -> Term
 nbe env' e = runEval (envToNamesMap env) $ do
   v   <- eval e env
   e'  <- reify v
@@ -116,13 +116,13 @@ reify (ResidualApp v1 v2) = do
   e2 <- reify v2
   return (mkApp e1 e2)
 
-evalTerm :: Bindings Eval -> Term -> Value Eval
+evalTerm :: Bindings Eval -> TypedTerm -> Value Eval
 evalTerm env' t = runEval (envToNamesMap env) $ do
   eval t env
  where env = dropTypes env'
 
 
-eval :: Term -> Env Eval -> Eval (Value Eval)
+eval :: TypedTerm -> Env Eval -> Eval (Value Eval)
 eval t env = case structure t of
   Int n -> do
     return (Number n)

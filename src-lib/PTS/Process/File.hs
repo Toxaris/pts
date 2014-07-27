@@ -78,7 +78,7 @@ processStmt (Term t) = recover () $ do
   t <- runEnvironmentT (typecheckPull t) env
   let q = typeOf t
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
-  let x = nbe env (strip t)
+  let x = nbe env t
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
 
 processStmt (Bind n args Nothing body) = recover () $ do
@@ -92,7 +92,7 @@ processStmt (Bind n args Nothing body) = recover () $ do
   t <- runEnvironmentT (typecheckPull t) env
   let q = typeOf t
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
-  let v = evalTerm env (strip t)
+  let v = evalTerm env t
   modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (False, v, q)) :)
 
 processStmt (Bind n args (Just body') body) = recover () $ do
@@ -115,7 +115,7 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   -- typecheck type
   qq <- runEnvironmentT (typecheckPull t'') env
   let q' = typeOf qq
-  case structure (nbe env (strip q')) of
+  case structure (nbe env q') of
     Const _ -> return ()
     _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
                          $$ text "  expected:" <+> text "constant"
@@ -125,7 +125,7 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   t <- runEnvironmentT (typecheckPush t qq) env
   let q = typeOf t
 
-  let v = evalTerm env (strip t)
+  let v = evalTerm env t
   modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (False, v, q)) :)
 
 processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ do
@@ -137,18 +137,18 @@ processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ 
 
   let check Nothing Nothing = do
         t <- typecheckPull t
-        return (typeOf t, nbe env (strip t))
+        return (typeOf t, nbe env t)
       check (Just q') Nothing = do
         q' <- typecheckPull q'
         normalizeToSort (typeOf q') q' (text "in assertion") (text "as annotated type")
         t <- typecheckPush t q'
-        return (t, nbe env (strip t))
+        return (t, nbe env t)
       check Nothing (Just t') = do
         t' <- typecheckPull t'
         let q' = typeOf t'
         t <- typecheckPush t q'
-        unless (equivTerm env (strip t) (strip t')) $ do
-          let (expected, given) = showDiff 0 (diff (nbe env (strip t')) (nbe env (strip t)))
+        unless (equivTerm env t t') $ do
+          let (expected, given) = showDiff 0 (diff (nbe env t') (nbe env t))
           prettyFail $ text "Result mismatch in assertion"
                     $$ text "  specified result:" <+> pretty 0 t'
                     $$ text "       normal form:" <+> text expected
@@ -159,8 +159,8 @@ processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ 
         normalizeToSort (typeOf q') q' (text "in assertion") (text "as annotated type")
         t' <- typecheckPush t' q'
         t <- typecheckPush t q'
-        unless (equivTerm env (strip t) (strip t')) $ do
-          let (expected, given) = showDiff 0 (diff (nbe env (strip t')) (nbe env (strip t)))
+        unless (equivTerm env t t') $ do
+          let (expected, given) = showDiff 0 (diff (nbe env t') (nbe env t))
           prettyFail $ text "Result mismatch in assertion"
                     $$ text "  specified result:" <+> pretty 0 t'
                     $$ text "       normal form:" <+> text expected
