@@ -13,11 +13,6 @@ import PTS.Dynamics.Value
 import PTS.Syntax
 import PTS.Syntax.Names
 
-type Env m = [(Name, Value m)]
-
-dropTypes :: Bindings m -> Env m
-dropTypes = map (\(x, (_, y, z)) -> (x, y))
-
 newtype Eval a = Eval (State NamesMap a)
   deriving (Functor, Monad, MonadState NamesMap)
 
@@ -25,11 +20,10 @@ runEval :: NamesMap -> Eval a -> a
 runEval names (Eval p) = evalState p names
 
 equivTerm :: Bindings Eval -> TypedTerm -> TypedTerm -> Bool
-equivTerm env' t1 t2 = runEval (envToNamesMap env) $ do
+equivTerm env t1 t2 = runEval (envToNamesMap env) $ do
   v1 <- eval t1 env
   v2 <- eval t2 env
   equiv v1 v2
- where env = dropTypes env'
 
 equiv :: Value Eval -> Value Eval -> Eval Bool
 equiv (Function n v1 (ValueFunction f)) (Function _ v1' (ValueFunction f')) = do
@@ -70,11 +64,10 @@ equiv _ _ = do
   return False
 
 nbe :: Bindings Eval -> TypedTerm -> Term
-nbe env' e = runEval (envToNamesMap env) $ do
+nbe env e = runEval (envToNamesMap env) $ do
   v   <- eval e env
   e'  <- reify v
   return e'
- where env = dropTypes env'
 
 fresh :: Name -> Eval Name
 fresh n = do
@@ -117,12 +110,10 @@ reify (ResidualApp v1 v2) = do
   return (mkApp e1 e2)
 
 evalTerm :: Bindings Eval -> TypedTerm -> Value Eval
-evalTerm env' t = runEval (envToNamesMap env) $ do
+evalTerm env t = runEval (envToNamesMap env) $ do
   eval t env
- where env = dropTypes env'
 
-
-eval :: TypedTerm -> Env Eval -> Eval (Value Eval)
+eval :: TypedTerm -> Bindings Eval -> Eval (Value Eval)
 eval t env = case structure t of
   Int n -> do
     return (Number n)
@@ -148,7 +139,7 @@ eval t env = case structure t of
         return (ResidualIfZero v1 v2 v3)
   Var n -> do
     case lookup n env of
-      Just v -> return v
+      Just (_, v, _) -> return v
       Nothing -> return (ResidualVar n)
   Const c -> do
     return (Constant c)
@@ -162,10 +153,10 @@ eval t env = case structure t of
         return (ResidualApp v1 v2)
   Lam n e1 e2 -> do
     v1 <- eval e1 env
-    return (Function n v1 (ValueFunction (\v -> eval e2 ((n, v) : env))))
+    return (Function n v1 (ValueFunction (\v -> eval e2 ((n, (False, v, e1)) : env))))
   Pi n e1 e2 -> do
     v1 <- eval e1 env
-    return (PiType n v1 (ValueFunction (\v -> eval e2 ((n, v) : env))))
+    return (PiType n v1 (ValueFunction (\v -> eval e2 ((n, (False, v, e1)) : env))))
   Pos _ e -> do
     eval e env
   Infer _ -> error "Encountered type inference marker during evaluation. You either have an underscore in your code that cannnot be decided or you have discovered a bug in the interpreter."
