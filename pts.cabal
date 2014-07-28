@@ -119,9 +119,7 @@ Test-suite tests
   Type: exitcode-stdio-1.0
   Hs-source-dirs:      src-test
   Main-is:             tests.hs
-  Other-modules:       PTS.Core.Properties
-                       PTS.Core.Tests
-                       PTS.File.Tests
+  Other-modules:       PTS.File.Tests
                        PTS.Syntax.Arbitrary
                        PTS.Syntax.Parser.Tests
                        PTS.Syntax.Pretty.Tests
