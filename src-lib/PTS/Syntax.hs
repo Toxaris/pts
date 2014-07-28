@@ -40,6 +40,10 @@ module PTS.Syntax
   , mkUnquote
   , mkInfer
   , handlePos
+    -- ** Annotated terms
+  , AnnotatedTerm
+  , annotation
+  , annotatedHandlePos
     -- ** Typed terms
   , TypedTerm
   , typeOf
