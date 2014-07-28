@@ -50,6 +50,7 @@ Library
                        PTS.Dynamics.Evaluation
                        PTS.Dynamics.Module
                        PTS.Dynamics.Normalisation
+                       PTS.Dynamics.TypedTerm
                        PTS.Dynamics.Value
                        PTS.Error
                        PTS.Instances

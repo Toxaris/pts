@@ -21,6 +21,8 @@ import PTS.Syntax.Names
 import PTS.Syntax.Statement
 import PTS.Syntax.Term
 
+import PTS.Dynamics.TypedTerm
+
 import Text.PrettyPrint.HughesPJ
 
 class Pretty p where

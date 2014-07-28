@@ -11,6 +11,8 @@ import PTS.Syntax.Algebra
 import PTS.Syntax.Names
 import PTS.Syntax.Term
 
+import PTS.Dynamics.TypedTerm
+
 -- substitution (generates fresh variables if needed to prevent accidental capture)
 
 typedAvoidCapture :: TypedTerm -> Name -> TypedTerm -> Name -> TypedTerm -> (Name, TypedTerm)

@@ -22,7 +22,8 @@ module PTS.Interactive
 
 -- ASTs
 import PTS.Syntax.Names (Name(..))
-import PTS.Syntax.Term (Term(..), TypedTerm(..), TermStructure(..), BinOp(..))
+import PTS.Syntax.Term (Term(..), TermStructure(..), BinOp(..))
+import PTS.Dynamics.TypedTerm (TypedTerm(..))
 
 import PTS.Syntax
 

@@ -83,6 +83,8 @@ module PTS.Syntax
   , prettyAlgebra
   ) where
 
+import PTS.Dynamics.TypedTerm
+
 import PTS.Syntax.Algebra
 import PTS.Syntax.Constants
 import PTS.Syntax.Diff

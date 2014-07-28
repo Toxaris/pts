@@ -3,12 +3,11 @@
 module PTS.Syntax.Term
   ( Term (..)
   , AnnotatedTerm
-  , TypedTerm
   , TermStructure (..)
   , Structure (structure)
   , structure'
   , annotation
-  , typeOf
+  , MakeTerm (mkTerm)
   , mkInt
   , mkIntOp
   , mkIfZero
@@ -23,7 +22,6 @@ module PTS.Syntax.Term
   , freshvarl
   , handlePos
   , annotatedHandlePos
-  , typedHandlePos
   , evalOp
   , BinOp (..)
   , desugarArgs
@@ -47,24 +45,6 @@ data Term = MkTerm (TermStructure Term)
 data AnnotatedTerm a = MkAnnotatedTerm (TermStructure (AnnotatedTerm a)) a
   deriving (Data, Typeable, Show)
 
-newtype TypedTerm = MkTypedTerm (AnnotatedTerm TypedTerm)
-
-instance Show TypedTerm where
-  showsPrec d t@(MkTypedTerm (MkAnnotatedTerm struct typ)) =
-    showParen (d > app_prec) $
-      showString "MkTypedTerm (MkAnnotatedTerm " . showsPrec (app_prec + 1) struct .
-        if loops t
-         then showString " <self>" -- This is the only non-default behavior.
-         else showString " " . showsPrec (app_prec + 1) typ
-      . showString ")"
-   where
-     app_prec = 10
-
-loops t1 = sameConst (structure' t1) (structure' (typeOf t1))
- where
-   sameConst (Const (C c1)) (Const (C c2)) = c1 == c2
-   sameConst _ _ = False
-
 class Structure term where
   structure :: term -> TermStructure term
 
@@ -74,9 +54,6 @@ instance Structure Term where
 instance Structure (AnnotatedTerm a) where
   structure (MkAnnotatedTerm t _) = t
 
-instance Structure TypedTerm where
-  structure (MkTypedTerm t) = fmap MkTypedTerm (structure t)
-
 -- | Return the actual TermStructure of a Term-like thing without Pos nodes.
 structure' :: Structure term => term -> TermStructure term
 structure' t = case structure t of
@@ -85,9 +62,6 @@ structure' t = case structure t of
 
 annotation :: AnnotatedTerm a -> a
 annotation (MkAnnotatedTerm _ a) = a
-
-typeOf :: TypedTerm -> TypedTerm
-typeOf (MkTypedTerm t) = annotation t
 
 data BinOp
   = Add
@@ -151,11 +125,6 @@ instance MakeTerm (AnnotatedTerm a) (a -> AnnotatedTerm a) where
   mkTerm t q = result where
     result = MkAnnotatedTerm t q
 
-instance MakeTerm TypedTerm (TypedTerm -> TypedTerm) where
-  mkTerm t q = result where
-    result = MkTypedTerm (mkTerm (fmap (\(MkTypedTerm t) -> t) t) q)
-
-
 -- mkTerm :: TermStructure -> Term
 -- mkTerm t = unsafePerformIO $ do
 --   old <- readIORef counter
@@ -178,5 +147,3 @@ mkInfer i          =  mkTerm (Infer i)
 handlePos f p t = annotatePos p $ mkPos p <$> f t
 
 annotatedHandlePos f p t = annotatePos p $ (\t -> MkAnnotatedTerm (Pos p t) (annotation t)) <$> f t
-
-typedHandlePos f p t = annotatePos p $ (\(MkTypedTerm t) -> MkTypedTerm (MkAnnotatedTerm (Pos p t) (annotation t))) <$> f t
