@@ -27,12 +27,14 @@ class (Eq k, Ord k, Monad m) => MonadEnvironment k v m | m -> k v where
   lookup :: Eq k => k -> m (Maybe v)
   keys :: m (Set k)
   getEnvironment :: m (Env k v)
+  withEnvironment :: Env k v -> m a -> m a
 
 instance MonadEnvironment k v m => MonadEnvironment k v (ReaderT r m) where
   bind k v = mapReaderT (bind k v)
   lookup k = lift (lookup k)
   keys = lift keys
   getEnvironment = lift getEnvironment
+  withEnvironment env = mapReaderT (withEnvironment env)
 
 type Env k v = [(k, v)]
 
@@ -54,6 +56,8 @@ instance (Eq k, Ord k, Monad m) => MonadEnvironment k v (EnvironmentT k v m) whe
     return $ fromList $ map fst env
   getEnvironment = EnvironmentT $ do
     ask
+  withEnvironment env (EnvironmentT p) = EnvironmentT $ do
+    local (\_ -> env) p
 
 instance MonadReader r m => MonadReader r (EnvironmentT k v m) where
   ask = lift ask

@@ -2,27 +2,30 @@
 module PTS.Dynamics.Evaluation where
 
 import Control.Applicative hiding (Const)
+import Control.Monad.Environment
 import Control.Monad.State
 
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 
+import Prelude hiding (lookup)
+
 import PTS.Dynamics.Binding
 import PTS.Dynamics.Value
 import PTS.Syntax
 import PTS.Syntax.Names
 
-newtype Eval a = Eval (State NamesMap a)
-  deriving (Functor, Monad, MonadState NamesMap)
+newtype Eval a = Eval (EnvironmentT Name (Binding Eval) (State NamesMap) a)
+  deriving (Functor, Monad, MonadState NamesMap, MonadEnvironment Name (Binding Eval))
 
-runEval :: NamesMap -> Eval a -> a
-runEval names (Eval p) = evalState p names
+runEval :: Bindings Eval -> Eval a -> a
+runEval env (Eval p) = evalState (runEnvironmentT p env) (envToNamesMap env)
 
 equivTerm :: Bindings Eval -> TypedTerm -> TypedTerm -> Bool
-equivTerm env t1 t2 = runEval (envToNamesMap env) $ do
-  v1 <- eval t1 env
-  v2 <- eval t2 env
+equivTerm env t1 t2 = runEval env $ do
+  v1 <- eval t1
+  v2 <- eval t2
   equiv v1 v2
 
 equiv :: Value Eval -> Value Eval -> Eval Bool
@@ -64,8 +67,8 @@ equiv _ _ = do
   return False
 
 nbe :: Bindings Eval -> TypedTerm -> Term
-nbe env e = runEval (envToNamesMap env) $ do
-  v   <- eval e env
+nbe env e = runEval env $ do
+  v   <- eval e
   e'  <- reify v
   return e'
 
@@ -110,16 +113,16 @@ reify (ResidualApp v1 v2) = do
   return (mkApp e1 e2)
 
 evalTerm :: Bindings Eval -> TypedTerm -> Value Eval
-evalTerm env t = runEval (envToNamesMap env) $ do
-  eval t env
+evalTerm env t = runEval env $ do
+  eval t
 
-eval :: TypedTerm -> Bindings Eval -> Eval (Value Eval)
-eval t env = case structure t of
+eval :: TypedTerm -> Eval (Value Eval)
+eval t = case structure t of
   Int n -> do
     return (Number n)
   IntOp op e1 e2 -> do
-    v1 <- eval e1 env
-    v2 <- eval e2 env
+    v1 <- eval e1
+    v2 <- eval e2
     return $
       fromMaybe (ResidualIntOp op v1 v2)
         (case (v1, v2) of
@@ -127,37 +130,40 @@ eval t env = case structure t of
               Number <$> evalOp op n1 n2
             _ -> Nothing)
   IfZero e1 e2 e3 -> do
-    v1 <- eval e1 env
+    v1 <- eval e1
     case v1 of
       Number 0 -> do
-        eval e2 env
+        eval e2
       Number _ -> do
-        eval e3 env
+        eval e3
       _ -> do
-        v2   <- eval e2 env
-        v3   <- eval e3 env
+        v2   <- eval e2
+        v3   <- eval e3
         return (ResidualIfZero v1 v2 v3)
   Var n -> do
-    case lookup n env of
+    binding <- lookup n
+    case binding of
       Just (_, v, _) -> return v
       Nothing -> return (ResidualVar n)
   Const c -> do
     return (Constant c)
   App e1 e2 -> do
-    v1 <- eval e1 env
-    v2 <- eval e2 env
+    v1 <- eval e1
+    v2 <- eval e2
     case v1 of
       Function n t (ValueFunction f) -> do
         f v2
       _ -> do
         return (ResidualApp v1 v2)
   Lam n e1 e2 -> do
-    v1 <- eval e1 env
-    return (Function n v1 (ValueFunction (\v -> eval e2 ((n, (False, v, e1)) : env))))
+    v1 <- eval e1
+    env <- getEnvironment
+    return (Function n v1 (ValueFunction (\v -> withEnvironment env $ bind n (False, v, e1) $ eval e2)))
   Pi n e1 e2 -> do
-    v1 <- eval e1 env
-    return (PiType n v1 (ValueFunction (\v -> eval e2 ((n, (False, v, e1)) : env))))
+    v1 <- eval e1
+    env <- getEnvironment
+    return (PiType n v1 (ValueFunction (\v -> withEnvironment env $ bind n (False, v, e1) $ eval e2)))
   Pos _ e -> do
-    eval e env
+    eval e
   Infer _ -> error "Encountered type inference marker during evaluation. You either have an underscore in your code that cannnot be decided or you have discovered a bug in the interpreter."
   Unquote _ -> error "During evaluation, there should be no unquote left."
