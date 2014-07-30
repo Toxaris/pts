@@ -135,8 +135,9 @@ name as a string. Otherwise, return nil.
 `match-end' and `match-data' access; save and restore the match
 data if you want to preserve them."
   (let ((candidate (thing-at-point 'symbol)))
-    (unless (string-match pts-reserved-words-regexp candidate)
-      candidate)))
+    (and (stringp candidate)
+         (not (string-match pts-reserved-words-regexp candidate))
+         candidate)))
 
 (defun pts-module-import-at-point ()
   "Check whether point is inside a PTS module import.
