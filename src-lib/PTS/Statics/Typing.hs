@@ -50,9 +50,6 @@ import Text.Show (Show (show))
 
 import Debug.Trace
 
--- instance Ord Term where
---   compare a b = compare (show a) (show b)
-
 -- Reduction and Evaluation of terms
 isVal :: Term -> Bool
 isVal t = case structure t of
