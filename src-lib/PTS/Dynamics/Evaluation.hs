@@ -9,8 +9,6 @@ import Data.Maybe (fromMaybe)
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 
-import Prelude hiding (lookup)
-
 import PTS.Dynamics.Binding
 import PTS.Dynamics.Value
 import PTS.Syntax
@@ -141,9 +139,9 @@ eval t = case structure t of
         v3   <- eval e3
         return (ResidualIfZero v1 v2 v3)
   Var n -> do
-    binding <- lookup n
+    binding <- lookupValue n
     case binding of
-      Just Binding {bindingValue = v} -> return v
+      Just v -> return v
       Nothing -> return (ResidualVar n)
   Const c -> do
     return (Constant c)
