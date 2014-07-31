@@ -50,27 +50,6 @@ import Text.Show (Show (show))
 
 import Debug.Trace
 
--- Reduction and Evaluation of terms
-isVal :: Term -> Bool
-isVal t = case structure t of
-  Const _    ->  True
-  Lam _ _ _  ->  True
-  Pi _ _ _   ->  True
-  Int _      ->  True
-  _          ->  False
-
-check :: Monad m => Bool -> String -> m ()
-check True _ = return ()
-check False s = fail s
-
-checkMaybe :: Monad m => Maybe a -> String -> m ()
-checkMaybe (Just _) _ = return ()
-checkMaybe Nothing s = fail s
-
--- mytrace d ctx (Const x) | x == star = False
--- mytrace d ctx t =
---   trace ((show d) ++ (ndots d) ++ (show ctx) ++ " |- "++(show t) ++ " : ???") False
-
 -- safe bind
 safebind :: MonadEnvironment Name (Binding Eval) m => Name -> TypedTerm -> Term -> (Name -> Term -> m a) -> m a
 safebind x t b f = do

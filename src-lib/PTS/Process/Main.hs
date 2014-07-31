@@ -23,8 +23,6 @@ import System.Directory (findFile)
 import System.Environment (getArgs)
 import System.Exit (exitSuccess, exitFailure)
 import System.IO (hPutStrLn, stderr, hFlush, stdout)
-infixl 2 >>>
-(>>>) = flip (.)
 
 main = do
   result <- parseCommandLine processJobs
