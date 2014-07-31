@@ -48,7 +48,7 @@ processJob (opt, file) = do
   file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
   checkAssertions . runOptMonads opt $ processFile file
 
-initState = (Map.empty, [], [])
+initState = ProcessingState Map.empty [] []
 withEmptyState act = evalStateT act initState
 
 runOptMonads opt action =

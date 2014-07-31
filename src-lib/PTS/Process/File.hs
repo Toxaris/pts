@@ -42,31 +42,36 @@ setLiterateFromName fileName =
     ".pts" -> setLiterate False
     _ -> id -- Keep setting from cmd line.
 
-type ProcessingState = (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval)
+data ProcessingState
+  = ProcessingState
+    { stateCache :: Map.Map ModuleName (Module Eval)
+    , stateImports :: [ModuleName]
+    , stateBindings :: Bindings Eval
+    }
 
 getCache = do
-  (cache, _, _) <- get
-  return cache
+  state <- get
+  return (stateCache state)
 
 putCache cache = do
-  (_, imports, env) <- get
-  put (cache, imports, env)
+  state <- get
+  put (state {stateCache = cache})
 
 getImports = do
-  (_, imports, _) <- get
-  return imports
+  state <- get
+  return (stateImports state)
 
 putImports imports = do
-  (cache, _, env) <- get
-  put (cache, imports, env)
+  state <- get
+  put (state {stateImports = imports})
 
 getBindings = do
-  (_, _, env) <- get
-  return env
+  state <- get
+  return (stateBindings state)
 
 putBindings env = do
-  (cache, imports, _) <- get
-  put (cache, imports, env)
+  state <- get
+  put (state {stateBindings = env})
 
 processFileInt fileName = do
   local (setLiterateFromName fileName) $ processFileInt' fileName
@@ -85,9 +90,9 @@ processFile file = do
   (maybeName, rest) <- processFileInt file
   return $ filterRet <$> maybeName <*> pure rest
 
-filterRet name (cache, imports, bindings) =
-  let contents = [(n, b {bindingExport = False}) | (n, b) <- bindings, bindingExport b] in
-    Module imports name contents
+filterRet name state =
+  let contents = [(n, b {bindingExport = False}) | (n, b) <- stateBindings state, bindingExport b] in
+    Module (stateImports state) name contents
 
 processStmts (text, stmts) = do
   annotateCode text $ mapM_ processStmt stmts
