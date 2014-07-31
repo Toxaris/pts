@@ -15,5 +15,4 @@ module PTS.Dynamics
 import PTS.Dynamics.Binding
 import PTS.Dynamics.Evaluation
 import PTS.Dynamics.Module
-import PTS.Dynamics.Normalisation
 import PTS.Dynamics.Value
