@@ -67,14 +67,6 @@ checkMaybe :: Monad m => Maybe a -> String -> m ()
 checkMaybe (Just _) _ = return ()
 checkMaybe Nothing s = fail s
 
-lookupValue x = do
-  m <- lookup x
-  return (fmap bindingValue m)
-
-lookupType x = do
-  m <- lookup x
-  return (fmap bindingType m)
-
 -- mytrace d ctx (Const x) | x == star = False
 -- mytrace d ctx t =
 --   trace ((show d) ++ (ndots d) ++ (show ctx) ++ " |- "++(show t) ++ " : ???") False

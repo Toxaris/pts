@@ -1,9 +1,12 @@
 module PTS.Dynamics
   ( -- * Values
     Value (..)
-  , Binding (..)
-  , Bindings
   , Module (..)
+    -- * Binding
+  , Bindings
+  , Binding (..)
+  , lookupValue
+  , lookupType
     -- * Evaluation
   , Eval
   , evalTerm
