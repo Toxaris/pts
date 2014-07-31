@@ -9,7 +9,7 @@ import Control.Monad.Assertions (MonadAssertions (assert))
 import Control.Monad.Environment (runEnvironmentT)
 import Control.Monad.Errors
 import Control.Monad.Reader (MonadReader (local), runReaderT, asks)
-import Control.Monad.State (MonadState, get, put, modify, evalStateT)
+import Control.Monad.State (MonadState, get, put, evalStateT)
 import Control.Monad.Trans (MonadIO (liftIO))
 import Control.Monad.Log (MonadLog, runConsoleLogT)
 
@@ -44,6 +44,30 @@ setLiterateFromName fileName =
 
 type ProcessingState = (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval)
 
+getCache = do
+  (cache, _, _) <- get
+  return cache
+
+putCache cache = do
+  (_, imports, env) <- get
+  put (cache, imports, env)
+
+getImports = do
+  (_, imports, _) <- get
+  return imports
+
+putImports imports = do
+  (cache, _, env) <- get
+  put (cache, imports, env)
+
+getBindings = do
+  (_, _, env) <- get
+  return env
+
+putBindings env = do
+  (cache, imports, _) <- get
+  put (cache, imports, env)
+
 processFileInt fileName = do
   local (setLiterateFromName fileName) $ processFileInt' fileName
 
@@ -53,8 +77,8 @@ processFileInt' file = do
   text <- deliterate text
   File maybeName stmts <- parseFile file text
   processStmts (lines text, stmts)
-  (cache, imports, bindings) <- get
-  return (maybeName, (cache, imports, bindings))
+  state <- get
+  return (maybeName, state)
 
 processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState ProcessingState m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module Eval))
 processFile file = do
@@ -76,7 +100,7 @@ processStmt (Term t) = recover () $ do
   output (text "process expression")
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
-  (_, _, env) <- get
+  env <- getBindings
   t <- runEnvironmentT (typecheckPull t) env
   let q = typeOf t
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
@@ -89,13 +113,13 @@ processStmt (Bind n args Nothing body) = recover () $ do
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
-  (_, _, env) <- get
+  env <- getBindings
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
   t <- runEnvironmentT (typecheckPull t) env
   let q = typeOf t
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let v = evalTerm env t
-  modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (Binding False v q)) :)
+  putBindings ((n, Binding False v q) : env)
 
 processStmt (Bind n args (Just body') body) = recover () $ do
   let t   =  desugarArgs mkLam args body
@@ -112,7 +136,7 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   output (nest 2 (sep [text "specified type:", nest 2 (pretty 0 t')]))
   let t'' = t'
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t'' )]))
-  (_, _, env) <- get
+  env <- getBindings
 
   -- typecheck type
   qq <- runEnvironmentT (typecheckPull t'') env
@@ -128,14 +152,14 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   let q = typeOf t
 
   let v = evalTerm env t
-  modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (Binding False v q)) :)
+  putBindings ((n, Binding False v q) : env)
 
 processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ do
   output (text "")
   output (text "process assertion")
   output (nest 2 (sep [text " term:", nest 2 (pretty 0 t)]))
 
-  (_, _, env) <- get
+  env <- getBindings
 
   let check Nothing Nothing = do
         t <- typecheckPull t
@@ -178,38 +202,42 @@ processStmt (Export n) = recover () $ do
   output (text "process export of" <+> pretty 0 n)
 
   -- mark as exported
-  (cache, imports, bindings) <- get
+  bindings <- getBindings
   when (and [n /= n' | (n', _) <- bindings]) $ do
     fail $ "Unbound identifier: " ++ show n
   let bindings' = [(n', b {bindingExport = bindingExport b || n== n'}) | (n', b) <- bindings]
-  put (cache, imports, bindings')
+  putBindings bindings'
 
 processStmt (Import mod) = recover () $ do
   output (text "")
   output (text "process import of" <+> pretty 0 mod)
 
-  (cache, imports, bindings) <- get
+  cache <- getCache
+  imports <- getImports
+  bindings <- getBindings
 
   case Map.lookup mod cache of
     Just (Module _ _ bindings') -> do
-      put (cache, imports, bindings ++ bindings')
+      putBindings (bindings ++ bindings')
     Nothing -> do
       -- find file
       path <- asks optPath
       (literate, file) <- findModule path mod
 
-      put (cache, [], [])
+      putImports []
+      putBindings []
       result <- local (setLiterate literate) $ processFile file
-      (cache, _, _) <- get
-      put (cache, imports, bindings)
 
       case result of
         Nothing ->
           fail $ "expected module " ++ showPretty mod ++ " in file " ++ file ++ " but found no module statement."
         Just (Module _ name _) | name /= mod ->
           fail $ "expected module " ++ showPretty mod ++ " inf file " ++ file ++ " but found module " ++ showPretty name ++ "."
-        Just found@(Module _ _ bindings') ->
-          put (Map.insert mod found cache, imports, bindings ++ bindings')
+        Just found@(Module _ _ bindings') -> do
+          cache <- getCache
+          putCache (Map.insert mod found cache)
+          putImports imports
+          putBindings (bindings ++ bindings')
 
 findModule path mod = find path where
   base  =  joinPath (parts mod)
