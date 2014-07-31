@@ -72,11 +72,11 @@ checkMaybe Nothing s = fail s
 
 lookupValue x = do
   m <- lookup x
-  return (fmap (\(_, y, _) -> y) m)
+  return (fmap bindingValue m)
 
 lookupType x = do
   m <- lookup x
-  return (fmap (\(_, _, y) -> y) m)
+  return (fmap bindingType m)
 
 -- mytrace d ctx (Const x) | x == star = False
 -- mytrace d ctx t =
@@ -88,11 +88,11 @@ safebind x t b f = do
   result <- lookupType x
   case result of
     Nothing -> do
-      bind x (False, ResidualVar x, t) (f x b)
+      bind x (Binding False (ResidualVar x) t) (f x b)
     Just _ -> do
       vars <- keys
       let nx = freshvarl (freevars b `Set.union` vars) x
-      bind nx (False, ResidualVar nx, t) (f nx (subst b x (mkVar nx)))
+      bind nx (Binding False (ResidualVar nx) t) (f nx (subst b x (mkVar nx)))
 
 debug :: (MonadEnvironment Name (Binding Eval) m, MonadLog m) => String -> Term -> m TypedTerm -> m TypedTerm
 debug n t result = do
@@ -117,7 +117,7 @@ debugPush n t q result = do
 #else
   enter n
   ctx <- getEnvironment
-  log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
+  log $ "Context: " ++ showCtx [(n, (bindingValue b, bindingType b)) | (n, b) <- ctx]
   log $ "Subject: " ++ showPretty t
   log $ "Push type: " ++ showPretty q
   x <- result
@@ -236,7 +236,7 @@ typecheckPull t = case structure t of
   Var x -> debug "typecheckPull Var" t $ do
     ctx <- getEnvironment
 #ifdef DEBUG_TYPING
-    log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
+    log $ "Context: " ++ showCtx [(n, (bindingValue b, bindingType b)) | (n, b) <- ctx]
 #endif
     xt <- lookupType x
     case xt of
@@ -268,7 +268,7 @@ typecheckPull t = case structure t of
 
     -- TODO avoid rechecking
     a' <- typecheckPull a
-    b' <- bind x (False, ResidualVar x, a') $
+    b' <- bind x (Binding False (ResidualVar x) a') $
             typecheckPull b
 
     -- in t1 t2

@@ -1,5 +1,5 @@
 module PTS.Dynamics.Binding
-  (  Binding
+  (  Binding (..)
   ,  Bindings
   )  where
 
@@ -8,4 +8,10 @@ import PTS.Syntax (Name, TypedTerm)
 
 type Bindings m = [(Name, Binding m)]
 
-type Binding m = (Bool, Value m, TypedTerm)
+data Binding m
+  = Binding
+    { bindingExport :: Bool
+    , bindingValue :: Value m
+    , bindingType :: TypedTerm
+    }
+  deriving Show

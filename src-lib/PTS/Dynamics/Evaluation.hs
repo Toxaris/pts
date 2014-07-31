@@ -143,7 +143,7 @@ eval t = case structure t of
   Var n -> do
     binding <- lookup n
     case binding of
-      Just (_, v, _) -> return v
+      Just Binding {bindingValue = v} -> return v
       Nothing -> return (ResidualVar n)
   Const c -> do
     return (Constant c)
@@ -158,11 +158,11 @@ eval t = case structure t of
   Lam n e1 e2 -> do
     v1 <- eval e1
     env <- getEnvironment
-    return (Function n v1 (ValueFunction (\v -> withEnvironment env $ bind n (False, v, e1) $ eval e2)))
+    return (Function n v1 (ValueFunction (\v -> withEnvironment env $ bind n (Binding False v e1) $ eval e2)))
   Pi n e1 e2 -> do
     v1 <- eval e1
     env <- getEnvironment
-    return (PiType n v1 (ValueFunction (\v -> withEnvironment env $ bind n (False, v, e1) $ eval e2)))
+    return (PiType n v1 (ValueFunction (\v -> withEnvironment env $ bind n (Binding False v e1) $ eval e2)))
   Pos _ e -> do
     eval e
   Infer _ -> error "Encountered type inference marker during evaluation. You either have an underscore in your code that cannnot be decided or you have discovered a bug in the interpreter."

@@ -60,7 +60,7 @@ processFile file = do
   return $ filterRet <$> maybeName <*> pure rest
 
 filterRet name (cache, imports, bindings) =
-  let contents = [(n, (False, t, v)) | (n, (True, t, v)) <- bindings] in
+  let contents = [(n, b {bindingExport = False}) | (n, b) <- bindings, bindingExport b] in
     Module imports name contents
 
 processStmts (text, stmts) = do
@@ -93,7 +93,7 @@ processStmt (Bind n args Nothing body) = recover () $ do
   let q = typeOf t
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let v = evalTerm env t
-  modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (False, v, q)) :)
+  modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (Binding False v q)) :)
 
 processStmt (Bind n args (Just body') body) = recover () $ do
   let t   =  desugarArgs mkLam args body
@@ -126,7 +126,7 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   let q = typeOf t
 
   let v = evalTerm env t
-  modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (False, v, q)) :)
+  modify $ (\f (x, y, z) -> (x, y, f z)) $ ((n, (Binding False v q)) :)
 
 processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ do
   output (text "")
@@ -179,7 +179,7 @@ processStmt (Export n) = recover () $ do
   (cache, imports, bindings) <- get
   when (and [n /= n' | (n', _) <- bindings]) $ do
     fail $ "Unbound identifier: " ++ show n
-  let bindings' = [(n', (x || n == n', t, v)) | (n', (x, t, v)) <- bindings]
+  let bindings' = [(n', b {bindingExport = bindingExport b || n== n'}) | (n', b) <- bindings]
   put (cache, imports, bindings')
 
 processStmt (Import mod) = recover () $ do
