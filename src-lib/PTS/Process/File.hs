@@ -42,6 +42,8 @@ setLiterateFromName fileName =
     ".pts" -> setLiterate False
     _ -> id -- Keep setting from cmd line.
 
+type ProcessingState = (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval)
+
 processFileInt fileName = do
   local (setLiterateFromName fileName) $ processFileInt' fileName
 
@@ -54,7 +56,7 @@ processFileInt' file = do
   (cache, imports, bindings) <- get
   return (maybeName, (cache, imports, bindings))
 
-processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module Eval))
+processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState ProcessingState m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module Eval))
 processFile file = do
   (maybeName, rest) <- processFileInt file
   return $ filterRet <$> maybeName <*> pure rest

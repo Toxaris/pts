@@ -42,7 +42,7 @@ processErrors result = do
 processJobs jobs = do
   runErrorsT . withEmptyState $ mapM processJob jobs
 
-processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m) => (Options, FilePath) -> m (Maybe (Module Eval))
+processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState ProcessingState m) => (Options, FilePath) -> m (Maybe (Module Eval))
 processJob (opt, file) = do
   let path = optPath opt
   file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
