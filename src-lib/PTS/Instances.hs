@@ -1,20 +1,18 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, Rank2Types  #-}
 module PTS.Instances where
 
 import PTS.Syntax
+import PTS.Dynamics.Value
 
 -- This type defines a specific pure type system, see Barendregt
 
 data PTS = PTS
   { sorts :: C -> Bool
-  , axioms :: C -> Maybe TypedTerm
-  , relations :: C -> C -> Maybe TypedTerm
+  , axioms :: C -> Maybe C
+  , relations :: C -> C -> Maybe C
   , name :: [String]
   , description :: String
   }
-
-notExpressible :: TypedTerm
-notExpressible = mkConst (C (negate 1)) notExpressible
 
 -- some specific pure type systems
 
@@ -26,10 +24,10 @@ lama = PTS sorts axioms relations name description where
   sorts (C 1) = True
   sorts (C _) = False
 
-  axioms (C 0) = Just typedStar
+  axioms (C 0) = Just star
   axioms (C _) = Nothing
 
-  relations (C 1) (C 1) = Just typedStar
+  relations (C 1) (C 1) = Just star
   relations (C _) (C _) = Nothing
 
   name = [ "stlc"
@@ -38,8 +36,6 @@ lama = PTS sorts axioms relations name description where
          , "lambda-arrow" ]
 
   description = "lambda-calculus with simple types"
-
-  typedStar = mkConst star notExpressible
 
 
 f :: PTS
@@ -51,13 +47,13 @@ lam2 = PTS sorts axioms relations name description where
   sorts (C 2) = True
   sorts (C _) = False
 
-  axioms (C 0) = Just typedStar
-  axioms (C 1) = Just typedBox
+  axioms (C 0) = Just star
+  axioms (C 1) = Just box
   axioms (C _) = Nothing
 
-  relations (C 1) (C 1) = Just typedStar
+  relations (C 1) (C 1) = Just star
   relations (C 1) (C 2) = Nothing
-  relations (C 2) (C 1) = Just typedStar
+  relations (C 2) (C 1) = Just star
   relations (C 2) (C 2) = Nothing
   relations (C _) (C _) = Nothing
 
@@ -72,9 +68,6 @@ lam2 = PTS sorts axioms relations name description where
 
   description = "lambda-calculus with simple and polymorphic types"
 
-  typedStar = mkConst star typedBox
-  typedBox  = mkConst box notExpressible
-
 
 lamp :: PTS
 lamp = PTS sorts axioms relations name description where
@@ -82,12 +75,12 @@ lamp = PTS sorts axioms relations name description where
   sorts (C 2) = True
   sorts (C _) = False
 
-  axioms (C 0) = Just typedStar
-  axioms (C 1) = Just typedBox
+  axioms (C 0) = Just star
+  axioms (C 1) = Just box
   axioms (C _) = Nothing
 
-  relations (C 1) (C 1) = Just typedStar
-  relations (C 1) (C 2) = Just typedBox
+  relations (C 1) (C 1) = Just star
+  relations (C 1) (C 2) = Just box
   relations (C 2) (C 1) = Nothing
   relations (C 2) (C 2) = Nothing
   relations (C _) (C _) = Nothing
@@ -101,9 +94,6 @@ lamp = PTS sorts axioms relations name description where
 
   description = "lambda-calculus with simple and dependent types"
 
-  typedStar = mkConst star typedBox
-  typedBox  = mkConst box notExpressible
-
 
 -- "v" is weaker than "vv", ;)
 lamv :: PTS
@@ -112,14 +102,14 @@ lamv = PTS sorts axioms relations name description where
   sorts (C 2) = True
   sorts (C _) = False
 
-  axioms (C 0) = Just typedStar
-  axioms (C 1) = Just typedBox
+  axioms (C 0) = Just star
+  axioms (C 1) = Just box
   axioms (C _) = Nothing
 
-  relations (C 1) (C 1) = Just typedStar
+  relations (C 1) (C 1) = Just star
   relations (C 1) (C 2) = Nothing
   relations (C 2) (C 1) = Nothing
-  relations (C 2) (C 2) = Just typedBox
+  relations (C 2) (C 2) = Just box
   relations (C _) (C _) = Nothing
 
   name = [ "hotlc"
@@ -129,9 +119,6 @@ lamv = PTS sorts axioms relations name description where
 
   description = "lambda-calculus with simple and higher-order types"
 
-  typedStar = mkConst star typedBox
-  typedBox  = mkConst box notExpressible
-
 
 lap2 :: PTS
 lap2 = PTS sorts axioms relations name description where
@@ -139,13 +126,13 @@ lap2 = PTS sorts axioms relations name description where
   sorts (C 2) = True
   sorts (C _) = False
 
-  axioms (C 0) = Just typedStar
-  axioms (C 1) = Just typedBox
+  axioms (C 0) = Just star
+  axioms (C 1) = Just box
   axioms (C _) = Nothing
 
-  relations (C 1) (C 1) = Just typedStar
-  relations (C 1) (C 2) = Just typedBox
-  relations (C 2) (C 1) = Just typedStar
+  relations (C 1) (C 1) = Just star
+  relations (C 1) (C 2) = Just box
+  relations (C 2) (C 1) = Just star
   relations (C 2) (C 2) = Nothing
   relations (C _) (C _) = Nothing
 
@@ -153,9 +140,6 @@ lap2 = PTS sorts axioms relations name description where
          , "lambda-pi-2" ]
 
   description = "lambda-calculus with simple, dependent and polymorphic types"
-
-  typedStar = mkConst star typedBox
-  typedBox  = mkConst box notExpressible
 
 
 fomega :: PTS
@@ -168,14 +152,14 @@ lamw = PTS sorts axioms relations name description where
   sorts (C 2) = True
   sorts (C _) = False
 
-  axioms (C 0) = Just typedStar
-  axioms (C 1) = Just typedBox
+  axioms (C 0) = Just star
+  axioms (C 1) = Just box
   axioms (C _) = Nothing
 
-  relations (C 1) (C 1) = Just typedStar
+  relations (C 1) (C 1) = Just star
   relations (C 1) (C 2) = Nothing
-  relations (C 2) (C 1) = Just typedStar
-  relations (C 2) (C 2) = Just typedBox
+  relations (C 2) (C 1) = Just star
+  relations (C 2) (C 2) = Just box
   relations (C _) (C _) = Nothing
 
   name = [ "fw"
@@ -187,9 +171,6 @@ lamw = PTS sorts axioms relations name description where
 
   description = "lambda-calculus with simple, polymorphic and higher-order types"
 
-  typedStar = mkConst star typedBox
-  typedBox  = mkConst box notExpressible
-
 
 lapv :: PTS
 lapv = PTS sorts axioms relations name description where
@@ -197,23 +178,20 @@ lapv = PTS sorts axioms relations name description where
   sorts (C 2) = True
   sorts (C _) = False
 
-  axioms (C 0) = Just typedStar
-  axioms (C 1) = Just typedBox
+  axioms (C 0) = Just star
+  axioms (C 1) = Just box
   axioms (C _) = Nothing
 
-  relations (C 1) (C 1) = Just typedStar
-  relations (C 1) (C 2) = Just typedBox
+  relations (C 1) (C 1) = Just star
+  relations (C 1) (C 2) = Just box
   relations (C 2) (C 1) = Nothing
-  relations (C 2) (C 2) = Just typedBox
+  relations (C 2) (C 2) = Just box
   relations (C _) (C _) = Nothing
 
   name = [ "lapv"
          , "lambda-pi-weak-omega"]
 
   description = "lambda-calculus with simple, dependent and higher-order types"
-
-  typedStar = mkConst star typedBox
-  typedBox  = mkConst box notExpressible
 
 
 coc :: PTS
@@ -225,14 +203,14 @@ lamc = PTS sorts axioms relations name description where
   sorts (C 2) = True
   sorts (C _) = False
 
-  axioms (C 0) = Just typedStar
-  axioms (C 1) = Just typedBox
+  axioms (C 0) = Just star
+  axioms (C 1) = Just box
   axioms (C _) = Nothing
 
-  relations (C 1) (C 1) = Just typedStar
-  relations (C 1) (C 2) = Just typedBox
-  relations (C 2) (C 1) = Just typedStar
-  relations (C 2) (C 2) = Just typedBox
+  relations (C 1) (C 1) = Just star
+  relations (C 1) (C 2) = Just box
+  relations (C 2) (C 1) = Just star
+  relations (C 2) (C 2) = Just box
   relations (C _) (C _) = Nothing
 
   name = [ "coc"
@@ -244,9 +222,6 @@ lamc = PTS sorts axioms relations name description where
 
   description = "lambda-calculus with simple, dependent, polymorphic and higher-order types"
 
-  typedStar = mkConst star typedBox
-  typedBox  = mkConst box notExpressible
-
 
 lambdastar :: PTS
 lambdastar = lams
@@ -256,11 +231,11 @@ lams = PTS sorts axioms relations name description where
   sorts (C 1) = True
   sorts (C _) = False
 
-  axioms (C 0) = Just typedStar
-  axioms (C 1) = Just typedStar
+  axioms (C 0) = Just star
+  axioms (C 1) = Just star
   axioms (C _) = Nothing
 
-  relations (C 1) (C 1) = Just typedStar
+  relations (C 1) (C 1) = Just star
   relations (C _) (C _) = Nothing
 
   name = [ "lam*"
@@ -270,8 +245,6 @@ lams = PTS sorts axioms relations name description where
          , "lams" ]
 
   description = "lambda-calculus with the axiom * : *"
-
-  typedStar = mkConst star typedStar
 
 
 fomegastar :: PTS
@@ -283,15 +256,15 @@ laws = PTS sorts axioms relations name description where
   sorts (C 2) = True
   sorts (C _) = False
 
-  axioms (C 0) = Just typedStar
-  axioms (C 1) = Just typedBox
-  axioms (C 2) = Just typedBox
+  axioms (C 0) = Just star
+  axioms (C 1) = Just box
+  axioms (C 2) = Just box
   axioms (C _) = Nothing
 
-  relations (C 1) (C 1) = Just typedStar
+  relations (C 1) (C 1) = Just star
   relations (C 1) (C 2) = Nothing
-  relations (C 2) (C 1) = Just typedStar
-  relations (C 2) (C 2) = Just typedBox
+  relations (C 2) (C 1) = Just star
+  relations (C 2) (C 2) = Just box
   relations (C _) (C _) = Nothing
 
   name = [ "fw*"
@@ -304,9 +277,6 @@ laws = PTS sorts axioms relations name description where
 
   description = "fomega with the axiom ** : **"
 
-  typedStar = mkConst star typedBox
-  typedBox  = mkConst box typedBox
-
 
 fomegaomega :: PTS
 fomegaomega = lawu
@@ -316,11 +286,11 @@ lawu = PTS sorts axioms relations name description where
   sorts (C 0) = False
   sorts (C n) = True
 
-  axioms (C n) = Just (typed (succ n))
+  axioms (C n) = Just (C (succ n))
 
   relations (C 0) (C _) = Nothing
   relations (C _) (C 0) = Nothing
-  relations (C a) (C b) = if a >= b then Just (typed b) else Nothing
+  relations (C a) (C b) = if a >= b then Just (C b) else Nothing
 
   name = [ "fww"
          , "fomegaomega"
@@ -330,8 +300,6 @@ lawu = PTS sorts axioms relations name description where
 
   description = "fomega with an infinite hierarchy of universes"
 
-  typed n = mkConst (C n) (typed (succ n))
-
 u :: PTS
 u = PTS sorts axioms relations name description where
   sorts (C 1) = True
@@ -339,16 +307,16 @@ u = PTS sorts axioms relations name description where
   sorts (C 3) = True
   sorts (C _) = False
 
-  axioms (C 0) = Just typedStar
-  axioms (C 1) = Just typedBox
-  axioms (C 2) = Just typedTriangle
+  axioms (C 0) = Just star
+  axioms (C 1) = Just box
+  axioms (C 2) = Just triangle
   axioms (C _) = Nothing
 
-  relations (C 1) (C 1) = Just typedStar
-  relations (C 2) (C 1) = Just typedStar
-  relations (C 2) (C 2) = Just typedBox
-  relations (C 3) (C 2) = Just typedBox
-  relations (C 3) (C 1) = Just typedStar
+  relations (C 1) (C 1) = Just star
+  relations (C 2) (C 1) = Just star
+  relations (C 2) (C 2) = Just box
+  relations (C 3) (C 2) = Just box
+  relations (C 3) (C 1) = Just star
   relations (C _) (C _) = Nothing
 
   name = [ "systemu"
@@ -357,9 +325,6 @@ u = PTS sorts axioms relations name description where
 
   description = "system U"
 
-  typedStar     = mkConst star typedBox
-  typedBox      = mkConst box typedTriangle
-  typedTriangle = mkConst triangle notExpressible
 
 uu :: PTS
 uu = PTS sorts axioms relations name description where
@@ -369,22 +334,22 @@ uu = PTS sorts axioms relations name description where
   sorts (C 4) = True
   sorts (C _) = False
 
-  axioms (C 0) = Just typedStar
-  axioms (C 1) = Just typedBox
-  axioms (C 2) = Just typedTriangle
-  axioms (C 3) = Just typedCircle
+  axioms (C 0) = Just star
+  axioms (C 1) = Just box
+  axioms (C 2) = Just triangle
+  axioms (C 3) = Just circle
   axioms (C _) = Nothing
 
-  relations (C 1) (C 1) = Just typedStar
-  relations (C 2) (C 1) = Just typedStar
-  relations (C 3) (C 1) = Just typedStar
-  relations (C 4) (C 1) = Just typedStar
+  relations (C 1) (C 1) = Just star
+  relations (C 2) (C 1) = Just star
+  relations (C 3) (C 1) = Just star
+  relations (C 4) (C 1) = Just star
 
-  relations (C 2) (C 2) = Just typedBox
-  relations (C 3) (C 2) = Just typedBox
-  relations (C 3) (C 3) = Just typedTriangle
-  relations (C 4) (C 3) = Just typedTriangle
-  relations (C 4) (C 2) = Just typedBox
+  relations (C 2) (C 2) = Just box
+  relations (C 3) (C 2) = Just box
+  relations (C 3) (C 3) = Just triangle
+  relations (C 4) (C 3) = Just triangle
+  relations (C 4) (C 2) = Just box
 
   relations (C _) (C _) = Nothing
 
@@ -394,10 +359,6 @@ uu = PTS sorts axioms relations name description where
 
   description = "system U squared"
 
-  typedStar     = mkConst star typedBox
-  typedBox      = mkConst box typedTriangle
-  typedTriangle = mkConst triangle typedCircle
-  typedCircle   = mkConst circle notExpressible
 
 instances :: [PTS]
 instances = [lama, lam2, lamp, lamv, lap2, lamw, lapv, lamc, lams, laws, lawu, u, uu]

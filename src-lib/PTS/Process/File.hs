@@ -85,6 +85,11 @@ processFileInt' file = do
   state <- get
   return (maybeName, state)
 
+liftEval :: MonadState ProcessingState m => Eval a -> m a
+liftEval action = do
+  env <- getBindings
+  return (runEval env action)
+
 processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState ProcessingState m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module Eval))
 processFile file = do
   (maybeName, rest) <- processFileInt file
@@ -107,9 +112,9 @@ processStmt (Term t) = recover () $ do
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
   env <- getBindings
   t <- runEnvironmentT (typecheckPull t) env
-  let q = typeOf t
+  q <- liftEval (reify (typeOf t))
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
-  let x = nbe env t
+  x <- liftEval (eval t >>= reify) 
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
 
 processStmt (Bind n args Nothing body) = recover () $ do
@@ -121,10 +126,10 @@ processStmt (Bind n args Nothing body) = recover () $ do
   env <- getBindings
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
   t <- runEnvironmentT (typecheckPull t) env
-  let q = typeOf t
+  q <- liftEval (reify (typeOf t))
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
   let v = evalTerm env t
-  putBindings ((n, Binding False v q) : env)
+  putBindings ((n, Binding False v (typeOf t) (sortOf t)) : env)
 
 processStmt (Bind n args (Just body') body) = recover () $ do
   let t   =  desugarArgs mkLam args body
@@ -146,18 +151,21 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   -- typecheck type
   qq <- runEnvironmentT (typecheckPull t'') env
   let q' = typeOf qq
-  case structure (nbe env q') of
-    Const _ -> return ()
-    _       -> prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
-                         $$ text "  expected:" <+> text "constant"
-                         $$ text "     found:" <+> pretty 0 q'
+  case q' of
+    Constant _ -> return ()
+    _ -> do
+      q' <- liftEval (reify q')
+      prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
+                 $$ text "  expected:" <+> text "constant"
+                 $$ text "     found:" <+> pretty 0 q'
 
   -- use declared type to typecheck push
+  qq <- liftEval (eval qq)
   t <- runEnvironmentT (typecheckPush t qq) env
   let q = typeOf t
 
   let v = evalTerm env t
-  putBindings ((n, Binding False v q) : env)
+  putBindings ((n, Binding False v (typeOf t) (sortOf t)) : env)
 
 processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ do
   output (text "")
@@ -168,38 +176,54 @@ processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ 
 
   let check Nothing Nothing = do
         t <- typecheckPull t
-        return (typeOf t, nbe env t)
+        v <- liftEval (eval t)
+        return (typeOf t, v)
       check (Just q') Nothing = do
         q' <- typecheckPull q'
         normalizeToSort (typeOf q') q' (text "in assertion") (text "as annotated type")
+        q' <- liftEval (eval q')
         t <- typecheckPush t q'
-        return (t, nbe env t)
+        v <- liftEval (eval t)
+        return (typeOf t, v)
       check Nothing (Just t') = do
         t' <- typecheckPull t'
         let q' = typeOf t'
         t <- typecheckPush t q'
-        unless (equivTerm env t t') $ do
-          let (expected, given) = showDiff 0 (diff (nbe env t') (nbe env t))
+        v' <- liftEval (eval t')
+        v <- liftEval (eval t)
+        same <- liftEval (equiv v v')
+        unless same $ do
+          t <- liftEval (reify v)
+          t' <- liftEval (reify v')
+          let (expected, given) = showDiff 0 (diff t t')
           prettyFail $ text "Result mismatch in assertion"
                     $$ text "  specified result:" <+> pretty 0 t'
                     $$ text "       normal form:" <+> text expected
                     $$ text "     actual result:" <+> text given
-        return (t, strip t')
+        return (typeOf t, v)
       check (Just q') (Just t') = do
         q' <- typecheckPull q'
         normalizeToSort (typeOf q') q' (text "in assertion") (text "as annotated type")
+        q' <- liftEval (eval q')
         t' <- typecheckPush t' q'
         t <- typecheckPush t q'
-        unless (equivTerm env t t') $ do
-          let (expected, given) = showDiff 0 (diff (nbe env t') (nbe env t))
+        v' <- liftEval (eval t')
+        v <- liftEval (eval t)
+        same <- liftEval (equiv v v')
+        unless same $ do
+          t <- liftEval (reify v)
+          t' <- liftEval (reify v')
+          let (expected, given) = showDiff 0 (diff t t')
           prettyFail $ text "Result mismatch in assertion"
                     $$ text "  specified result:" <+> pretty 0 t'
                     $$ text "       normal form:" <+> text expected
                     $$ text "     actual result:" <+> text given
-        return (t, strip t')
+        return (typeOf t, v)
 
   (t, v) <- runEnvironmentT (check q' t') env
-  output (nest 2 (sep [text " type:", nest 2 (pretty 0 (typeOf t))]))
+  v <- liftEval (reify v)
+  t <- liftEval (reify t)
+  output (nest 2 (sep [text " type:", nest 2 (pretty 0 t)]))
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 v)]))
 
 processStmt (Export n) = recover () $ do

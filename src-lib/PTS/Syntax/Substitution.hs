@@ -1,6 +1,6 @@
 module PTS.Syntax.Substitution
   ( subst
-  , typedSubst
+  -- , typedSubst
   , freshCommonVar
   ) where
 
@@ -15,17 +15,17 @@ import PTS.Dynamics.TypedTerm
 
 -- substitution (generates fresh variables if needed to prevent accidental capture)
 
-typedAvoidCapture :: TypedTerm -> Name -> TypedTerm -> Name -> TypedTerm -> (Name, TypedTerm)
-typedAvoidCapture s x xt y t = (x', s') where
-  x' | x `Set.member` fvt = freshvarl fv x
-     | otherwise = x
-
-  s' | x == x' = s
-     | otherwise = typedSubst s x (mkVar x' xt)
-
-  fvs = freevars s
-  fvt = freevars t
-  fv = Set.unions [fvs, fvt, Set.singleton y]
+-- typedAvoidCapture :: TypedTerm m -> Name -> Value m -> Name -> TypedTerm m -> (Name, TypedTerm m)
+-- typedAvoidCapture s x xt y t = (x', s') where
+--   x' | x `Set.member` fvt = freshvarl fv x
+--      | otherwise = x
+--  
+--   s' | x == x' = s
+--      | otherwise = typedSubst s x (mkVar x' xt)
+--  
+--   fvs = freevars s
+--   fvt = freevars t
+--   fv = Set.unions [fvs, fvt, Set.singleton y]
 
 avoidCapture :: Term -> Name -> Name -> Term -> (Name, Term)
 avoidCapture s x y t = (x', s') where
@@ -52,32 +52,32 @@ subst t x t' = case structure t of
     let (newy, newt2) = avoidCapture t2 y x t'
     in mkLam newy (subst t1 x t') (subst newt2 x t')
   Lam y t1 t2 | x == y  ->  mkLam y (subst t1 x t') t2
-  Pi y t1 t2 | x /= y   ->
+  Pi y t1 t2 s | x /= y ->
     let (newy, newt2) = avoidCapture t2 y x t'
-    in mkPi newy (subst t1 x t') (subst newt2 x t')
-  Pi y t1 t2 | x == y   ->  mkPi y (subst t1 x t') t2
+    in mkSortedPi newy (subst t1 x t') (subst newt2 x t') s
+  Pi y t1 t2 s | x == y ->  mkSortedPi y (subst t1 x t') t2 s
   Pos p t               ->  mkPos p (subst t x t') -- delete pos annotation here?
   Infer i               ->  mkInfer i
 
-typedSubst :: TypedTerm -> Name -> TypedTerm -> TypedTerm
-typedSubst t x t' = case structure t of
-  Int i                 ->  mkInt i (typeOf t)
-  IntOp op t1 t2        ->  mkIntOp op (typedSubst t1 x t') (typedSubst t2 x t') (typeOf t)
-  IfZero t1 t2 t3       ->  mkIfZero (typedSubst t1 x t') (typedSubst t2 x t')  (typedSubst t3 x t') (typeOf t)
-  Var y | y == x        ->  t'
-  Var y | otherwise     ->  mkVar y (typeOf t)
-  Const c               ->  mkConst c (typeOf t)
-  App t1 t2             ->  mkApp (typedSubst t1 x t') (typedSubst t2 x t') (typeOf t)
-  Lam y t1 t2 | x /= y  ->
-    let (newy, newt2) = typedAvoidCapture t2 y t1 x t' 
-    in mkLam newy (typedSubst t1 x t') (typedSubst newt2 x t') (typeOf t)
-  Lam y t1 t2 | x == y  ->  mkLam y (typedSubst t1 x t') t2 (typeOf t)
-  Pi y t1 t2 | x /= y   ->
-    let (newy, newt2) = typedAvoidCapture t2 y t1 x t'
-    in mkPi newy (typedSubst t1 x t') (typedSubst newt2 x t') (typeOf t)
-  Pi y t1 t2 | x == y   ->  mkPi y (typedSubst t1 x t') t2 (typeOf t)
-  Pos p t               ->  mkPos p (typedSubst t x t') (typeOf t) -- delete pos annotation here?
-  Infer i               ->  mkInfer i (typeOf t)
+-- typedSubst :: TypedTerm m -> Name -> TypedTerm m -> TypedTerm m
+-- typedSubst t x t' = case structure t of
+--   Int i                 ->  mkInt i (typeOf t)
+--   IntOp op t1 t2        ->  mkIntOp op (typedSubst t1 x t') (typedSubst t2 x t') (typeOf t)
+--   IfZero t1 t2 t3       ->  mkIfZero (typedSubst t1 x t') (typedSubst t2 x t')  (typedSubst t3 x t') (typeOf t)
+--   Var y | y == x        ->  t'
+--   Var y | otherwise     ->  mkVar y (typeOf t)
+--   Const c               ->  mkConst c (typeOf t)
+--   App t1 t2             ->  mkApp (typedSubst t1 x t') (typedSubst t2 x t') (typeOf t)
+--   Lam y t1 t2 | x /= y  ->
+--     let (newy, newt2) = typedAvoidCapture t2 y t1 x t' 
+--     in mkLam newy (typedSubst t1 x t') (typedSubst newt2 x t') (typeOf t)
+--   Lam y t1 t2 | x == y  ->  mkLam y (typedSubst t1 x t') t2 (typeOf t)
+--   Pi y t1 t2 | x /= y   ->
+--     let (newy, newt2) = typedAvoidCapture t2 y t1 x t'
+--     in mkPi newy (typedSubst t1 x t') (typedSubst newt2 x t') (typeOf t)
+--   Pi y t1 t2 | x == y   ->  mkPi y (typedSubst t1 x t') t2 (typeOf t)
+--   Pos p t               ->  mkPos p (typedSubst t x t') (typeOf t) -- delete pos annotation here?
+--   Infer i               ->  mkInfer i (typeOf t)
 
 freshCommonVar
   :: Name -> Name -> Term -> Term -> (Name, Term, Term)

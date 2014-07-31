@@ -16,6 +16,7 @@ module PTS.Syntax.Term
   , mkApp
   , mkLam
   , mkPi
+  , mkSortedPi
   , mkPos
   , mkUnquote
   , mkInfer
@@ -90,7 +91,7 @@ data TermStructure alpha
   | Const   C
   | App     alpha alpha
   | Lam     Name alpha alpha
-  | Pi      Name alpha alpha
+  | Pi      Name alpha alpha (Maybe C)
   | Pos     Position alpha
   | Unquote alpha
   | Infer   Integer
@@ -139,7 +140,8 @@ mkVar n            =  mkTerm (Var n)
 mkConst c          =  mkTerm (Const c)
 mkApp t1 t2        =  mkTerm (App t1 t2)
 mkLam n t1 t2      =  mkTerm (Lam n t1 t2)
-mkPi n t1 t2       =  mkTerm (Pi n t1 t2)
+mkPi n t1 t2       =  mkTerm (Pi n t1 t2 Nothing)
+mkSortedPi n t1 t2 s = mkTerm (Pi n t1 t2 s)
 mkPos p t          =  mkTerm (Pos p t)
 mkUnquote t        =  mkTerm (Unquote t)
 mkInfer i          =  mkTerm (Infer i)

@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, PatternGuards #-}
 module PTS.Dynamics.Evaluation where
 
 import Control.Applicative hiding (Const)
@@ -20,7 +20,12 @@ newtype Eval a = Eval (EnvironmentT Name (Binding Eval) (State NamesMap) a)
 runEval :: Bindings Eval -> Eval a -> a
 runEval env (Eval p) = evalState (runEnvironmentT p env) (envToNamesMap env)
 
-equivTerm :: Bindings Eval -> TypedTerm -> TypedTerm -> Bool
+close :: Name -> Value Eval -> Maybe C -> Value Eval -> Eval (ValueFunction Eval)
+close name typ sort value = do
+  term <- reify value
+  return (ValueFunction (\arg -> withEnvironment [] $ bind name (Binding False arg typ sort) $ eval term))
+
+equivTerm :: Bindings Eval -> TypedTerm Eval -> TypedTerm Eval -> Bool
 equivTerm env t1 t2 = runEval env $ do
   v1 <- eval t1
   v2 <- eval t2
@@ -38,13 +43,13 @@ equiv (Number n) (Number n') = do
   return (n == n')
 equiv (Constant c) (Constant c') = do
   return (c == c')
-equiv (PiType n v1 (ValueFunction f)) (PiType _ v1' (ValueFunction f')) = do
+equiv (PiType n v1 (ValueFunction f) s1) (PiType _ v1' (ValueFunction f') s2) = do
   r1   <- equiv v1 v1'
   n'   <- fresh n
   v2   <- f   (ResidualVar n')
   v2'  <- f'  (ResidualVar n')
   r2   <- equiv v2 v2'
-  return (r1 && r2)
+  return (r1 && r2 && s1 == s2)
 equiv (ResidualIntOp op v1 v2) (ResidualIntOp op' v1' v2') = do
   let r1 = op == op'
   r2 <- equiv v1 v1'
@@ -64,7 +69,7 @@ equiv (ResidualApp v1 v2) (ResidualApp v1' v2') = do
 equiv _ _ = do
   return False
 
-nbe :: Bindings Eval -> TypedTerm -> Term
+nbe :: Structure t => Bindings Eval -> t -> Term
 nbe env e = runEval env $ do
   v   <- eval e
   e'  <- reify v
@@ -88,12 +93,12 @@ reify (Number n) = do
   return (mkInt n)
 reify (Constant c) = do
   return (mkConst c)
-reify (PiType n v1 (ValueFunction f)) = do
+reify (PiType n v1 (ValueFunction f) s) = do
   e1 <- reify v1
   n' <- fresh n
   v2 <- f (ResidualVar n')
   e2 <- reify v2
-  return (mkPi n' e1 e2)
+  return (mkSortedPi n' e1 e2 (Just s))
 reify (ResidualIntOp op v1 v2) = do
   e1 <- reify v1
   e2 <- reify v2
@@ -110,23 +115,21 @@ reify (ResidualApp v1 v2) = do
   e2 <- reify v2
   return (mkApp e1 e2)
 
-evalTerm :: Bindings Eval -> TypedTerm -> Value Eval
+evalTerm :: Bindings Eval -> TypedTerm Eval -> Value Eval
 evalTerm env t = runEval env $ do
   eval t
 
-eval :: TypedTerm -> Eval (Value Eval)
+eval :: Structure t => t -> Eval (Value Eval)
 eval t = case structure t of
   Int n -> do
     return (Number n)
   IntOp op e1 e2 -> do
     v1 <- eval e1
     v2 <- eval e2
-    return $
-      fromMaybe (ResidualIntOp op v1 v2)
-        (case (v1, v2) of
-            (Number n1, Number n2) -> do
-              Number <$> evalOp op n1 n2
-            _ -> Nothing)
+    case (v1, v2) of
+      (Number n1, Number n2) | Just n3 <- evalOp op n1 n2 -> do
+        return (Number n3)
+      _ -> return (ResidualIntOp op v1 v2)
   IfZero e1 e2 e3 -> do
     v1 <- eval e1
     case v1 of
@@ -156,11 +159,11 @@ eval t = case structure t of
   Lam n e1 e2 -> do
     v1 <- eval e1
     env <- getEnvironment
-    return (Function n v1 (ValueFunction (\v -> withEnvironment env $ bind n (Binding False v e1) $ eval e2)))
-  Pi n e1 e2 -> do
+    return (Function n v1 (ValueFunction (\v -> withEnvironment env $ bind n (Binding False v v1 Nothing) $ eval e2)))
+  Pi n e1 e2 (Just s) -> do
     v1 <- eval e1
     env <- getEnvironment
-    return (PiType n v1 (ValueFunction (\v -> withEnvironment env $ bind n (Binding False v e1) $ eval e2)))
+    return (PiType n v1 (ValueFunction (\v -> withEnvironment env $ bind n (Binding False v v1 Nothing) $ eval e2)) s)
   Pos _ e -> do
     eval e
   Infer _ -> error "Encountered type inference marker during evaluation. You either have an underscore in your code that cannnot be decided or you have discovered a bug in the interpreter."

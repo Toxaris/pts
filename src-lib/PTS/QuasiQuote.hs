@@ -94,10 +94,14 @@ instance Lift Term where
   lift (MkTerm (Const   c))              =  con 'MkTerm  [con 'Const   [lift c]]
   lift (MkTerm (App     f  a))           =  con 'MkTerm  [con 'App     [lift f, lift a]]
   lift (MkTerm (Lam     v  t  e))        =  con 'MkTerm  [con 'Lam     [lift v, lift t, lift e]]
-  lift (MkTerm (Pi      v  t  e))        =  con 'MkTerm  [con 'Pi      [lift v, lift t, lift e]]
+  lift (MkTerm (Pi      v  t  e  s))     =  con 'MkTerm  [con 'Pi      [lift v, lift t, lift e, lift s]]
   lift (MkTerm (Unquote t))              =  unquote t
   lift (MkTerm (Pos     p  e))           =  lift e
   lift (MkTerm (Infer   i))              =  con 'MkTerm  [con 'Infer   [lift i]]
+
+instance Lift a => Lift (Maybe a) where
+  lift (Nothing)  = con 'Nothing []
+  lift (Just a)   = con 'Just [lift a]
 
 class Unquote e where
   unquote :: PatOrExp t => e -> Q t

@@ -2,6 +2,10 @@ module PTS.Dynamics
   ( -- * Values
     Value (..)
   , Module (..)
+    -- * Functions
+  , ValueFunction
+  , callFunction
+  , close
     -- * Binding
   , Bindings
   , Binding (..)
@@ -9,9 +13,14 @@ module PTS.Dynamics
   , lookupType
     -- * Evaluation
   , Eval
+  , runEval
+  , eval
   , evalTerm
+    -- * Reification
+  , reify
     -- * Normalization and Equivalence
   , nbe
+  , equiv
   , equivTerm
   ) where
 

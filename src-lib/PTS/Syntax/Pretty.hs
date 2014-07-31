@@ -138,16 +138,16 @@ prettyAlgebra (Lam name (_, qualifier) (_, LamChain lams body)) =
 prettyAlgebra (Lam name (_, qualifier) (_, body)) =
   LamChain [(pretty 0 name, pretty pLam qualifier)] (pretty pLam body)
 
-prettyAlgebra (Pi name (_, qualifier) (freevars, PiChain lams body)) | name `Set.member` freevars =
+prettyAlgebra (Pi name (_, qualifier) (freevars, PiChain lams body) _) | name `Set.member` freevars =
   PiChain ((pretty 0 name, pretty pPi qualifier) : lams) body
 
-prettyAlgebra (Pi name (_, qualifier) (freevars, body)) | name `Set.member` freevars =
+prettyAlgebra (Pi name (_, qualifier) (freevars, body) _) | name `Set.member` freevars =
   PiChain [(pretty 0 name, pretty pPi qualifier)] (pretty pPi body)
 
-prettyAlgebra (Pi name (_, qualifier) (freevars, ArrChain lams body)) | name `Set.notMember` freevars =
+prettyAlgebra (Pi name (_, qualifier) (freevars, ArrChain lams body) _) | name `Set.notMember` freevars =
   ArrChain (pretty pArrL qualifier : lams) body
 
-prettyAlgebra (Pi name (_, qualifier) (freevars, body)) | name `Set.notMember` freevars =
+prettyAlgebra (Pi name (_, qualifier) (freevars, body) _) | name `Set.notMember` freevars =
   ArrChain [pretty pArrL qualifier] (pretty pArr body)
 
 prettyAlgebra (Pos _ (_, t)) = t
@@ -155,7 +155,7 @@ prettyAlgebra (Pos _ (_, t)) = t
 instance Pretty Term where
   pretty p t = pretty p (snd (fold (depZip freevarsAlgebra prettyAlgebra) t))
 
-instance Pretty TypedTerm where
+instance Pretty (TypedTerm m) where
   pretty p t = pretty p (snd (fold (depZip freevarsAlgebra prettyAlgebra) t))
 
 prettyArgs :: [([Name], Term)] -> Doc
@@ -187,5 +187,5 @@ instance Pretty ModuleName where
 showPretty :: Pretty p => p -> String
 showPretty = singleLine
 
-showCtx :: [(Name, (a, TypedTerm))] -> String
-showCtx = concat . intersperse ", " . map (\(n, (v, t)) -> show n ++ " : " ++ showPretty t)
+showCtx :: Pretty a => [(Name, a)] -> String
+showCtx = concat . intersperse ", " . map (\(n, t) -> show n ++ " : " ++ showPretty t)

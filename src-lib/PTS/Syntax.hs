@@ -36,6 +36,7 @@ module PTS.Syntax
   , mkApp
   , mkLam
   , mkPi
+  , mkSortedPi
   , mkPos
   , mkUnquote
   , mkInfer
@@ -47,6 +48,7 @@ module PTS.Syntax
     -- ** Typed terms
   , TypedTerm
   , typeOf
+  , sortOf
   , typedHandlePos
     -- ** Multiple arguments
   , desugarArgs
@@ -76,14 +78,12 @@ module PTS.Syntax
   , diff
   , showDiff
   , subst
-  , typedSubst
+  -- , typedSubst
     -- * Algebras
   , allvarsAlgebra
   , freevarsAlgebra
   , prettyAlgebra
   ) where
-
-import PTS.Dynamics.TypedTerm
 
 import PTS.Syntax.Algebra
 import PTS.Syntax.Constants
@@ -95,3 +95,5 @@ import PTS.Syntax.Pretty
 import PTS.Syntax.Statement
 import PTS.Syntax.Substitution
 import PTS.Syntax.Term
+
+import PTS.Dynamics.TypedTerm

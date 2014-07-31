@@ -39,7 +39,7 @@ allvarsAlgebra (App t1 t2)        =  t1 `Set.union` t2
 allvarsAlgebra (IntOp _ t1 t2)    =  t1 `Set.union` t2
 allvarsAlgebra (IfZero t1 t2 t3)  =  t1 `Set.union` t2 `Set.union` t3
 allvarsAlgebra (Lam x t1 t2)      =  Set.insert x (t1 `Set.union` t2)
-allvarsAlgebra (Pi x t1 t2)       =  Set.insert x (t1 `Set.union` t2)
+allvarsAlgebra (Pi x t1 t2 _)     =  Set.insert x (t1 `Set.union` t2)
 allvarsAlgebra (Pos p t)          =  t
 allvarsAlgebra _                  =  Set.empty
 
@@ -50,7 +50,7 @@ freevarsAlgebra t = case t of
   IntOp _ t1 t2    ->  t1 `Set.union` t2
   IfZero t1 t2 t3  ->  Set.unions [t1, t2, t3]
   Lam x t1 t2      ->  t1 `Set.union` (Set.delete x t2)
-  Pi x t1 t2       ->  t1 `Set.union` (Set.delete x t2)
+  Pi x t1 t2 _     ->  t1 `Set.union` (Set.delete x t2)
   Pos p t          ->  t
   _                ->  Set.empty
 
