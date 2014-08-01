@@ -66,8 +66,7 @@ showError (Error p e m c) = unlines allLines where
 
 showPosition :: Position -> String
 showPosition (Position f r1 r2 c1 c2)
-  | (r1 == r2) && (c1 == c2)  = printf "%s:%d:%d:" f r1 c1
-  | otherwise                 = printf "%s:%d.%d-%d.%d:" f r1 c1 r2 c2
+  = printf "%s:%d.%d-%d.%d:" f r1 c1 r2 c2
 
 mark :: Int -> Int -> Int -> String -> [String]
 mark c1 c2 width line = [code, mark] where
