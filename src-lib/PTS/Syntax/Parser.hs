@@ -173,7 +173,7 @@ ident = lexem (do name <- namepart
                   return (read name))
           <?> "variable name"
 
-namepart = lexem (do
+namepart = do
   name <- many1 (satisfy identChar)
   when (name `elem` keywords) $
     unexpected ("keyword " ++ name)
@@ -181,7 +181,7 @@ namepart = lexem (do
     unexpected ("numeric literal " ++ name)
   when (isDigit (head name)) $
     pzero
-  return name)
+  return name
 
 modname = lexem (do
   names <- namepart `sepBy` dot
