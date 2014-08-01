@@ -19,6 +19,7 @@ import System.IO
 import Text.ParserCombinators.Parsec hiding ((<|>))
 import qualified Text.ParserCombinators.Parsec as Parsec
 import Text.ParserCombinators.Parsec.Error
+import Text.ParserCombinators.Parsec.Pos (initialPos)
 
 import PTS.Error
 import PTS.Syntax.Algebra
@@ -49,7 +50,11 @@ var cons ident = cons <$> ident
 -- non-recursive syntax pattern: "constant"
 con cons constant = cons <$ constant
 
-withPos f p = setPos f <$> getPosition <*> p <*> getPosition where
+withPos f p = setPos f <$> getPosition <*> p <*> getEndPosition where
+
+getEndPosition = do
+  (pos, available, explicits) <- getState
+  return pos
 
 setPos f p1 x p2 = f (Position (sourceName p1) (sourceLine p1) (sourceLine p2) (sourceColumn p1) (pred $ sourceColumn p2)) x
 
@@ -144,14 +149,14 @@ meta = lexem (do char '$'
                  return (read ('$' : first : rest)))
          <?> "meta variable name"
 
-nextInfer = do ~(available, explicits) <- getState
-               setState (tail available, explicits)
+nextInfer = do ~(pos, available, explicits) <- getState
+               setState (pos, tail available, explicits)
                return $ head available
 
 infer = lexem (do char '_'
                   n <- number
-                  ~(available, explicits) <- getState
-                  setState (available, n:explicits)
+                  ~(pos, available, explicits) <- getState
+                  setState (pos, available, n:explicits)
                   return n)
         <|>
         lexem (do char '_'
@@ -197,7 +202,11 @@ keyword s  = lexem (string s <* notFollowedBy (satisfy identChar))
 comment = string "/*" <* manyTill anyChar (try (string "*/"))
 
 skipSpace = skipMany ((space *> pure () <|> comment *> pure ()) <?> "")
-lexem p = try p <* skipSpace
+lexem p = try p <* do
+  pos <- getPosition
+  (_, available, explicits) <- getState
+  setState (pos, available, explicits)
+  skipSpace
 
 dot    = lexem (char '.')
 colon1 = lexem (char ':')
@@ -257,7 +266,7 @@ parseInternal parser file text = do
                              state <- getState
                              return (result, state)) initialState file text
       initialState = case result of
-                       ~(Right (_, (available, used))) -> ([0..] \\ used, [])
+                       ~(Right (_, (_, available, used))) -> (initialPos file, [0..] \\ used, [])
   case result of
     Left e -> throwError . pure . formatError file text $ e
     Right (ast, state) -> return ast
@@ -274,7 +283,7 @@ parseTermAtPos file line col text =
                              state <- getState
                              return (result, state)) initialState file text
       initialState = case result of
-                       ~(Right (_, (available, used))) -> ([0..] \\ used, [])
+                       ~(Right (_, (_, available, used))) -> (initialPos file, [0..] \\ used, [])
   in case result of
       Left err  -> fail $ show err
       Right (e, state) -> return e
