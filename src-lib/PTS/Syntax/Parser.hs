@@ -110,9 +110,22 @@ inferredOrExplicitType = (colon1 *> expr) <|> (mkInfer <$> nextInfer)
 
 argGroup = (,) <$> names <*> inferredOrExplicitType
 
+argGroupOrNames = asum
+  [ parens argGroup
+  , (,) <$> names <*> (mkInfer <$> nextInfer)
+  ]
+
 argsOrArgGroup = asum
-  [ return <$> argGroup
-  , args
+  [ do ns <- names
+       asum
+         [ do colon1
+              typ <- expr
+              return [(ns, typ)]
+         , do typ <- mkInfer <$> nextInfer
+              rest <- many argGroupOrNames
+              return ((ns, typ) : rest)
+         ]
+  , many argGroupOrNames
   ]
 
 file = File <$> optionMaybe (keyword "module" *> modname <* semi) <*> stmts
