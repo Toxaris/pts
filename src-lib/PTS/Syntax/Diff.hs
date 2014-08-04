@@ -1,5 +1,8 @@
 module PTS.Syntax.Diff where
 
+import Control.Arrow ((***))
+
+import Data.List (intersperse)
 import Data.Set (Set)
 import qualified Data.Set as Set
 
@@ -86,6 +89,20 @@ prio :: Int -> Int -> (String, String) -> (String, String)
 prio m n (x, y) | m < n = ("(" ++ x ++ ")", "(" ++ y ++ ")")
                 | otherwise = (x, y)
 
+type LamChain = [(Name, Diff)]
+
+findLamChain :: Diff -> (LamChain, Diff)
+findLamChain (DLam n q b) = ((n, q) : args, body) where
+  (args, body) = findLamChain b
+findLamChain x = ([], x)
+
+showLamChain :: LamChain -> (String, String)
+showLamChain = (concat *** concat) . unzip . intersperse (" ", " ") . map showElement where
+  showElement (name, DEqual _) = (show name, show name)
+  showElement (name, d) = ("(" ++ show name ++ " : " ++ q1 ++ ")",
+                           "(" ++ show name ++ " : " ++ q2 ++ ")") where
+    (q1, q2) = showDiff 0 d
+
 showDiff :: Int -> Diff -> (String, String)
 
 showDiff p (DEqual t) = (showNothing p t, showNothing p t)
@@ -117,10 +134,11 @@ showDiff p (DApp f a) = prio 2 p
   (a1, a2) = showDiff 3 a
 
 showDiff p (DLam n q b) = prio 0 p
-                          ("lambda " ++ show n ++ " : " ++ q1 ++ " . " ++ b1,
-                           "lambda " ++ show n ++ " : " ++ q2 ++ " . " ++ b2) where
-  (q1, q2) = showDiff 0 q
-  (b1, b2) = showDiff 0 b
+                          ("lambda " ++ q1 ++ " . " ++ b1,
+                           "lambda " ++ q2 ++ " . " ++ b2) where
+  (chain, body) = findLamChain b
+  (q1, q2) = showLamChain ((n, q) : chain)
+  (b1, b2) = showDiff 0 body
 
 showDiff p (DPi n q b True True) = prio 0 p
                          ("Pi " ++ show n ++ " : " ++ q1 ++ " . " ++ b1,
