@@ -119,6 +119,10 @@ evalTerm :: Bindings Eval -> TypedTerm Eval -> Value Eval
 evalTerm env t = runEval env $ do
   eval t
 
+apply :: Monad m => Value m -> Value m -> m (Value m)
+apply (Function n t (ValueFunction f)) v2 = f v2
+apply v1 v2 = return (ResidualApp v1 v2)
+
 eval :: Structure t => t -> Eval (Value Eval)
 eval t = case structure t of
   Int n -> do
@@ -151,11 +155,7 @@ eval t = case structure t of
   App e1 e2 -> do
     v1 <- eval e1
     v2 <- eval e2
-    case v1 of
-      Function n t (ValueFunction f) -> do
-        f v2
-      _ -> do
-        return (ResidualApp v1 v2)
+    apply v1 v2
   Lam n e1 e2 -> do
     v1 <- eval e1
     env <- getEnvironment
