@@ -195,7 +195,7 @@ processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ 
         unless same $ do
           t <- liftEval (reify v)
           t' <- liftEval (reify v')
-          let (expected, given) = showDiff 0 (diff t t')
+          let (expected, given) = showDiff 0 (diff t' t)
           prettyFail $ text "Result mismatch in assertion"
                     $$ text "  specified result:" <+> pretty 0 t'
                     $$ text "       normal form:" <+> text expected
@@ -213,7 +213,7 @@ processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ 
         unless same $ do
           t <- liftEval (reify v)
           t' <- liftEval (reify v')
-          let (expected, given) = showDiff 0 (diff t t')
+          let (expected, given) = showDiff 0 (diff t' t)
           prettyFail $ text "Result mismatch in assertion"
                     $$ text "  specified result:" <+> pretty 0 t'
                     $$ text "       normal form:" <+> text expected
