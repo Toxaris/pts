@@ -1,5 +1,20 @@
 {-# LANGUAGE FlexibleInstances #-}
-module PTS.Dynamics.Value where
+module PTS.Dynamics.Value
+  ( Value
+    ( Function
+    , Number
+    , Constant
+    , PiType
+    , ResidualIntOp
+    , ResidualIfZero
+    , ResidualVar
+    , ResidualApp
+    )
+  , ValueFunction
+    ( ValueFunction
+    )
+  , callFunction
+  ) where
 
 import PTS.Syntax.Constants (C)
 import PTS.Syntax.Names (Name)
