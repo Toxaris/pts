@@ -1,11 +1,13 @@
 {-# LANGUAGE NoMonomorphismRestriction, DeriveFunctor, DeriveDataTypeable, StandaloneDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances #-}
 module PTS.Syntax.Term
   ( Term (..)
-  , TypedTerm (..)
+  , AnnotatedTerm
   , TermStructure (..)
   , Structure (structure)
   , structure'
-  , typeOf
+  , annotation
+  , MakeTerm (mkTerm)
   , mkInt
   , mkIntOp
   , mkIfZero
@@ -14,12 +16,13 @@ module PTS.Syntax.Term
   , mkApp
   , mkLam
   , mkPi
+  , mkSortedPi
   , mkPos
   , mkUnquote
   , mkInfer
   , freshvarl
   , handlePos
-  , typedHandlePos
+  , annotatedHandlePos
   , evalOp
   , BinOp (..)
   , desugarArgs
@@ -40,23 +43,8 @@ import PTS.Syntax.Names (Name, Names, freshvarl)
 data Term = MkTerm (TermStructure Term)
   deriving (Data, Typeable, Show)
 
-data TypedTerm = MkTypedTerm (TermStructure TypedTerm) TypedTerm
-  deriving (Data, Typeable)
-
-instance Show TypedTerm where
-  showsPrec d t@(MkTypedTerm struct typ) =
-    showParen (d > app_prec) $
-      showString "MkTypedTerm " . showsPrec (app_prec + 1) struct .
-        if loops t
-         then showString " <self>" -- This is the only non-default behavior.
-         else showString " " . showsPrec (app_prec + 1) typ
-   where
-     app_prec = 10
-
-loops t1 = sameConst (structure' t1) (structure' (typeOf t1))
- where
-   sameConst (Const (C c1)) (Const (C c2)) = c1 == c2
-   sameConst _ _ = False
+data AnnotatedTerm a = MkAnnotatedTerm (TermStructure (AnnotatedTerm a)) a
+  deriving (Data, Typeable, Show)
 
 class Structure term where
   structure :: term -> TermStructure term
@@ -64,8 +52,8 @@ class Structure term where
 instance Structure Term where
   structure (MkTerm t) = t
 
-instance Structure TypedTerm where
-  structure (MkTypedTerm t _) = t
+instance Structure (AnnotatedTerm a) where
+  structure (MkAnnotatedTerm t _) = t
 
 -- | Return the actual TermStructure of a Term-like thing without Pos nodes.
 structure' :: Structure term => term -> TermStructure term
@@ -73,8 +61,8 @@ structure' t = case structure t of
   Pos _ t -> structure' t
   t -> t
 
-typeOf :: TypedTerm -> TypedTerm
-typeOf (MkTypedTerm _ t) = t
+annotation :: AnnotatedTerm a -> a
+annotation (MkAnnotatedTerm _ a) = a
 
 data BinOp
   = Add
@@ -103,7 +91,7 @@ data TermStructure alpha
   | Const   C
   | App     alpha alpha
   | Lam     Name alpha alpha
-  | Pi      Name alpha alpha
+  | Pi      Name alpha alpha (Maybe C)
   | Pos     Position alpha
   | Unquote alpha
   | Infer   Integer
@@ -127,9 +115,16 @@ desugarArgs mk (((n : ns), t) : args) body = mk n t (desugarArgs mk ((ns, t) : a
 -- counter :: IORef Tag
 -- counter = unsafePerformIO (newIORef 0)
 
-mkTerm :: TermStructure Term -> Term
-mkTerm t = result where
-  result = MkTerm t
+class MakeTerm a b | a -> b, b -> a where
+  mkTerm :: TermStructure a -> b
+
+instance MakeTerm Term Term where
+  mkTerm t = result where
+    result = MkTerm t
+
+instance MakeTerm (AnnotatedTerm a) (a -> AnnotatedTerm a) where
+  mkTerm t q = result where
+    result = MkAnnotatedTerm t q
 
 -- mkTerm :: TermStructure -> Term
 -- mkTerm t = unsafePerformIO $ do
@@ -145,11 +140,12 @@ mkVar n            =  mkTerm (Var n)
 mkConst c          =  mkTerm (Const c)
 mkApp t1 t2        =  mkTerm (App t1 t2)
 mkLam n t1 t2      =  mkTerm (Lam n t1 t2)
-mkPi n t1 t2       =  mkTerm (Pi n t1 t2)
+mkPi n t1 t2       =  mkTerm (Pi n t1 t2 Nothing)
+mkSortedPi n t1 t2 s = mkTerm (Pi n t1 t2 s)
 mkPos p t          =  mkTerm (Pos p t)
 mkUnquote t        =  mkTerm (Unquote t)
 mkInfer i          =  mkTerm (Infer i)
 
 handlePos f p t = annotatePos p $ mkPos p <$> f t
 
-typedHandlePos f p t = annotatePos p $ (\t -> MkTypedTerm (Pos p t) (typeOf t)) <$> f t
+annotatedHandlePos f p t = annotatePos p $ (\t -> MkAnnotatedTerm (Pos p t) (annotation t)) <$> f t

@@ -1,7 +1,8 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, PatternGuards #-}
 module PTS.Dynamics.Evaluation where
 
 import Control.Applicative hiding (Const)
+import Control.Monad.Environment
 import Control.Monad.State
 
 import Data.Maybe (fromMaybe)
@@ -13,43 +14,45 @@ import PTS.Dynamics.Value
 import PTS.Syntax
 import PTS.Syntax.Names
 
-type Env m = [(Name, Value m)]
+newtype Eval a = Eval (EnvironmentT Name (Binding Eval) (State NamesMap) a)
+  deriving (Functor, Monad, MonadState NamesMap, MonadEnvironment Name (Binding Eval))
 
-dropTypes :: Bindings m -> Env m
-dropTypes = map (\(x, (_, y, z)) -> (x, y))
+runEval :: Bindings Eval -> Eval a -> a
+runEval env (Eval p) = evalState (runEnvironmentT p env) (envToNamesMap env)
 
-newtype Eval a = Eval (State NamesMap a)
-  deriving (Functor, Monad, MonadState NamesMap)
+close :: Name -> Value Eval -> Maybe C -> Value Eval -> Eval (Function Eval)
+close name typ sort value = do
+  term <- reify value
+  abstract (\arg -> do
+    withEnvironment [] $ do
+      bind name (Binding False arg typ sort) $ do
+        eval term)
 
-runEval :: NamesMap -> Eval a -> a
-runEval names (Eval p) = evalState p names
-
-equivTerm :: Bindings Eval -> Term -> Term -> Bool
-equivTerm env' t1 t2 = runEval (envToNamesMap env) $ do
-  v1 <- eval t1 env
-  v2 <- eval t2 env
+equivTerm :: Bindings Eval -> TypedTerm Eval -> TypedTerm Eval -> Bool
+equivTerm env t1 t2 = runEval env $ do
+  v1 <- eval t1
+  v2 <- eval t2
   equiv v1 v2
- where env = dropTypes env'
 
 equiv :: Value Eval -> Value Eval -> Eval Bool
-equiv (Function n v1 (ValueFunction f)) (Function _ v1' (ValueFunction f')) = do
+equiv (Function n v1 f) (Function _ v1' f') = do
   r1 <- equiv v1 v1'
   n'   <- fresh n
-  v2   <- f   (ResidualVar n')
-  v2'  <- f'  (ResidualVar n')
+  v2   <- open f   (ResidualVar n')
+  v2'  <- open f'  (ResidualVar n')
   r2 <- equiv v2 v2'
   return (r1 && r2)
 equiv (Number n) (Number n') = do
   return (n == n')
 equiv (Constant c) (Constant c') = do
   return (c == c')
-equiv (PiType n v1 (ValueFunction f)) (PiType _ v1' (ValueFunction f')) = do
+equiv (PiType n v1 f s1) (PiType _ v1' f' s2) = do
   r1   <- equiv v1 v1'
   n'   <- fresh n
-  v2   <- f   (ResidualVar n')
-  v2'  <- f'  (ResidualVar n')
+  v2   <- open f   (ResidualVar n')
+  v2'  <- open f'  (ResidualVar n')
   r2   <- equiv v2 v2'
-  return (r1 && r2)
+  return (r1 && r2 && s1 == s2)
 equiv (ResidualIntOp op v1 v2) (ResidualIntOp op' v1' v2') = do
   let r1 = op == op'
   r2 <- equiv v1 v1'
@@ -69,12 +72,11 @@ equiv (ResidualApp v1 v2) (ResidualApp v1' v2') = do
 equiv _ _ = do
   return False
 
-nbe :: Bindings Eval -> Term -> Term
-nbe env' e = runEval (envToNamesMap env) $ do
-  v   <- eval e env
+nbe :: Structure t => Bindings Eval -> t -> Term
+nbe env e = runEval env $ do
+  v   <- eval e
   e'  <- reify v
   return e'
- where env = dropTypes env'
 
 fresh :: Name -> Eval Name
 fresh n = do
@@ -84,22 +86,22 @@ fresh n = do
   return n'
 
 reify :: Value Eval -> Eval Term
-reify (Function n v1 (ValueFunction f)) = do
+reify (Function n v1 f) = do
   e1 <- reify v1
   n' <- fresh n
-  v2 <- f (ResidualVar n')
+  v2 <- open f (ResidualVar n')
   e2 <- reify v2
   return (mkLam n' e1 e2)
 reify (Number n) = do
   return (mkInt n)
 reify (Constant c) = do
   return (mkConst c)
-reify (PiType n v1 (ValueFunction f)) = do
+reify (PiType n v1 f s) = do
   e1 <- reify v1
   n' <- fresh n
-  v2 <- f (ResidualVar n')
+  v2 <- open f (ResidualVar n')
   e2 <- reify v2
-  return (mkPi n' e1 e2)
+  return (mkSortedPi n' e1 e2 (Just s))
 reify (ResidualIntOp op v1 v2) = do
   e1 <- reify v1
   e2 <- reify v2
@@ -116,72 +118,64 @@ reify (ResidualApp v1 v2) = do
   e2 <- reify v2
   return (mkApp e1 e2)
 
-evalTerm :: Bindings Eval -> Term -> Value Eval
-evalTerm env' t = runEval (envToNamesMap env) $ do
-  eval t env
- where env = dropTypes env'
+evalTerm :: Bindings Eval -> TypedTerm Eval -> Value Eval
+evalTerm env t = runEval env $ do
+  eval t
 
+apply :: Monad m => Value m -> Value m -> m (Value m)
+apply (Function n t f) v2 = open f v2
+apply v1 v2 = return (ResidualApp v1 v2)
 
-eval :: Term -> Env Eval -> Eval (Value Eval)
-eval t env = case structure t of
+eval :: Structure t => t -> Eval (Value Eval)
+eval t = case structure t of
   Int n -> do
     return (Number n)
   IntOp op e1 e2 -> do
-    v1 <- eval e1 env
-    v2 <- eval e2 env
-    return $
-      fromMaybe (ResidualIntOp op v1 v2)
-        (case (v1, v2) of
-            (Number n1, Number n2) -> do
-              Number <$> evalOp op n1 n2
-            _ -> Nothing)
+    v1 <- eval e1
+    v2 <- eval e2
+    case (v1, v2) of
+      (Number n1, Number n2) | Just n3 <- evalOp op n1 n2 -> do
+        return (Number n3)
+      _ -> return (ResidualIntOp op v1 v2)
   IfZero e1 e2 e3 -> do
-    v1 <- eval e1 env
+    v1 <- eval e1
     case v1 of
       Number 0 -> do
-        eval e2 env
+        eval e2
       Number _ -> do
-        eval e3 env
+        eval e3
       _ -> do
-        v2   <- eval e2 env
-        v3   <- eval e3 env
+        v2   <- eval e2
+        v3   <- eval e3
         return (ResidualIfZero v1 v2 v3)
   Var n -> do
-    case lookup n env of
+    binding <- lookupValue n
+    case binding of
       Just v -> return v
       Nothing -> return (ResidualVar n)
   Const c -> do
     return (Constant c)
   App e1 e2 -> do
-    v1 <- eval e1 env
-    v2 <- eval e2 env
-    case v1 of
-      Function n t (ValueFunction f) -> do
-        f v2
-      _ -> do
-        return (ResidualApp v1 v2)
+    v1 <- eval e1
+    v2 <- eval e2
+    apply v1 v2
   Lam n e1 e2 -> do
-    v1 <- eval e1 env
-    return (Function n v1 (ValueFunction (\v -> eval e2 ((n, v) : env))))
-  Pi n e1 e2 -> do
-    v1 <- eval e1 env
-    return (PiType n v1 (ValueFunction (\v -> eval e2 ((n, v) : env))))
+    v1 <- eval e1
+    env <- getEnvironment
+    f <- abstract (\v -> do
+      withEnvironment env $ do
+        bind n (Binding False v v1 Nothing) $ do
+          eval e2)
+    return (Function n v1 f)
+  Pi n e1 e2 (Just s) -> do
+    v1 <- eval e1
+    env <- getEnvironment
+    f <- abstract (\v -> do
+      withEnvironment env $ do
+        bind n (Binding False v v1 Nothing) $ do
+          eval e2)
+    return (PiType n v1 f s)
   Pos _ e -> do
-    eval e env
+    eval e
   Infer _ -> error "Encountered type inference marker during evaluation. You either have an underscore in your code that cannnot be decided or you have discovered a bug in the interpreter."
   Unquote _ -> error "During evaluation, there should be no unquote left."
-
-{-
-data TermStructure alpha
-  = Int     Integer
-  | IntOp   BinOp alpha alpha
-  | IfZero  alpha alpha alpha
-  | Var     Name
-  | Const   C
-  | App     alpha alpha
-  | Lam     Name alpha alpha
-  | Pi      Name alpha alpha
-  | Pos     Position alpha
-  | Unquote alpha
-  deriving (Functor, Data, Typeable)
--}

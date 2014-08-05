@@ -1,6 +1,6 @@
 module PTS.Syntax.Pretty.Tests where
 
-import Test.Framework (testGroup)
+import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.Framework.Providers.HUnit
 import Test.HUnit (assertEqual)
@@ -19,6 +19,7 @@ y = read "y"
 z :: Name
 z = read "z"
 
+testPretty :: String -> Term -> Test
 testPretty text term
   =  testCase text $
        assertEqual "Unexpected pretty print." text (showPretty term)
@@ -28,9 +29,9 @@ tests
      [  testPretty "Int" (mkConst int)
      ,  testPretty "*" (mkConst star)
      ,  testPretty "**" (mkConst box)
-     ,  testPretty "x" x
-     ,  testPretty "y" y
-     ,  testPretty "z" z
+     ,  testPretty "x" (mkVar x)
+     ,  testPretty "y" (mkVar y)
+     ,  testPretty "z" (mkVar z)
      ,  testPretty "x y" (mkApp (mkVar x) (mkVar y))
      ,  testPretty "x y z" (mkApp (mkApp (mkVar x) (mkVar y)) (mkVar z))
      ,  testPretty "x (y z)" (mkApp (mkVar x) (mkApp (mkVar y) (mkVar z)))

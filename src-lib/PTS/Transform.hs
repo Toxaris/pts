@@ -3,10 +3,10 @@ module PTS.Transform
   (  transform
   ,  typeOf
   ,  sortOf
-  ,  asSort
+  ,  C (C)
+  ,  Value (Constant)
   ,  structure
   ,  Name
-  ,  Sort (Term, Type)
   ,  Term
   ,  TermStructure (..)
   ,  TypedTerm
@@ -27,23 +27,11 @@ import qualified Data.Set as Set (insert)
 import PTS.Error (showErrors)
 import PTS.Options (defaultOptions)
 import PTS.Statics (typecheckPull)
-import PTS.Syntax (TypedTerm, typeOf, structure, Name, Term, TermStructure (..), mkVar, strip, parseTerm, multiLine, C (C))
+import PTS.Syntax (TypedTerm, typeOf, sortOf, structure, Name, Term, TermStructure (..), mkVar, strip, parseTerm, multiLine, C (C))
+import PTS.Dynamics (Eval, Value (Constant))
 
 import System.Exit (exitSuccess, exitFailure)
 import System.IO (hPutStrLn, stderr)
-
-data Sort
-  = Term
-  | Type
-
-sortOf :: TypedTerm -> Sort
-sortOf t = asSort (typeOf (typeOf t))
-
-asSort :: TypedTerm -> Sort
-asSort t = case structure t of
-  Const (C 1) -> Term
-  Const (C 2) -> Type
-  Pos p t     -> asSort t
 
 run p = do
   result <- runErrorsT (p `runConsoleLogT` False) `runReaderT` defaultOptions
@@ -55,7 +43,7 @@ run p = do
       putStrLn (multiLine 80 result)
       exitSuccess
 
-transform :: (TypedTerm -> Term) -> IO ()
+transform :: (TypedTerm Eval -> Term) -> IO ()
 transform f = run $ do
   text <- liftIO $ getContents
   term <- parseTerm "<stdin>" text

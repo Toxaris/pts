@@ -22,7 +22,8 @@ module PTS.Interactive
 
 -- ASTs
 import PTS.Syntax.Names (Name(..))
-import PTS.Syntax.Term (Term(..), TypedTerm(..), TermStructure(..), BinOp(..))
+import PTS.Syntax.Term (Term(..), TermStructure(..), BinOp(..))
+import PTS.Dynamics.TypedTerm (TypedTerm(..))
 
 import PTS.Syntax
 
@@ -48,7 +49,7 @@ parseSimple input = parseTerm "REPL" input
 parseStSimple :: String -> Either Errors Stmt
 parseStSimple input = parseStmt "REPL" input
 
-nbeClosed :: Term -> Term
+nbeClosed :: TypedTerm Eval -> Term
 nbeClosed = nbe []
 
 processFileSimple inst f = runErrorsAndOpts inst (processFile f)
@@ -64,19 +65,19 @@ wrapTypecheckPull ::
   Maybe Instances.PTS
   -> Term
   -> Bindings Eval
-  -> IO (Either Errors TypedTerm)
+  -> IO (Either Errors (TypedTerm Eval))
 wrapTypecheckPush ::
   Maybe Instances.PTS
   -> Term
-  -> TypedTerm
+  -> Value Eval
   -> Bindings Eval
-  -> IO (Either Errors TypedTerm)
+  -> IO (Either Errors (TypedTerm Eval))
 wrapTypecheckPushUntyped ::
   Maybe Instances.PTS
      -> Term
      -> Term
      -> Bindings Eval
-     -> IO (Either Errors TypedTerm)
+     -> IO (Either Errors (TypedTerm Eval))
 
 wrapTypecheckPull inst term =
   typecheckWrapper inst (typecheckPull term)

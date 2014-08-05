@@ -19,6 +19,7 @@ import Data.Data
 import Data.List (intercalate)
 import Data.Typeable
 
+import Text.Printf (printf)
 
 data PTSError
   = Error (Maybe Position) (Maybe String) [String] (Maybe [String])
@@ -64,7 +65,8 @@ showError (Error p e m c) = unlines allLines where
            | otherwise = mark c1 c2 70 (src !! pred r1)
 
 showPosition :: Position -> String
-showPosition (Position f r1 r2 c1 c2) = intercalate ":" [f, show r1, ""] --, show r2, show c1, show c2]
+showPosition (Position f r1 r2 c1 c2)
+  = printf "%s:%d.%d-%d.%d:" f r1 c1 r2 c2
 
 mark :: Int -> Int -> Int -> String -> [String]
 mark c1 c2 width line = [code, mark] where

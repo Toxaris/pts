@@ -23,8 +23,6 @@ import System.Directory (findFile)
 import System.Environment (getArgs)
 import System.Exit (exitSuccess, exitFailure)
 import System.IO (hPutStrLn, stderr, hFlush, stdout)
-infixl 2 >>>
-(>>>) = flip (.)
 
 main = do
   result <- parseCommandLine processJobs
@@ -44,13 +42,13 @@ processErrors result = do
 processJobs jobs = do
   runErrorsT . withEmptyState $ mapM processJob jobs
 
-processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState (Map.Map ModuleName (Module Eval), [ModuleName], Bindings Eval) m) => (Options, FilePath) -> m (Maybe (Module Eval))
+processJob :: (Functor m, MonadIO m, MonadErrors [PTSError] m, MonadState ProcessingState m) => (Options, FilePath) -> m (Maybe (Module Eval))
 processJob (opt, file) = do
   let path = optPath opt
   file <- liftIO (findFile path file) >>= maybe (fail ("file not found: " ++ file)) return
   checkAssertions . runOptMonads opt $ processFile file
 
-initState = (Map.empty, [], [])
+initState = ProcessingState Map.empty [] []
 withEmptyState act = evalStateT act initState
 
 runOptMonads opt action =

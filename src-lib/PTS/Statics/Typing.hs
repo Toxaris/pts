@@ -2,7 +2,7 @@
 {-# LANGUAGE CPP #-}
 module PTS.Statics.Typing where
 
-import Prelude (fst, snd, String)
+import Prelude (fst, snd, String, take)
 
 import Control.Monad
 import Control.Monad.Environment
@@ -27,7 +27,6 @@ import PTS.Error
 import PTS.Instances
 import PTS.Options
 import PTS.Syntax
-import PTS.Syntax.Term (TypedTerm (MkTypedTerm))
 
 import Text.PrettyPrint.HughesPJ hiding (int)
 import Text.Show (Show (show))
@@ -51,51 +50,19 @@ import Text.Show (Show (show))
 
 import Debug.Trace
 
--- instance Ord Term where
---   compare a b = compare (show a) (show b)
-
--- Reduction and Evaluation of terms
-isVal :: Term -> Bool
-isVal t = case structure t of
-  Const _    ->  True
-  Lam _ _ _  ->  True
-  Pi _ _ _   ->  True
-  Int _      ->  True
-  _          ->  False
-
-check :: Monad m => Bool -> String -> m ()
-check True _ = return ()
-check False s = fail s
-
-checkMaybe :: Monad m => Maybe a -> String -> m ()
-checkMaybe (Just _) _ = return ()
-checkMaybe Nothing s = fail s
-
-lookupValue x = do
-  m <- lookup x
-  return (fmap (\(_, y, _) -> y) m)
-
-lookupType x = do
-  m <- lookup x
-  return (fmap (\(_, _, y) -> y) m)
-
--- mytrace d ctx (Const x) | x == star = False
--- mytrace d ctx t =
---   trace ((show d) ++ (ndots d) ++ (show ctx) ++ " |- "++(show t) ++ " : ???") False
-
 -- safe bind
-safebind :: MonadEnvironment Name (Binding Eval) m => Name -> TypedTerm -> Term -> (Name -> Term -> m a) -> m a
-safebind x t b f = do
+safebind :: MonadEnvironment Name (Binding Eval) m => Name -> Value Eval -> Maybe C -> Term -> (Name -> Term -> m a) -> m a
+safebind x t s b f = do
   result <- lookupType x
   case result of
     Nothing -> do
-      bind x (False, ResidualVar x, t) (f x b)
+      bind x (Binding False (ResidualVar x) t s) (f x b)
     Just _ -> do
       vars <- keys
       let nx = freshvarl (freevars b `Set.union` vars) x
-      bind nx (False, ResidualVar nx, t) (f nx (subst b x (mkVar nx)))
+      bind nx (Binding False (ResidualVar nx) t s) (f nx (subst b x (mkVar nx)))
 
-debug :: (MonadEnvironment Name (Binding Eval) m, MonadLog m) => String -> Term -> m TypedTerm -> m TypedTerm
+debug :: (MonadEnvironment Name (Binding Eval) m, MonadLog m) => String -> Term -> m (TypedTerm Eval) -> m (TypedTerm Eval)
 debug n t result = do
 #ifndef DEBUG_TYPING
   result
@@ -106,24 +73,29 @@ debug n t result = do
   log $ "Subject: " ++ showPretty t
   x <- result
   log $ "Result:  " ++ showPretty x
-  log $ "         : " ++ showPretty (typeOf x)
+  tx <- liftEval (reify (typeOf x))
+  log $ "         : " ++ showPretty tx
   exit
   return x
 #endif
 
-debugPush :: (MonadEnvironment Name (Binding Eval) m, MonadLog m) => String -> Term -> TypedTerm -> m TypedTerm -> m TypedTerm
+debugPush ::
+  (MonadEnvironment Name (Binding Eval) m, MonadLog m) =>
+  String -> Term -> Value Eval -> m (TypedTerm Eval) -> m (TypedTerm Eval)
 debugPush n t q result = do
 #ifndef DEBUG_TYPING
   result
 #else
   enter n
   ctx <- getEnvironment
-  log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
+  -- log $ "Context: " ++ showCtx [(n, (bindingValue b, bindingType b)) | (n, b) <- ctx]
   log $ "Subject: " ++ showPretty t
+  q <- liftEval (reify q)
   log $ "Push type: " ++ showPretty q
   x <- result
   log $ "Result:  " ++ showPretty x
-  log $ "         : " ++ showPretty (typeOf x)
+  tx <- liftEval (reify (typeOf x))
+  log $ "         : " ++ showPretty tx
   exit
   return x
 #endif
@@ -135,9 +107,11 @@ normalizeToSort t' t context info = do
   pts <- asks optInstance
   env <- getEnvironment
 
-  case structure (nbe env (strip t')) of
-    Const s | sorts pts s  ->  return s
-    _                      ->  prettyFail $ msgNotProperType context info t t'
+  case t' of
+    Constant s | sorts pts s -> return s
+    _ -> do
+      t' <- liftEval (reify t')
+      prettyFail $ msgNotProperType context info t t'
 
 msgNotProperType context info t t'
   = text "Type Error" <+> context <+> text ": Expected proper type" <+> info <> text "." $$ nest 2 (
@@ -146,17 +120,16 @@ msgNotProperType context info t t'
     sep [text "Type:", nest 2 (pretty 0 t')])
 
 normalizeToSame s' t' s t context info1 info2 = do
-  let stripS' = strip s'
-  let stripT' = strip t'
-  env <- getEnvironment
-  if (equivTerm env (stripS') (stripT'))
-      then return ()
-      else let  s'' = nbe env (stripS')
-                t'' = nbe env (stripT')
-             in prettyFail $ msgNotSame context info1 info2 s t s'' t''
+  same <- liftEval (equiv s' t') 
+  if same
+    then return ()
+    else do
+      s'' <- liftEval (reify s')
+      t'' <- liftEval (reify t')
+      prettyFail $ msgNotSame context info1 info2 s t s'' t''
 
 msgNotSame context info1 info2 s t s' t'
-  = let (s'', t'') = showDiff 0 (diff s' t')
+  = let (s'', t'') = showDiff 0 (diff (strip s') (strip t'))
      in text "Type Error" <+> context <> text ": Types do not match." $$ nest 2 (
         sep [text "Explanation:", nest 2 (text "The types of the" <+> info1 <+> text "and the" <+> info2 <+> text "should be beta-equivalent.")] $$
         sep [info1 <> text ":", nest 2 (pretty 0 s)] $$
@@ -164,28 +137,39 @@ msgNotSame context info1 info2 s t s' t'
         sep [text "Type of" <+> info1 <> text ":", nest 2 (text s'')] $$
         sep [text "Type of" <+> info2 <> text ":", nest 2 (text t'')])
 
-normalizeToInt :: (MonadLog m, Functor m, MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m) => TypedTerm -> TypedTerm -> Doc -> Doc -> m TypedTerm
+normalizeToInt :: (MonadLog m, Functor m, MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m) => TypedTerm Eval -> TypedTerm Eval -> Doc -> Doc -> m (TypedTerm Eval)
 normalizeToInt t' t context info = do
-  let stripT' = strip t'
   env <- getEnvironment
-  if equivTerm env stripT' (mkConst int)
-    then typecheckPull (mkConst int)
-    else let t'' = nbe env stripT'
+  expected <- typecheckPull (mkConst int)
+  if equivTerm env t' expected
+    then return expected
+    else let t'' = nbe env t'
           in prettyFail $ msgNotInt context info t t'' int
 
 msgNotInt context info t t' int
-  = text "Type Error" <+> context <> text ": Types do not match." $$ nest 2 (
-    sep [text "Explanation:", nest 2 (text "The type of the" <+> info <+> text "should be beta-equivalent to" <+> pretty 0 (mkConst int) <> text ".")] $$
+  = let expected :: Term
+        expected = mkConst int in
+    text "Type Error" <+> context <> text ": Types do not match." $$ nest 2 (
+    sep [text "Explanation:", nest 2 (text "The type of the" <+> info <+> text "should be beta-equivalent to" <+> pretty 0 expected <> text ".")] $$
     sep [info <> text ":", nest 2 (pretty 0 t)] $$
     sep [text "Type of" <+> info <> text ":", nest 2 (pretty 0 t')] $$
-    sep [text "Expected Type:" <+> nest 2 (pretty 0 (mkConst int))])
+    sep [text "Expected Type:" <+> nest 2 (pretty 0 expected)])
 
-normalizeToPi t' t context info = do
+liftEval :: MonadEnvironment Name (Binding Eval) m => Eval a -> m a
+liftEval action = do
   env <- getEnvironment
-  let t'' = nbe env (strip t') in
-     case structure t'' of
-       result@(Pi _ _ _)  ->  return result
-       _                  ->  prettyFail $ msgNotPi context info t t''
+  return (runEval env action)
+
+normalizeToPi ::
+  (MonadReader Options m, MonadErrors Errors m, MonadEnvironment Name (Binding Eval) m) =>
+  Value Eval -> TypedTerm Eval -> Doc -> Doc -> m (Value Eval)
+normalizeToPi v t context info = do
+  case v of
+    result@(PiType _ _ _ _) ->
+      return result
+    _ -> do
+      t' <- liftEval $ reify v
+      prettyFail $ msgNotPi context info t t'
 
 msgNotPi context info t t'
   = text "Type Error" <+> context <> text ": Not a product type." $$ nest 2 (
@@ -201,15 +185,18 @@ prettyRelations pts s1 s2 =
 
 -- Check whether actualType is beta equivalent to expectedType.
 -- checkedTerm is only used for error reporting.
-bidiExpected :: (MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => TypedTerm -> TypedTerm -> Term -> String -> m ()
+bidiExpected ::
+  (MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) =>
+  Value Eval -> Value Eval -> Term -> String -> m ()
 bidiExpected actualType expectedType checkedTerm context = do
-  let actualType' = strip actualType
-  let expectedType' = strip expectedType
   env <- getEnvironment
-  if equivTerm env actualType' expectedType'
+  same <- liftEval (equiv actualType expectedType)
+  if same
      then return ()
      else do
-       let (actual, expected) = showDiff 0 (diff actualType' expectedType')
+       actualType <- liftEval (reify actualType)
+       expectedType <- liftEval (reify expectedType)
+       let (actual, expected) = showDiff 0 (diff actualType expectedType)
        prettyFail $ text "Type error: we expected two terms to be equivalent but they are not."
                  $$ text context
                  $$ text "Checked term:" <+> pretty 0 checkedTerm
@@ -220,13 +207,13 @@ bidiExpected actualType expectedType checkedTerm context = do
                  $$ text "  expected:" <+> text expected
 
 
-typecheckPull :: (MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m TypedTerm
+typecheckPull :: (MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> m (TypedTerm Eval)
 typecheckPull t = case structure t of
   -- constant
   Const c -> debug "typecheckPull Const" t $ do
     pts <- asks optInstance
     case axioms pts c of
-      Just t  ->  return (MkTypedTerm (Const c) t)
+      Just t  ->  return (mkConst c (Constant t) (axioms pts t))
       _       ->
               if sorts pts c
                 then
@@ -237,92 +224,120 @@ typecheckPull t = case structure t of
   Var x -> debug "typecheckPull Var" t $ do
     ctx <- getEnvironment
 #ifdef DEBUG_TYPING
-    log $ "Context: " ++ showCtx [(n, (x, y)) | (n, (_, x, y)) <- ctx]
+    -- log $ "Context: " ++ showCtx [(n, (bindingValue b, bindingType b)) | (n, b) <- ctx]
 #endif
     xt <- lookupType x
     case xt of
-      Just xt -> do
-        return (MkTypedTerm (Var x) xt)
+      Just (xt, xs) -> do
+        return (mkVar x xt xs)
       Nothing ->
         fail $ "Unbound identifier: " ++ show x
 
   -- product
-  Pi x a b -> debug "typecheckPull Fun" t $ do
-    a'@(MkTypedTerm _ s1) <- typecheckPull a
-    s1' <- normalizeToSort s1 a (text "in product type") (text "as domain")
+  Pi name annotation body s -> debug "typecheckPull Fun" t $ do
+    -- check annotation
+    annotation <- typecheckPull annotation
+    s1 <- normalizeToSort (typeOf annotation) annotation (text "in product type") (text "as domain")
+    domain <- liftEval (eval annotation)
 
-    safebind x a' b $ \newx newb -> do
-      newb'@(MkTypedTerm _ s2) <- typecheckPull newb
-      s2' <- normalizeToSort s2 newb (text "in product type") (text "as codomain")
+    -- check range
+    safebind name domain (Just s1) body $ \name body -> do
+      body <- typecheckPull body
+      s2 <- normalizeToSort (typeOf body) body (text "in product type") (text "as codomain")
 
+      -- check language support
       pts <- asks optInstance
-      s3 <- prettyRelations pts s1' s2'
-      return (MkTypedTerm (Pi newx a' newb') s3)
+      s3 <- prettyRelations pts s1 s2
+      let s4 = axioms pts s3
+
+      -- construct result
+      return (mkSortedPi name annotation body (Just s2) (Constant s3) s4)
 
   -- application
-  App t1 t2 -> debug "typecheckPull App" t $ do
-    t1'@(MkTypedTerm _ tt1) <- typecheckPull t1
-    Pi x a b <- normalizeToPi tt1 t1 (text "in application") (text "operator")
+  App operator operand -> debug "typecheckPull App" t $ do
+    -- check operator
+    operator <- typecheckPull operator
+    PiType name domain range kind <- normalizeToPi (typeOf operator) operator (text "in application") (text "operator")
 
-    -- TODO avoid rechecking
-    a' <- typecheckPull a
-    b' <- bind x (False, ResidualVar x, a') $
-            typecheckPull b
+    -- check operand
+    operand <- typecheckPush operand domain
 
-    -- in t1 t2
-    -- t1 is a function from a -> b, so
-    -- t2 better be of type a
-    -- check that the argument t2 actually has the type we expect
-    t2'@(MkTypedTerm _ tt2) <- typecheckPush t2 a'
-
-    -- TODO get rid of subst?
-    return (MkTypedTerm (App t1' t2') (typedSubst b' x t2'))
+    -- construct result
+    result <- liftEval $ do
+      operand <- eval operand
+      open range operand
+    return (mkApp operator operand result (Just kind))
 
   -- abstraction
-  Lam x a b -> debug "typecheckPull Abs" t $ do
-    env2 <- getEnvironment
-    a'@(MkTypedTerm _ s1)  <- typecheckPull (nbe env2 a)
-    s1' <- normalizeToSort s1 a (text "in lambda abstraction") (text "as type of" <+> pretty 0 x)
+  Lam name annotation body -> debug "typecheckPull Abs" t $ do
+    -- check annotation
+    annotation  <- typecheckPull annotation
+    s1 <- normalizeToSort (typeOf annotation) annotation
+            (text "in lambda abstraction")
+            (text "as type of" <+> pretty 0 name)
+    domain <- liftEval (eval annotation)
 
-    safebind x a' b $ \newx newb -> do
-      newb'@(MkTypedTerm _ tb)  <- typecheckPull newb
-      env <- getEnvironment
-      let tb' = nbe env (strip tb)
-      -- XXX This computes a sort of something the user did not write.
-      -- So this should be properly annotated in the output.
-      tb''@(MkTypedTerm _ s2)  <- typecheckPull tb'
-      s2' <- normalizeToSort s2 tb' (text "in lambda abstraction") (text "as type of body")
+    -- check body
+    safebind name domain (Just s1) body $ \name body -> do
+      body <- typecheckPull body
+      let range = typeOf body
 
+      -- check language support
       pts <- asks optInstance
-      s3 <- prettyRelations pts s1' s2'
-
-      return (MkTypedTerm (Lam newx a' newb') (MkTypedTerm (Pi newx a' tb'') s3))
+      s2 <- case sortOf body of
+        Just s | sorts pts s -> return s
+        Nothing -> fail "Internal Error."
+      s3 <- prettyRelations pts s1 s2
+     
+      -- construct result
+      range <- liftEval (close name domain (Just s1) range)
+      return (mkLam name annotation body (PiType name domain range s3) (Just s3))
 
   -- Int
   Int i -> debug "typecheckPull Int" t $ do
-    int' <- typecheckPull (mkConst int)
-    return (MkTypedTerm (Int i) int')
+    -- construct integer type
+    integerType <- typecheckPull (mkConst int)
+    integerType <- liftEval (eval integerType)
+    pts <- asks optInstance
+    let integerSort = axioms pts int
+    
+    -- construct result
+    return (mkInt i integerType integerSort)
 
   -- IntOp
   IntOp opFunction t1 t2 -> debug "typecheckPull IntOp" t $ do
+    -- construct integer type
     integerType <- typecheckPull (mkConst int)
-    -- Both arguments to any IntOp have to be Ints, so typecheckPush an Int in there.
-    t1'@(MkTypedTerm _ tt1) <- typecheckPush t1 integerType
-    t2'@(MkTypedTerm _ tt2) <- typecheckPush t2 integerType
-    return (MkTypedTerm (IntOp opFunction t1' t2') integerType)
+    integerType <- liftEval (eval integerType)
+    pts <- asks optInstance
+    let integerSort = axioms pts int
+
+    -- check operands
+    t1 <- typecheckPush t1 integerType
+    t2 <- typecheckPush t2 integerType
+
+    -- construct result
+    return (mkIntOp opFunction t1 t2 integerType integerSort)
 
   -- IfZero
-  IfZero condition thenTerm elseTerm -> debug "typecheckPull IfZero" t $ do
-    -- Condition needs to be of type integer (think boolean in a real if).
+  IfZero condition thenBranch elseBranch -> debug "typecheckPull IfZero" t $ do
+    -- check condition
     integerType <- typecheckPull (mkConst int)
-    typedCondition <- typecheckPush condition integerType
+    integerType <- liftEval (eval integerType)
+    condition <- typecheckPush condition integerType
+
+    -- check branches
+    --
     -- Then and else branch need to have the same type. We could typecheckPull
     -- the then branch and push the result into the else branch. This might be
     -- faster, but the asymmetry seems weird.
-    typedThen@(MkTypedTerm _ thenType) <- typecheckPull thenTerm
-    typedElse@(MkTypedTerm _ elseType) <- typecheckPull elseTerm
-    normalizeToSame thenType elseType typedThen typedElse (text "in if0") (text "then branch") (text "else branch")
-    return (MkTypedTerm (IfZero typedCondition typedThen typedElse) thenType)
+    thenBranch <- typecheckPull thenBranch
+    elseBranch <- typecheckPull elseBranch
+    normalizeToSame (typeOf thenBranch) (typeOf elseBranch) thenBranch elseBranch
+      (text "in if0") (text "then branch") (text "else branch")
+
+    -- construct result
+    return (mkIfZero condition thenBranch elseBranch (typeOf thenBranch) (sortOf thenBranch))
 
   -- Position information
   Pos p t -> do
@@ -340,120 +355,138 @@ typecheckPull t = case structure t of
 -- Second argument (q) is its expected type.
 --   The second argument is of the form (MkTypedTerm type kind) where type is the actual expected
 --   type of the first argument and kind is the type of type.
-typecheckPush :: (MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> TypedTerm -> m TypedTerm
+typecheckPush :: (MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m, Functor m, MonadLog m) => Term -> Value Eval -> m (TypedTerm Eval)
 typecheckPush t q = case structure t of
   -- constant
   Const c -> debugPush "typecheckPush Const" t q $ do
+    -- check language support
     pts <- asks optInstance
     case axioms pts c of
-      Just ct -> do bidiExpected ct q t "Attempted to push the wrong type onto a constant."
-                    return (MkTypedTerm (Const c) ct)
+      Just ct -> do bidiExpected (Constant ct) q t "Attempted to push the wrong type onto a constant."
+                    return (mkConst c (Constant ct) (axioms pts ct))
       _       ->  prettyFail $ text "Unknown constant:" <+> pretty 0 c
 
   Var x -> debugPush "typecheckPush Var" t q $ do
     xt <- lookupType x
     case xt of
-      Just xt -> do bidiExpected xt q t "A variable from the environment has an unexpected type."
-                    return (MkTypedTerm (Var x) xt)
+      Just (xt, xs) -> do bidiExpected xt q t "A variable from the environment has an unexpected type."
+                          return (mkVar x xt xs)
       Nothing ->
         fail $ "Unbound identifier: " ++ show x
 
   -- product
-  Pi x a b -> debugPush "typecheckPush Fun" t q $ do
-    a'@(MkTypedTerm _ s1) <- typecheckPull a
-    s1' <- normalizeToSort s1 a (text "in product type") (text "as domain")
+  Pi name annotation body _ -> debugPush "typecheckPush Fun" t q $ do
+    -- check annotation
+    annotation <- typecheckPull annotation
+    s1 <- normalizeToSort (typeOf annotation) annotation (text "in product type") (text "as domain")
+    domain <- liftEval (eval annotation)
 
-    safebind x a' b $ \newx newb -> do
-      newb'@(MkTypedTerm _ s2) <- typecheckPull newb
-      s2' <- normalizeToSort s2 newb (text "in product type") (text "as codomain")
+    -- check body
+    safebind name domain (Just s1) body $ \name body -> do
+      body <- typecheckPull body
+      s2 <- normalizeToSort (typeOf body) body (text "in product type") (text "as codomain")
 
+      -- check language support
       pts <- asks optInstance
-      s3 <- prettyRelations pts s1' s2'
-      return (MkTypedTerm (Pi newx a' newb') s3)
+      s3 <- prettyRelations pts s1 s2
+      let s4 = axioms pts s3
+
+      -- construct result
+      return (mkSortedPi name annotation body (Just s2) (Constant s3) s4)
 
   -- application
-  App f a -> debugPush "typecheckPush App" t q $ do
-    -- 3 Things to do here:
-    -- 1. Pull the function type and get a result type.
-    -- 2. Push the domain of the function type (A) into the argument (a).
-    -- 3. In the codomain (R) substitute the formal parameter (a') for the actual argument value (a) and check that this matches the expected type (B).
+  App operator operand -> debugPush "typecheckPush App" t q $ do
+    -- check operator
+    operator <- typecheckPull operator
+    PiType name domain range sort <- normalizeToPi (typeOf operator) operator (text "in application") (text "operator")
 
-    -- Γ ⊢ f  pull  (Pi a' A -> R)    Γ ⊢ a  push  A    R[a'/a] ≡β B
-    -- -------------------------------------------------------------
-    -- Γ ⊢ f a  push  B
+    -- check operand
+    operand <- typecheckPush operand domain
 
-    -- 1.
-    typedFunction <- typecheckPull f
-    case structure' (typeOf typedFunction) of
-      Pi a' typeA typeR -> do
-        -- 2.
-        typedArgument <- typecheckPush a typeA
-        -- 3. (B is actually the pushed term q)
-        bidiExpected (typedSubst typeR a' typedArgument) q t "The function has an unexpected codomain."
-        return (MkTypedTerm (App typedFunction typedArgument) q)
-      _ -> do
-        prettyFail $ text "In type checking a push application, found the term in function position to not be of a function type."
-                  $$ text "Term in function position:" <+> pretty 0 f
-                  $$ text "Found type:" <+> pretty 0 (typeOf typedFunction)
-                  $$ text "This might or might not be a bug in the type checker."
+    -- check that expected type matches actual type
+    env <- getEnvironment
+    result <- liftEval $ do
+      operand <- eval operand
+      open range operand
+    bidiExpected result q t "The function has an unexpected codomain."
+
+    -- construct result
+    return (mkApp operator operand q (Just sort))
 
   -- abstraction
-  Lam declaredName declaredDomain body -> debugPush "typecheckPush Abs" t q $ case structure' declaredDomain of
-    -- Domain is not actually declared but needs to be inferred.
-    Infer n -> do
-      case structure' q of
-        expectedFunctionType@(Pi expectedName expectedDomain expectedCodomain) -> do
-          let argumentType = expectedDomain
-          safebind declaredName argumentType body $ \newArgumentName newBody -> do
-            typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody (typedSubst expectedCodomain expectedName (MkTypedTerm (Var newArgumentName) expectedDomain))
-            return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
-                                (MkTypedTerm (Pi newArgumentName expectedDomain newCodomain) kind))
-        _ -> prettyFail $ text "Expected a function type for" <+> pretty 0 t <+> text "but got" <+> pretty 0 q
-    -- Domain is declared, check that it is correct.
-    _       -> do
-      env <- getEnvironment
-      argumentType <- typecheckPull (nbe env declaredDomain)
-      -- Check whether we actually expect a lambda abstraction, that is a Pi-type. Fail immediately otherwise.
-      case structure' q of
-        expectedFunctionType@(Pi expectedName expectedDomain expectedCodomain) -> do
-          -- Need to check two things here:
-          --  1. does the declared argument type match the expected domain
-          bidiExpected argumentType expectedDomain t "In a lambda abstraction, the declared argument type does not match the expected domain."
-          --  2. does the body have the type of the expected codomain (typecheckPush in extended environment)
-          safebind declaredName argumentType body $ \newArgumentName newBody -> do
-            typedNewBody@(MkTypedTerm _ newCodomain@(MkTypedTerm _ kind)) <- typecheckPush newBody (typedSubst expectedCodomain expectedName (MkTypedTerm (Var newArgumentName) expectedDomain))
-            -- Both succeed, so return the term (=lambda) with its type (=pi).
-            -- This is a bit more cumbersome than expected, we actually want to just return a (MkTypedTerm t q).
-            -- But the returned t is t with a new argument name and body,
-            -- and the returned q is q with a new argument name and new codomain.
-            return (MkTypedTerm (Lam newArgumentName argumentType typedNewBody)
-                                (MkTypedTerm (Pi newArgumentName expectedDomain newCodomain) kind))
-        _ -> prettyFail $ text "Expected" <+> pretty 0 q <+> text "but found" <+> pretty 0 t
+  Lam name annotation body -> debugPush "typecheckPush Abs" t q $ do
+    -- check that expected type is a function type
+    (domain, range) <- case q of
+      PiType _ domain range _ -> return (domain, range)
+      _ -> do
+        expected <- liftEval (reify q)
+        prettyFail $ text "Expected a function type for" <+> pretty 0 t <+> text "but got" <+> pretty 0 expected
 
+    -- infer annotation if missing
+    annotation <- case structure' annotation of
+      Infer _ -> liftEval (reify domain)
+      _ -> return annotation
+
+    -- check annotation
+    annotation <- typecheckPull annotation
+    s1 <- normalizeToSort (typeOf annotation) annotation (text "in lambda abstraction") (text "as domain")
+    annotatedDomain <- liftEval (eval annotation)
+    bidiExpected annotatedDomain domain t
+      "In a lambda abstraction, the declared argument type does not match the expected domain."
+  
+    -- check body
+    safebind name domain (Just s1) body $ \name body -> do
+      result <- liftEval (open range (ResidualVar name))
+      body <- typecheckPush body result
+      return (mkLam name annotation body q (sortOf body))
 
   -- Int
   Int i -> debugPush "typecheckPush Int" t q $ do
-    int' <- typecheckPull (mkConst int)
-    bidiExpected int' q t "An integer literal is not expected to be one."
-    return (MkTypedTerm (Int i) int')
-
-  -- IntOp
-  IntOp opFunction t1 t2 -> debugPush "typecheckPush IntOp" t q $ do
+    -- construct integer type
     integerType <- typecheckPull (mkConst int)
+    integerType <- liftEval (eval integerType)
+    pts <- asks optInstance
+    let integerSort = axioms pts int
+    
+    -- check that expected type is integer type
+    bidiExpected integerType q t "An integer literal is not expected to be one."
+
+    -- construct result
+    return (mkInt i integerType integerSort)
+ 
+  -- IntOp
+  IntOp op t1 t2 -> debugPush "typecheckPush IntOp" t q $ do
+    -- construct integer type
+    integerType <- typecheckPull (mkConst int)
+    integerType <- liftEval (eval integerType)
+    pts <- asks optInstance
+    let integerSort = axioms pts int
+
+    -- check that expected type is integer type
     bidiExpected integerType q t "An integer operation is not expected to be one."
-    typedT1 <- typecheckPush t1 integerType
-    typedT2 <- typecheckPush t2 integerType
-    return (MkTypedTerm (IntOp opFunction typedT1 typedT2) integerType)
+
+    -- check operands
+    t1 <- typecheckPush t1 integerType
+    t2 <- typecheckPush t2 integerType
+
+    -- construct result
+    return (mkIntOp op t1 t2 integerType integerSort)
 
   -- IfZero
   IfZero t1 t2 t3 -> debugPush "typecheckPush IfZero" t q $ do
+    -- construct integer type
     integerType <- typecheckPull (mkConst int)
-    t1'@(MkTypedTerm _ tt1) <- typecheckPush t1 integerType
-    normalizeToInt tt1 t1' (text "in if0") (text "condition")
-    t2'@(MkTypedTerm _ tt2) <- typecheckPush t2 q
-    t3'@(MkTypedTerm _ tt3) <- typecheckPush t3 q
-    normalizeToSame tt2 tt3 t2' t3' (text "in if0") (text "then branch") (text "else branch")
-    return (MkTypedTerm (IfZero t1' t2' t3') tt2)
+    integerType <- liftEval (eval integerType)
+
+    -- check condition
+    t1 <- typecheckPush t1 integerType
+
+    -- check operands
+    t2 <- typecheckPush t2 q
+    t3 <- typecheckPush t3 q
+
+    -- construct result
+    return (mkIfZero t1 t2 t3 q (sortOf t2))
 
   -- Position information
   Pos p t -> do
@@ -463,7 +496,10 @@ typecheckPush t q = case structure t of
     return x
 
   Infer _ -> do
-    prettyFail $ text "Attempted to push a type on an underscore. Most likely there is an underscore at a position where type inference is impossible. The offending underscore is" <+> pretty 0 t <+> text "which is supposed to have type" <+> pretty 0 q
+    expected <- liftEval (reify q)
+    prettyFail $ text "Attempted to push a type on an underscore. Most likely there is an underscore at a position where type inference is impossible. The offending underscore is" <+> pretty 0 t <+> text "which is supposed to have type" <+> pretty 0 expected
 
-typecheckPushUntyped term untypedExpectedType =
-  typecheckPush term =<< typecheckPull untypedExpectedType
+typecheckPushUntyped term expected = do
+  expected <- typecheckPull expected
+  expected <- liftEval (eval expected)
+  typecheckPush term expected

@@ -1,5 +1,8 @@
 module PTS.Syntax.Diff where
 
+import Control.Arrow ((***))
+
+import Data.List (intersperse)
 import Data.Set (Set)
 import qualified Data.Set as Set
 
@@ -23,47 +26,47 @@ allEqual = all isEqual where
   isEqual (DEqual _) = True
   isEqual _ = False
 
-diff :: Term -> Term -> Diff
+diff :: Structure t => t -> t -> Diff
 diff t1 t2 = case (structure t1, structure t2) of
   (Int n1, Int n2)
-    |   n1 == n2   ->  DEqual t1
-    |   otherwise  ->  DDifferent t1 t2
+    |   n1 == n2   ->  DEqual (strip t1)
+    |   otherwise  ->  DDifferent (strip t1) (strip t2)
 
   (IntOp op1 x1 y1, IntOp op2 x2 y2)
     |   op1 == op2 ->  let x = diff x1 x2; y = diff y1 y2 in
-                         if allEqual [x, y] then DEqual t1 else DIntOp op1 x y
-    |   otherwise  ->  DDifferent t1 t2
+                         if allEqual [x, y] then DEqual (strip t1) else DIntOp op1 x y
+    |   otherwise  ->  DDifferent (strip t1) (strip t2)
 
   (IfZero n1 x1 y1, IfZero n2 x2 y2)
     ->  let n = diff n1 n2; x = diff x1 x2; y = diff y1 y2 in
-          if allEqual [n, x, y] then DEqual t1 else DIfZero n x y
+          if allEqual [n, x, y] then DEqual (strip t1) else DIfZero n x y
 
   (Const c1, Const c2)
-    |   c1 == c2   ->  DEqual t1
-    |   otherwise  ->  DDifferent t1 t2
+    |   c1 == c2   ->  DEqual (strip t1)
+    |   otherwise  ->  DDifferent (strip t1) (strip t2)
 
   (Var v1, Var v2)
-    |   v1 == v2   ->  DEqual t1
-    |   otherwise  ->  DDifferent t1 t2
+    |   v1 == v2   ->  DEqual (strip t1)
+    |   otherwise  ->  DDifferent (strip t1) (strip t2)
 
   (App f1 a1, App f2 a2)
     ->  let f = diff f1 f2; a = diff a1 a2 in
-          if allEqual [f, a] then DEqual t1 else DApp f a
+          if allEqual [f, a] then DEqual (strip t1) else DApp f a
 
   (Lam n1 q1 b1, Lam n2 q2 b2)
-    ->  let  (n, b1', b2') = freshCommonVar n1 n2 b1 b2
+    ->  let  (n, b1', b2') = freshCommonVar n1 n2 (strip b1) (strip b2)
              q = diff q1 q2
              b = diff b1' b2' in
           if allEqual [q, b]
-            then DEqual (mkLam n q1 b1')
+            then DEqual (mkLam n (strip q1) b1')
             else DLam n q b
 
-  (Pi n1 q1 b1, Pi n2 q2 b2)
-    ->  let  (n, b1', b2') = freshCommonVar n1 n2 b1 b2
+  (Pi n1 q1 b1 _, Pi n2 q2 b2 _)
+    ->  let  (n, b1', b2') = freshCommonVar n1 n2 (strip b1) (strip b2)
              q = diff q1 q2
              b = diff b1' b2' in
           if allEqual [q, b]
-            then DEqual (mkPi n q1 b1')
+            then DEqual (mkPi n (strip q1) b1')
             else DPi n q b (n `Set.member` freevars b1') (n `Set.member` freevars b2')
 
   (Pos p t, _)
@@ -73,7 +76,7 @@ diff t1 t2 = case (structure t1, structure t2) of
     ->  diff t1 t
 
   (_, _)
-    ->  DDifferent t1 t2
+    ->  DDifferent (strip t1) (strip t2)
 
 showToplevel :: Int -> Term -> String
 showToplevel p t = singleLine (pretty p t)
@@ -85,6 +88,20 @@ showNothing p t = if null (drop 5 s) then s else "..." where
 prio :: Int -> Int -> (String, String) -> (String, String)
 prio m n (x, y) | m < n = ("(" ++ x ++ ")", "(" ++ y ++ ")")
                 | otherwise = (x, y)
+
+type LamChain = [(Name, Diff)]
+
+findLamChain :: Diff -> (LamChain, Diff)
+findLamChain (DLam n q b) = ((n, q) : args, body) where
+  (args, body) = findLamChain b
+findLamChain x = ([], x)
+
+showLamChain :: LamChain -> (String, String)
+showLamChain = (concat *** concat) . unzip . intersperse (" ", " ") . map showElement where
+  showElement (name, DEqual _) = (show name, show name)
+  showElement (name, d) = ("(" ++ show name ++ " : " ++ q1 ++ ")",
+                           "(" ++ show name ++ " : " ++ q2 ++ ")") where
+    (q1, q2) = showDiff 0 d
 
 showDiff :: Int -> Diff -> (String, String)
 
@@ -117,10 +134,11 @@ showDiff p (DApp f a) = prio 2 p
   (a1, a2) = showDiff 3 a
 
 showDiff p (DLam n q b) = prio 0 p
-                          ("lambda " ++ show n ++ " : " ++ q1 ++ " . " ++ b1,
-                           "lambda " ++ show n ++ " : " ++ q2 ++ " . " ++ b2) where
-  (q1, q2) = showDiff 0 q
-  (b1, b2) = showDiff 0 b
+                          ("lambda " ++ q1 ++ " . " ++ b1,
+                           "lambda " ++ q2 ++ " . " ++ b2) where
+  (chain, body) = findLamChain b
+  (q1, q2) = showLamChain ((n, q) : chain)
+  (b1, b2) = showDiff 0 body
 
 showDiff p (DPi n q b True True) = prio 0 p
                          ("Pi " ++ show n ++ " : " ++ q1 ++ " . " ++ b1,

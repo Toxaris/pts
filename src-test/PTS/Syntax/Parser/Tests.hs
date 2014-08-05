@@ -1,6 +1,6 @@
 module PTS.Syntax.Parser.Tests where
 
-import Test.Framework (testGroup)
+import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.HUnit
 import Test.HUnit (assertEqual, assertFailure)
 
@@ -9,6 +9,7 @@ import PTS.Syntax
 
 parse text = parseTerm "PTS.Syntax.Parser.Tests" text :: Either [PTSError] PTS.Syntax.Term
 
+testParser :: String -> Term -> Test
 testParser text term = testCase text $ case parse text of
   Right parsedTerm ->  assertEqual "Unexpected parse result." (showPretty term) (showPretty parsedTerm)
   Left error -> assertFailure $ "Unexpected parse error: " ++ show error
@@ -34,9 +35,9 @@ tests
      [  testParser "Int" (mkConst int)
      ,  testParser "*" (mkConst star)
      ,  testParser "**" (mkConst box)
-     ,  testParser "x" x
-     ,  testParser "y" y
-     ,  testParser "z" z
+     ,  testParser "x" (mkVar x)
+     ,  testParser "y" (mkVar y)
+     ,  testParser "z" (mkVar z)
      ,  testParser "x y" (mkApp (mkVar x) (mkVar y))
      ,  testParser "x y z" (mkApp (mkApp (mkVar x) (mkVar y)) (mkVar z))
      ,  testParser "x (y z)" (mkApp (mkVar x) (mkApp (mkVar y) (mkVar z)))
