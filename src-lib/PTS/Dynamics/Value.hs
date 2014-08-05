@@ -20,7 +20,7 @@ import PTS.Syntax.Constants (C)
 import PTS.Syntax.Names (Name)
 import PTS.Syntax.Term (BinOp)
 
-data ValueFunction m = ValueFunction (Value m -> m (Value m))
+newtype ValueFunction m = ValueFunction (Value m -> m (Value m))
 
 open :: ValueFunction m -> Value m -> m (Value m)
 open (ValueFunction f) v = f v
