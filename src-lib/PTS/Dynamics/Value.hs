@@ -11,8 +11,6 @@ module PTS.Dynamics.Value
     , ResidualApp
     )
   , ValueFunction
-    ( ValueFunction
-    )
   , abstract
   , open
   ) where
