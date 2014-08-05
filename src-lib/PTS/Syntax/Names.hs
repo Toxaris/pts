@@ -43,7 +43,7 @@ instance Read Name where
     plainName text rest = (PlainName first (reverse text), rest)
 
     indexName text index (c:cs) | isDigit c = indexName text (c : index) cs
-    indexName text index (c:cs) | isAlphaNum c = plainName (index ++ text) cs
+    indexName text index (c:cs) | isAlphaNum c = plainName (c : index ++ text) cs
     indexName text index rest = (IndexName (read (reverse index)) first (reverse text), rest)
 
 
