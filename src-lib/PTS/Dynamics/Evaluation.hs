@@ -32,22 +32,22 @@ equivTerm env t1 t2 = runEval env $ do
   equiv v1 v2
 
 equiv :: Value Eval -> Value Eval -> Eval Bool
-equiv (Function n v1 (ValueFunction f)) (Function _ v1' (ValueFunction f')) = do
+equiv (Function n v1 f) (Function _ v1' f') = do
   r1 <- equiv v1 v1'
   n'   <- fresh n
-  v2   <- f   (ResidualVar n')
-  v2'  <- f'  (ResidualVar n')
+  v2   <- open f   (ResidualVar n')
+  v2'  <- open f'  (ResidualVar n')
   r2 <- equiv v2 v2'
   return (r1 && r2)
 equiv (Number n) (Number n') = do
   return (n == n')
 equiv (Constant c) (Constant c') = do
   return (c == c')
-equiv (PiType n v1 (ValueFunction f) s1) (PiType _ v1' (ValueFunction f') s2) = do
+equiv (PiType n v1 f s1) (PiType _ v1' f' s2) = do
   r1   <- equiv v1 v1'
   n'   <- fresh n
-  v2   <- f   (ResidualVar n')
-  v2'  <- f'  (ResidualVar n')
+  v2   <- open f   (ResidualVar n')
+  v2'  <- open f'  (ResidualVar n')
   r2   <- equiv v2 v2'
   return (r1 && r2 && s1 == s2)
 equiv (ResidualIntOp op v1 v2) (ResidualIntOp op' v1' v2') = do
@@ -83,20 +83,20 @@ fresh n = do
   return n'
 
 reify :: Value Eval -> Eval Term
-reify (Function n v1 (ValueFunction f)) = do
+reify (Function n v1 f) = do
   e1 <- reify v1
   n' <- fresh n
-  v2 <- f (ResidualVar n')
+  v2 <- open f (ResidualVar n')
   e2 <- reify v2
   return (mkLam n' e1 e2)
 reify (Number n) = do
   return (mkInt n)
 reify (Constant c) = do
   return (mkConst c)
-reify (PiType n v1 (ValueFunction f) s) = do
+reify (PiType n v1 f s) = do
   e1 <- reify v1
   n' <- fresh n
-  v2 <- f (ResidualVar n')
+  v2 <- open f (ResidualVar n')
   e2 <- reify v2
   return (mkSortedPi n' e1 e2 (Just s))
 reify (ResidualIntOp op v1 v2) = do
@@ -120,7 +120,7 @@ evalTerm env t = runEval env $ do
   eval t
 
 apply :: Monad m => Value m -> Value m -> m (Value m)
-apply (Function n t (ValueFunction f)) v2 = f v2
+apply (Function n t f) v2 = open f v2
 apply v1 v2 = return (ResidualApp v1 v2)
 
 eval :: Structure t => t -> Eval (Value Eval)
