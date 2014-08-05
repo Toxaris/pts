@@ -265,7 +265,7 @@ typecheckPull t = case structure t of
     -- construct result
     result <- liftEval $ do
       operand <- eval operand
-      callFunction range operand
+      open range operand
     return (mkApp operator operand result (Just kind))
 
   -- abstraction
@@ -407,7 +407,7 @@ typecheckPush t q = case structure t of
     env <- getEnvironment
     result <- liftEval $ do
       operand <- eval operand
-      callFunction range operand
+      open range operand
     bidiExpected result q t "The function has an unexpected codomain."
 
     -- construct result
@@ -436,7 +436,7 @@ typecheckPush t q = case structure t of
   
     -- check body
     safebind name domain (Just s1) body $ \name body -> do
-      result <- liftEval (callFunction range (ResidualVar name))
+      result <- liftEval (open range (ResidualVar name))
       body <- typecheckPush body result
       return (mkLam name annotation body q (sortOf body))
 

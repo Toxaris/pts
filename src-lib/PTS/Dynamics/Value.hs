@@ -13,7 +13,7 @@ module PTS.Dynamics.Value
   , ValueFunction
     ( ValueFunction
     )
-  , callFunction
+  , open
   ) where
 
 import PTS.Syntax.Constants (C)
@@ -22,8 +22,8 @@ import PTS.Syntax.Term (BinOp)
 
 data ValueFunction m = ValueFunction (Value m -> m (Value m))
 
-callFunction :: ValueFunction m -> Value m -> m (Value m)
-callFunction (ValueFunction f) v = f v
+open :: ValueFunction m -> Value m -> m (Value m)
+open (ValueFunction f) v = f v
 
 instance Show (ValueFunction m) where
   show t = "<function>"

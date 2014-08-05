@@ -4,7 +4,7 @@ module PTS.Dynamics
   , Module (..)
     -- * Functions
   , ValueFunction
-  , callFunction
+  , open
   , close
     -- * Binding
   , Bindings
