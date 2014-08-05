@@ -23,7 +23,10 @@ runEval env (Eval p) = evalState (runEnvironmentT p env) (envToNamesMap env)
 close :: Name -> Value Eval -> Maybe C -> Value Eval -> Eval (ValueFunction Eval)
 close name typ sort value = do
   term <- reify value
-  return (ValueFunction (\arg -> withEnvironment [] $ bind name (Binding False arg typ sort) $ eval term))
+  abstract (\arg -> do
+    withEnvironment [] $ do
+      bind name (Binding False arg typ sort) $ do
+        eval term)
 
 equivTerm :: Bindings Eval -> TypedTerm Eval -> TypedTerm Eval -> Bool
 equivTerm env t1 t2 = runEval env $ do
@@ -159,11 +162,19 @@ eval t = case structure t of
   Lam n e1 e2 -> do
     v1 <- eval e1
     env <- getEnvironment
-    return (Function n v1 (ValueFunction (\v -> withEnvironment env $ bind n (Binding False v v1 Nothing) $ eval e2)))
+    f <- abstract (\v -> do
+      withEnvironment env $ do
+        bind n (Binding False v v1 Nothing) $ do
+          eval e2)
+    return (Function n v1 f)
   Pi n e1 e2 (Just s) -> do
     v1 <- eval e1
     env <- getEnvironment
-    return (PiType n v1 (ValueFunction (\v -> withEnvironment env $ bind n (Binding False v v1 Nothing) $ eval e2)) s)
+    f <- abstract (\v -> do
+      withEnvironment env $ do
+        bind n (Binding False v v1 Nothing) $ do
+          eval e2)
+    return (PiType n v1 f s)
   Pos _ e -> do
     eval e
   Infer _ -> error "Encountered type inference marker during evaluation. You either have an underscore in your code that cannnot be decided or you have discovered a bug in the interpreter."
