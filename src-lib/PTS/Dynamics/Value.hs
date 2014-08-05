@@ -10,7 +10,7 @@ module PTS.Dynamics.Value
     , ResidualVar
     , ResidualApp
     )
-  , ValueFunction
+  , Function
   , abstract
   , open
   ) where
@@ -19,22 +19,22 @@ import PTS.Syntax.Constants (C)
 import PTS.Syntax.Names (Name)
 import PTS.Syntax.Term (BinOp)
 
-newtype ValueFunction m = ValueFunction (Value m -> m (Value m))
+newtype Function m = MkFunction (Value m -> m (Value m))
 
-open :: ValueFunction m -> Value m -> m (Value m)
-open (ValueFunction f) v = f v
+open :: Function m -> Value m -> m (Value m)
+open (MkFunction f) v = f v
 
-abstract :: Monad m => (Value m -> m (Value m)) -> m (ValueFunction m)
-abstract f = return (ValueFunction f)
+abstract :: Monad m => (Value m -> m (Value m)) -> m (Function m)
+abstract f = return (MkFunction f)
 
-instance Show (ValueFunction m) where
+instance Show (Function m) where
   show t = "<function>"
 
 data Value m
-  = Function  Name (Value m) (ValueFunction m)
+  = Function  Name (Value m) (Function m)
   | Number    Integer
   | Constant  C
-  | PiType    Name (Value m) (ValueFunction m) C
+  | PiType    Name (Value m) (Function m) C
   | ResidualIntOp  BinOp (Value m) (Value m)
   | ResidualIfZero (Value m) (Value m) (Value m)
   | ResidualVar    Name

@@ -20,7 +20,7 @@ newtype Eval a = Eval (EnvironmentT Name (Binding Eval) (State NamesMap) a)
 runEval :: Bindings Eval -> Eval a -> a
 runEval env (Eval p) = evalState (runEnvironmentT p env) (envToNamesMap env)
 
-close :: Name -> Value Eval -> Maybe C -> Value Eval -> Eval (ValueFunction Eval)
+close :: Name -> Value Eval -> Maybe C -> Value Eval -> Eval (Function Eval)
 close name typ sort value = do
   term <- reify value
   abstract (\arg -> do

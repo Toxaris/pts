@@ -3,7 +3,7 @@ module PTS.Dynamics
     Value (..)
   , Module (..)
     -- * Functions
-  , ValueFunction
+  , Function
   , abstract
   , open
   , close
