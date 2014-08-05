@@ -13,6 +13,7 @@ module PTS.Dynamics.Value
   , ValueFunction
     ( ValueFunction
     )
+  , abstract
   , open
   ) where
 
@@ -24,6 +25,9 @@ newtype ValueFunction m = ValueFunction (Value m -> m (Value m))
 
 open :: ValueFunction m -> Value m -> m (Value m)
 open (ValueFunction f) v = f v
+
+abstract :: Monad m => (Value m -> m (Value m)) -> m (ValueFunction m)
+abstract f = return (ValueFunction f)
 
 instance Show (ValueFunction m) where
   show t = "<function>"

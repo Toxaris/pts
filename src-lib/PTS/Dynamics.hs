@@ -4,6 +4,7 @@ module PTS.Dynamics
   , Module (..)
     -- * Functions
   , ValueFunction
+  , abstract
   , open
   , close
     -- * Binding
