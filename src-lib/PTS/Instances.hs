@@ -16,6 +16,8 @@ data PTS = PTS
 
 -- some specific pure type systems
 
+-- By convention, equations for sorts, axioms, relations are sorted in lexicographic ascending order of constants.
+
 simplytyped :: PTS
 simplytyped = lama
 
@@ -313,10 +315,13 @@ u = PTS sorts axioms relations name description where
   axioms (C _) = Nothing
 
   relations (C 1) (C 1) = Just star
+
   relations (C 2) (C 1) = Just star
   relations (C 2) (C 2) = Just box
-  relations (C 3) (C 2) = Just box
+
   relations (C 3) (C 1) = Just star
+  relations (C 3) (C 2) = Just box
+
   relations (C _) (C _) = Nothing
 
   name = [ "systemu"
@@ -341,15 +346,17 @@ uu = PTS sorts axioms relations name description where
   axioms (C _) = Nothing
 
   relations (C 1) (C 1) = Just star
-  relations (C 2) (C 1) = Just star
-  relations (C 3) (C 1) = Just star
-  relations (C 4) (C 1) = Just star
 
+  relations (C 2) (C 1) = Just star
   relations (C 2) (C 2) = Just box
+
+  relations (C 3) (C 1) = Just star
   relations (C 3) (C 2) = Just box
   relations (C 3) (C 3) = Just triangle
-  relations (C 4) (C 3) = Just triangle
+
+  relations (C 4) (C 1) = Just star
   relations (C 4) (C 2) = Just box
+  relations (C 4) (C 3) = Just triangle
 
   relations (C _) (C _) = Nothing
 
