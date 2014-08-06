@@ -179,7 +179,7 @@ msgNotPi context info t t'
 
 prettyRelations pts s1 s2 =
   maybe
-    (prettyFail $ let s1t = pretty 0 s1; s2t = pretty 0 s2 in text "in this PTS you can't abstract on expressions of sort" <+> s1t <+> text "in expressions of sort" <+> s2t <+> text ": no relation" <+> s1t <+> text ":" <+> s2t)
+    (prettyFail $ let s1t = pretty 0 s1; s2t = pretty 0 s2 in text "in this PTS you can't abstract on expressions of sort" <+> s1t <+> text "in expressions of sort" <+> s2t <+> text ": no relation (" <+> s1t <+> text "," <+> s2t <+> text ")")
     return
     (relations pts s1 s2)
 
