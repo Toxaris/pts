@@ -1,0 +1,12 @@
+#!/usr/bin/env pts --instance u
+
+All error messages for these terms are confusing for different reasons, though
+it seems that all terms are indeed invalid.
+
+> accepted : Pi (s : **) (t : *). * = lambda (s : **) (t : *). t;
+> underDiscussion = lambda (s : ***) (s : *). s;
+> invalid1 = lambda (s : **) . s;
+> invalid2 (s : **) : ** = s;
+> foo2 = lambda (s : **) . **;
+> foo4 = Pi (s : **) . *;
+> foo5 = Pi (s : **) . *;
