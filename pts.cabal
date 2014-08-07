@@ -70,6 +70,7 @@ Library
                        PTS.Syntax.Pretty
                        PTS.Syntax.Statement
                        PTS.Syntax.Substitution
+                       PTS.Syntax.Telescope
                        PTS.Syntax.Term
                        PTS.Transform
                        Control.Monad.Assertions

@@ -118,7 +118,7 @@ processStmt (Term t) = recover () $ do
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
 
 processStmt (Bind n args Nothing body) = recover () $ do
-  let t = desugarArgs mkLam args body
+  let t = foldTelescope mkLam args body
   pts <- asks (optInstance)
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
@@ -132,8 +132,8 @@ processStmt (Bind n args Nothing body) = recover () $ do
   putBindings ((n, Binding False v (typeOf t) (sortOf t)) : env)
 
 processStmt (Bind n args (Just body') body) = recover () $ do
-  let t   =  desugarArgs mkLam args body
-  let t'  =  desugarArgs mkPi args body'
+  let t   =  foldTelescope mkLam args body
+  let t'  =  foldTelescope mkPi args body'
   pts <- asks (optInstance)
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
