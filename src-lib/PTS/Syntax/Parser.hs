@@ -34,7 +34,7 @@ import PTS.Syntax.Term
      ---------------------
 
 -- left-recursion handling
-term simple rec pos msg = result where
+term simple rec pos = result where
   result = combine <$> getPosition <*> simple <*> many ((,) <$> rec <*> getPosition)
   combine p = foldl' (\x (f, q) -> setPos pos p (f x) q)
 
@@ -64,7 +64,7 @@ setPos f p1 x p2 = f (Position (sourceName p1) (sourceLine p1) (sourceLine p2) (
 
 intop n f x = mkIntOp f <$> (keyword n *> x) <*> (x <?> "second argument of '" ++ n ++ "'")
 
-expr = term simple rec mkPos "expression" where
+expr = term simple rec mkPos where
   simple = withPos mkPos $ asum
     [ termParens expr
     , brackets expr
