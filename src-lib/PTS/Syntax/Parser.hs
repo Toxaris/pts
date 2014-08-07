@@ -117,6 +117,7 @@ stmt = withPos StmtPos $ asum
 
 stmts = many (optional pragma *> stmt)
 
+telescope :: Parser (Telescope Term)
 telescope = many (parens argGroup)
 
 inferredOrExplicitType = (colon1 *> expr) <|> (mkInfer <$> nextInfer)
@@ -128,6 +129,7 @@ argGroupOrNames = asum
   , (,) <$> names <*> (mkInfer <$> nextInfer)
   ]
 
+argsOrArgGroup :: Parser (Telescope Term)
 argsOrArgGroup = asum
   [ do ns <- names
        asum
