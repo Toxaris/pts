@@ -52,7 +52,7 @@ module PTS.Syntax
   , typedHandlePos
     -- ** Telescopes
   , Telescope
-  , desugarArgs
+  , foldTelescope
     -- ** Statements
   , Stmt (..)
     -- ** Files

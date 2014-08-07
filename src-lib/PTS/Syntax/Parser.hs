@@ -102,7 +102,7 @@ expr = term simple rec mkPos where
 -- parse abstractions with multiple parameters, like this:
 -- lambda (x1 : e1) (x2 x3 : e2) . e
 multAbs :: (Name -> Term -> Term -> Term) -> Parser a -> Parser Term
-multAbs constructor parser = desugarArgs constructor <$> (parser *> argsOrArgGroup) <*> (dot *> expr)
+multAbs constructor parser = foldTelescope constructor <$> (parser *> argsOrArgGroup) <*> (dot *> expr)
 
 unquote = char '$' *> asum
   [ var mkVar ident
