@@ -30,6 +30,7 @@ import PTS.Syntax.Constants
 import PTS.Syntax.File
 import PTS.Syntax.Names
 import PTS.Syntax.Statement
+import PTS.Syntax.Telescope
 import PTS.Syntax.Term
 
      ---------------
