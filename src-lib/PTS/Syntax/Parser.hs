@@ -12,14 +12,17 @@ import Data.Char
 import Data.Either
 import Data.Eq
 import Data.Foldable
+import Data.Functor.Identity
 import Data.List ((\\))
 
 import System.IO
 
-import Text.ParserCombinators.Parsec hiding ((<|>))
+import Text.ParserCombinators.Parsec hiding (Parser, (<|>))
 import qualified Text.ParserCombinators.Parsec as Parsec
 import Text.ParserCombinators.Parsec.Error
 import Text.ParserCombinators.Parsec.Pos (initialPos)
+
+import Text.Parsec (ParsecT)
 
 import PTS.Error
 import PTS.Syntax.Algebra
@@ -29,11 +32,19 @@ import PTS.Syntax.Names
 import PTS.Syntax.Statement
 import PTS.Syntax.Term
 
+     ---------------
+    -- PARSER TYPE --
+     ---------------
+
+type UserState = (SourcePos, [Integer], [Integer])
+type Parser = ParsecT String UserState Identity
+
      ---------------------
     -- PARAMETRIC PARSER --
      ---------------------
 
 -- left-recursion handling
+term :: Parser a -> Parser (a -> b) -> (Position -> b -> a) -> Parser a
 term simple rec pos = result where
   result = combine <$> getPosition <*> simple <*> many ((,) <$> rec <*> getPosition)
   combine p = foldl' (\x (f, q) -> setPos pos p (f x) q)
@@ -89,6 +100,7 @@ expr = term simple rec mkPos where
 
 -- parse abstractions with multiple parameters, like this:
 -- lambda (x1 : e1) (x2 x3 : e2) . e
+multAbs :: (Name -> Term -> Term -> Term) -> Parser a -> Parser Term
 multAbs constructor parser = desugarArgs constructor <$> (parser *> argsOrArgGroup) <*> (dot *> expr)
 
 unquote = char '$' *> asum
