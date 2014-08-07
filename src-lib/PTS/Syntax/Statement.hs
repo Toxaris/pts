@@ -4,9 +4,8 @@ module PTS.Syntax.Statement
 
 import PTS.Error (Position)
 import PTS.Syntax.Names (Name, ModuleName)
+import PTS.Syntax.Telescope (Telescope)
 import PTS.Syntax.Term (Term)
-
-type Telescope t = [([Name], t)]
 
 data Stmt
   = Bind Name (Telescope Term) (Maybe Term) Term
