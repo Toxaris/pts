@@ -33,4 +33,4 @@ This:
 should be the same as this:
 > foo2 : Int -> Int
 >  = lambda x : Int . x;
-
+> assert foo = foo2;
