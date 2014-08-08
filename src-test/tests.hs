@@ -21,4 +21,5 @@ tests =
   ,  testFile True ["examples"] "ChurchNumbers.lpts"
   ,  testFile True ["examples"] "Functions.lpts"
   ,  testFile True ["examples"] "Inference.lpts"
+  ,  testFile True ["examples"] "Syntax.lpts"
   ]

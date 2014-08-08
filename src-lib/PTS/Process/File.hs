@@ -28,8 +28,9 @@ import System.Directory (doesFileExist)
 
 import Text.PrettyPrint.HughesPJ
 
-deliterateLine ('>' : ' ' : line) = ' ' : ' ' : line
-deliterateLine _                  = ""
+isSpaceOrTab c = c == ' ' || c == '\t'
+deliterateLine ('>' : c : line) | isSpaceOrTab c  = ' ' : c : line
+deliterateLine _                                  = ""
 
 deliterate text = do
   flag <- asks optLiterate
