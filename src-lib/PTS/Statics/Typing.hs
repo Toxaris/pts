@@ -129,7 +129,7 @@ msgBodyNoSort context body t
     sep [text "Body:", nest 2 (pretty 0 body)] $$
     sep [text "Type:", nest 2 (pretty 0 t)])
 
-normalizeToSame s' t' s t context info1 info2 = do
+checkIsEquiv s' t' s t context info1 info2 = do
   same <- liftEval (equiv s' t') 
   if same
     then return ()
@@ -339,7 +339,7 @@ typecheckPull t = case structure t of
     -- faster, but the asymmetry seems weird.
     thenBranch <- typecheckPull thenBranch
     elseBranch <- typecheckPull elseBranch
-    normalizeToSame (typeOf thenBranch) (typeOf elseBranch) thenBranch elseBranch
+    checkIsEquiv (typeOf thenBranch) (typeOf elseBranch) thenBranch elseBranch
       (text "in if0") (text "then branch") (text "else branch")
 
     -- construct result
