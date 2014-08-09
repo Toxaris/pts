@@ -103,7 +103,8 @@ debugPush n t q result = do
 
 -- error messages and generic error checking
 
-normalizeToSort t' t context info = do
+normalizeToSort t context info = do
+  let t' = typeOf t
   pts <- asks optInstance
   env <- getEnvironment
 
@@ -237,13 +238,13 @@ typecheckPull t = case structure t of
   Pi name annotation body s -> debug "typecheckPull Fun" t $ do
     -- check annotation
     annotation <- typecheckPull annotation
-    s1 <- normalizeToSort (typeOf annotation) annotation (text "in product type") (text "as domain")
+    s1 <- normalizeToSort annotation (text "in product type") (text "as domain")
     domain <- liftEval (eval annotation)
 
     -- check range
     safebind name domain (Just s1) body $ \name body -> do
       body <- typecheckPull body
-      s2 <- normalizeToSort (typeOf body) body (text "in product type") (text "as codomain")
+      s2 <- normalizeToSort body (text "in product type") (text "as codomain")
 
       -- check language support
       pts <- asks optInstance
@@ -272,7 +273,7 @@ typecheckPull t = case structure t of
   Lam name annotation body -> debug "typecheckPull Abs" t $ do
     -- check annotation
     annotation  <- typecheckPull annotation
-    s1 <- normalizeToSort (typeOf annotation) annotation
+    s1 <- normalizeToSort annotation
             (text "in lambda abstraction")
             (text "as type of" <+> pretty 0 name)
     domain <- liftEval (eval annotation)
@@ -378,13 +379,13 @@ typecheckPush t q = case structure t of
   Pi name annotation body _ -> debugPush "typecheckPush Fun" t q $ do
     -- check annotation
     annotation <- typecheckPull annotation
-    s1 <- normalizeToSort (typeOf annotation) annotation (text "in product type") (text "as domain")
+    s1 <- normalizeToSort annotation (text "in product type") (text "as domain")
     domain <- liftEval (eval annotation)
 
     -- check body
     safebind name domain (Just s1) body $ \name body -> do
       body <- typecheckPull body
-      s2 <- normalizeToSort (typeOf body) body (text "in product type") (text "as codomain")
+      s2 <- normalizeToSort body (text "in product type") (text "as codomain")
 
       -- check language support
       pts <- asks optInstance
@@ -429,7 +430,7 @@ typecheckPush t q = case structure t of
 
     -- check annotation
     annotation <- typecheckPull annotation
-    s1 <- normalizeToSort (typeOf annotation) annotation (text "in lambda abstraction") (text "as domain")
+    s1 <- normalizeToSort annotation (text "in lambda abstraction") (text "as domain")
     annotatedDomain <- liftEval (eval annotation)
     bidiExpected annotatedDomain domain t
       "In a lambda abstraction, the declared argument type does not match the expected domain."
