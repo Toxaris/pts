@@ -170,10 +170,10 @@ liftEval action = do
   env <- getEnvironment
   return (runEval env action)
 
-normalizeToPi ::
+checkIsPi ::
   (MonadReader Options m, MonadErrors Errors m, MonadEnvironment Name (Binding Eval) m) =>
   Value Eval -> TypedTerm Eval -> Doc -> Doc -> m (Value Eval)
-normalizeToPi v t context info = do
+checkIsPi v t context info = do
   case v of
     result@(PiType _ _ _ _) ->
       return result
@@ -267,7 +267,7 @@ typecheckPull t = case structure t of
   App operator operand -> debug "typecheckPull App" t $ do
     -- check operator
     operator <- typecheckPull operator
-    PiType name domain range kind <- normalizeToPi (typeOf operator) operator (text "in application") (text "operator")
+    PiType name domain range kind <- checkIsPi (typeOf operator) operator (text "in application") (text "operator")
 
     -- check operand
     operand <- typecheckPush operand domain
@@ -404,7 +404,7 @@ typecheckPush t q = case structure t of
   App operator operand -> debugPush "typecheckPush App" t q $ do
     -- check operator
     operator <- typecheckPull operator
-    PiType name domain range sort <- normalizeToPi (typeOf operator) operator (text "in application") (text "operator")
+    PiType name domain range sort <- checkIsPi (typeOf operator) operator (text "in application") (text "operator")
 
     -- check operand
     operand <- typecheckPush operand domain
