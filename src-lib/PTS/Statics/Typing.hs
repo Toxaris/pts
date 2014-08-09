@@ -110,6 +110,19 @@ msgNotProperType context info t t'
     sep [text "Term:", nest 2 (pretty 0 t)] $$
     sep [text "Type:", nest 2 (pretty 0 t')])
 
+checkLamBodyHasSort body s1 context = do
+  pts <- asks optInstance
+  s2 <- case sortOf body of
+    Just s | sorts pts s -> return s
+    Just s -> fail "Internal Error."
+    Nothing -> do
+      rangeT <- liftEval . reify . typeOf $ body
+      prettyFail $ msgBodyNoSort (text "in lambda abstraction") body rangeT
+
+  s3 <- prettyRelations pts s1 s2
+  return (s2, s3)
+
+-- adapted from msgNotProperType.
 msgBodyNoSort context body t
   = text "Type Error" <+> context <+> text ": Expected function body to have a sort." $$ nest 2 (
     sep [text "Explanation:", nest 2 (text "The function body does not have a sort, that is, its type has no type. Therefore the this term cannot be used as a function body.")] $$
@@ -280,15 +293,7 @@ typecheckPull t = case structure t of
       let range = typeOf body
 
       -- check language support
-      pts <- asks optInstance
-      s2 <- case sortOf body of
-        Just s | sorts pts s -> return s
-        Just s -> fail "Internal Error."
-        Nothing -> do
-          rangeT <- liftEval $ reify range
-          prettyFail $ msgBodyNoSort (text "in lambda abstraction") body rangeT
-
-      s3 <- prettyRelations pts s1 s2
+      (s2, s3) <- checkLamBodyHasSort body s1 (text "in lambda abstraction")
      
       -- construct result
       range <- liftEval (close name domain (Just s1) range)
