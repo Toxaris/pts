@@ -50,8 +50,9 @@ module PTS.Syntax
   , typeOf
   , sortOf
   , typedHandlePos
-    -- ** Multiple arguments
-  , desugarArgs
+    -- ** Telescopes
+  , Telescope
+  , foldTelescope
     -- ** Statements
   , Stmt (..)
     -- ** Files
@@ -94,6 +95,7 @@ import PTS.Syntax.Parser
 import PTS.Syntax.Pretty
 import PTS.Syntax.Statement
 import PTS.Syntax.Substitution
+import PTS.Syntax.Telescope
 import PTS.Syntax.Term
 
 import PTS.Dynamics.TypedTerm

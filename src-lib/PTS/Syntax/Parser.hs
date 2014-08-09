@@ -12,14 +12,17 @@ import Data.Char
 import Data.Either
 import Data.Eq
 import Data.Foldable
+import Data.Functor.Identity
 import Data.List ((\\))
 
 import System.IO
 
-import Text.ParserCombinators.Parsec hiding ((<|>))
+import Text.ParserCombinators.Parsec hiding (Parser, (<|>))
 import qualified Text.ParserCombinators.Parsec as Parsec
 import Text.ParserCombinators.Parsec.Error
 import Text.ParserCombinators.Parsec.Pos (initialPos)
+
+import Text.Parsec (ParsecT)
 
 import PTS.Error
 import PTS.Syntax.Algebra
@@ -27,14 +30,23 @@ import PTS.Syntax.Constants
 import PTS.Syntax.File
 import PTS.Syntax.Names
 import PTS.Syntax.Statement
+import PTS.Syntax.Telescope
 import PTS.Syntax.Term
+
+     ---------------
+    -- PARSER TYPE --
+     ---------------
+
+type UserState = (SourcePos, [Integer], [Integer])
+type Parser = ParsecT String UserState Identity
 
      ---------------------
     -- PARAMETRIC PARSER --
      ---------------------
 
 -- left-recursion handling
-term simple rec pos msg = result where
+term :: Parser a -> Parser (a -> b) -> (Position -> b -> a) -> Parser a
+term simple rec pos = result where
   result = combine <$> getPosition <*> simple <*> many ((,) <$> rec <*> getPosition)
   combine p = foldl' (\x (f, q) -> setPos pos p (f x) q)
 
@@ -64,7 +76,7 @@ setPos f p1 x p2 = f (Position (sourceName p1) (sourceLine p1) (sourceLine p2) (
 
 intop n f x = mkIntOp f <$> (keyword n *> x) <*> (x <?> "second argument of '" ++ n ++ "'")
 
-expr = term simple rec mkPos "expression" where
+expr = term simple rec mkPos where
   simple = withPos mkPos $ asum
     [ termParens expr
     , brackets expr
@@ -89,7 +101,8 @@ expr = term simple rec mkPos "expression" where
 
 -- parse abstractions with multiple parameters, like this:
 -- lambda (x1 : e1) (x2 x3 : e2) . e
-multAbs constructor parser = desugarArgs constructor <$> (parser *> argsOrArgGroup) <*> (dot *> expr)
+multAbs :: (Name -> Term -> Term -> Term) -> Parser a -> Parser Term
+multAbs constructor parser = foldTelescope constructor <$> (parser *> telescopeOrArgGroup) <*> (dot *> expr)
 
 unquote = char '$' *> asum
   [ var mkVar ident
@@ -100,11 +113,12 @@ stmt = withPos StmtPos $ asum
   , Import <$> (keyword "import" *> modname <* semi)
   , Assertion <$> (keyword "assert" *> expr) <*> optionMaybe (colon1 *> expr) <*> optionMaybe (assign *> expr) <* semi
   , try (Term <$> expr <* semi)
-  , Bind <$> ident <*> args <*> optionMaybe (colon1 *> expr) <* assign <*> expr <* semi]
+  , Bind <$> ident <*> telescope <*> optionMaybe (colon1 *> expr) <* assign <*> expr <* semi]
 
 stmts = many (optional pragma *> stmt)
 
-args = many (parens argGroup)
+telescope :: Parser (Telescope Term)
+telescope = many (parens argGroup)
 
 inferredOrExplicitType = (colon1 *> expr) <|> (mkInfer <$> nextInfer)
 
@@ -115,7 +129,8 @@ argGroupOrNames = asum
   , (,) <$> names <*> (mkInfer <$> nextInfer)
   ]
 
-argsOrArgGroup = asum
+telescopeOrArgGroup :: Parser (Telescope Term)
+telescopeOrArgGroup = asum
   [ do ns <- names
        asum
          [ do colon1

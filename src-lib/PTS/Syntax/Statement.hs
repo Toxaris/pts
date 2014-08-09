@@ -4,10 +4,11 @@ module PTS.Syntax.Statement
 
 import PTS.Error (Position)
 import PTS.Syntax.Names (Name, ModuleName)
+import PTS.Syntax.Telescope (Telescope)
 import PTS.Syntax.Term (Term)
 
 data Stmt
-  = Bind Name [([Name], Term)] (Maybe Term) Term
+  = Bind Name (Telescope Term) (Maybe Term) Term
   | Term Term
   | Export Name
   | Import ModuleName
