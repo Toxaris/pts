@@ -2,8 +2,6 @@
 {-# LANGUAGE CPP #-}
 module PTS.Statics.Typing where
 
-import Prelude (fst, snd, String, take)
-
 import Control.Monad
 import Control.Monad.Environment
 import Control.Monad.Errors.Class
@@ -11,16 +9,8 @@ import Control.Monad.Log
 import Control.Monad.Reader
 import Control.Monad.Trans
 
-import Data.Bool (Bool (False, True), (&&))
-import Data.Char ()
-import Data.Eq (Eq ((==)))
-import Data.Function (($))
-import Data.Int (Int)
-import Data.List (map, null, replicate, (++))
-import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Data.Tuple (fst, snd)
 
 import PTS.Dynamics
 import PTS.Error
