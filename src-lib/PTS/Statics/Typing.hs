@@ -147,24 +147,6 @@ msgNotSame context info1 info2 s t s' t'
         sep [text "Type of" <+> info1 <> text ":", nest 2 (text s'')] $$
         sep [text "Type of" <+> info2 <> text ":", nest 2 (text t'')])
 
-normalizeToInt :: (MonadLog m, Functor m, MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m) => TypedTerm Eval -> TypedTerm Eval -> Doc -> Doc -> m (TypedTerm Eval)
-normalizeToInt t' t context info = do
-  env <- getEnvironment
-  expected <- typecheckPull (mkConst int)
-  if equivTerm env t' expected
-    then return expected
-    else let t'' = nbe env t'
-          in prettyFail $ msgNotInt context info t t'' int
-
-msgNotInt context info t t' int
-  = let expected :: Term
-        expected = mkConst int in
-    text "Type Error" <+> context <> text ": Types do not match." $$ nest 2 (
-    sep [text "Explanation:", nest 2 (text "The type of the" <+> info <+> text "should be beta-equivalent to" <+> pretty 0 expected <> text ".")] $$
-    sep [info <> text ":", nest 2 (pretty 0 t)] $$
-    sep [text "Type of" <+> info <> text ":", nest 2 (pretty 0 t')] $$
-    sep [text "Expected Type:" <+> nest 2 (pretty 0 expected)])
-
 liftEval :: MonadEnvironment Name (Binding Eval) m => Eval a -> m a
 liftEval action = do
   env <- getEnvironment
