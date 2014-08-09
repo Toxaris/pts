@@ -120,6 +120,12 @@ msgNotProperType context info t t'
     sep [text "Term:", nest 2 (pretty 0 t)] $$
     sep [text "Type:", nest 2 (pretty 0 t')])
 
+msgBodyNoSort context body t
+  = text "Type Error" <+> context <+> text ": Expected function body to have a sort." $$ nest 2 (
+    sep [text "Explanation:", nest 2 (text "The function body does not have a sort, that is, its type has no type. Therefore the this term cannot be used as a function body.")] $$
+    sep [text "Body:", nest 2 (pretty 0 body)] $$
+    sep [text "Type:", nest 2 (pretty 0 t)])
+
 normalizeToSame s' t' s t context info1 info2 = do
   same <- liftEval (equiv s' t') 
   if same
@@ -287,7 +293,11 @@ typecheckPull t = case structure t of
       pts <- asks optInstance
       s2 <- case sortOf body of
         Just s | sorts pts s -> return s
-        Nothing -> fail "Internal Error."
+        Just s -> fail "Internal Error."
+        Nothing -> do
+          rangeT <- liftEval $ reify range
+          prettyFail $ msgBodyNoSort (text "in lambda abstraction") body rangeT
+
       s3 <- prettyRelations pts s1 s2
      
       -- construct result
