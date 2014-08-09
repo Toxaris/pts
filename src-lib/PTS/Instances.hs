@@ -1,6 +1,7 @@
-{-# LANGUAGE DeriveDataTypeable, Rank2Types  #-}
+{-# LANGUAGE DeriveDataTypeable, Rank2Types, TupleSections  #-}
 module PTS.Instances where
 
+import Control.Arrow ((***))
 import PTS.Syntax
 
 import Data.Map (Map)
@@ -29,6 +30,39 @@ axioms (PTS {axiomsMap = Right f}) c = f c
 relations :: PTS -> C -> C -> Maybe C
 relations (PTS {relationsMap = Left rels}) c1 c2 = (c1, c2) `Map.lookup` rels
 relations (PTS {relationsMap = Right f}) c1 c2 = f c1 c2
+
+-- | Approximates whether the first PTS is syntactically contained in the second one.
+-- Warning: we do not formally know yet whether this has any semantic meaning.
+-- We believe (and Paolo sketched a simple proof) this is a conservative
+-- approximation of "semantic PTS containment", PTS1 <= PTS2, that is,
+--
+-- If |-_PTS1 t : T and PTS1 <= PTS2, then |-_PTS2 t : T
+--
+-- that is, if PTS1 <= PTS2 the typing judgement in PTS2 is a conservative
+-- extension of the one in PTS1.
+--
+-- Alternatively, PTS1 can be be "collapsable" into PTS2, but the concept is
+-- trickier, and an algorithm for that in general is less obvious. Moreover, if
+-- PTS1 is collapsable into PTS2, then we only know that
+--
+-- If |-_PTS1 t : T, then |-_PTS1 collapse(t) : collapse(T).
+
+isSubPTS :: PTS -> PTS -> Maybe Bool
+isSubPTS (PTS (Left sortsSet) (Left axiomsMap) (Left relationsMap) _ _) pts2 =
+  Just (subSorts && subAxioms && subRelations)
+    where
+      subSorts     = isSubRel pts1SortsGraph $ sorts pts2
+      subAxioms    = isSubRel pts1AxiomsGraph $ axioms pts2
+      subRelations = isSubRel pts1RelationsGraph $ \(s1, s2) -> relations pts2 s1 s2
+
+      isSubRel rel1Graph rel2 = all (\(k, v) -> rel2 k == v) rel1Graph
+
+      pts1SortsGraph     = map (, True)      $ Set.toList sortsSet
+      pts1AxiomsGraph    = map (id *** Just) $ Map.toList axiomsMap
+      pts1RelationsGraph = map (id *** Just) $ Map.toList relationsMap
+
+-- Can't check subtyping if pts1 is partly specified by a function.
+isSubPTS _ _ = Nothing
 
 -- some specific pure type systems
 
