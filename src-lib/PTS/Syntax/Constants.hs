@@ -13,7 +13,7 @@ import Data.Typeable
 
 -- constants
 newtype C = C Int
-  deriving (Eq, Data, Typeable, Show)
+  deriving (Eq, Ord, Data, Typeable, Show)
 
 int :: C
 int = C 0
