@@ -2,17 +2,61 @@
 module PTS.Instances where
 
 import PTS.Syntax
-import PTS.Dynamics.Value
+
+import Data.Map (Map)
+import qualified Data.Map as Map
+import Data.Set (Set)
+import qualified Data.Set as Set
 
 -- This type defines a specific pure type system, see Barendregt
 
 data PTS = PTS
-  { sorts :: C -> Bool
-  , axioms :: C -> Maybe C
-  , relations :: C -> C -> Maybe C
+  { sortsSet :: Either (Set C) (C -> Bool)
+  , axiomsMap :: Either (Map C C) (C -> Maybe C)
+  , relationsMap :: Either (Map (C, C) C) (C -> C -> Maybe C)
   , name :: [String]
   , description :: String
   }
+
+sorts :: PTS -> C -> Bool
+sorts (PTS {sortsSet = Left sorts}) c = c `Set.member` sorts
+sorts (PTS {sortsSet = Right f}) c = f c
+
+axioms :: PTS -> C -> Maybe C
+axioms (PTS {axiomsMap = Left axioms}) c = c `Map.lookup` axioms
+axioms (PTS {axiomsMap = Right f}) c = f c
+
+relations :: PTS -> C -> C -> Maybe C
+relations (PTS {relationsMap = Left rels}) c1 c2 = (c1, c2) `Map.lookup` rels
+relations (PTS {relationsMap = Right f}) c1 c2 = f c1 c2
+
+-- | Checks whether the first PTS is syntactically contained in the second one.
+-- Warning: we do not formally know yet whether this has any semantic meaning.
+-- We believe (and Paolo sketched a simple proof) this is a conservative
+-- approximation of "semantic PTS containment", PTS1 <= PTS2, that is,
+--
+-- If |-_PTS1 t : T and PTS1 <= PTS2, then |-_PTS2 t : T
+--
+-- that is, if PTS1 <= PTS2 the typing judgement in PTS2 is a conservative
+-- extension of the one in PTS1.
+--
+-- Alternatively, PTS1 can be be "collapsable" into PTS2, but the concept is
+-- trickier, and an algorithm for that in general is less obvious. Moreover, if
+-- PTS1 is collapsable into PTS2, then we only know that
+--
+-- If |-_PTS1 t : T, then |-_PTS1 collapse(t) : collapse(T).
+
+isSubPTS :: PTS -> PTS -> Maybe Bool
+isSubPTS (PTS (Left sortsSet) (Left axiomsMap) (Left relationsMap) _ _) pts2 =
+  Just (subSorts && subAxioms && subRelations)
+    where
+      mapEntryMatch :: (Eq v) => (k -> Maybe v) -> (k, v) -> Bool
+      mapEntryMatch f (k, v) = f k == Just v
+      subSorts = all (sorts pts2) $ Set.toList sortsSet
+      subAxioms  = all (mapEntryMatch $ axioms pts2) $ Map.toList axiomsMap
+      subRelations = all (mapEntryMatch . uncurry $ relations pts2) $ Map.toList relationsMap
+-- Can't check subtyping if pts1 is partly specified by a function.
+isSubPTS _ _ = Nothing
 
 -- some specific pure type systems
 
@@ -21,16 +65,21 @@ data PTS = PTS
 simplytyped :: PTS
 simplytyped = lama
 
+mkSorts = Left . Set.fromDistinctAscList . map C
+mkAxiom n c = ((C n), c)
+mkRel n1 n2 c = (((C n1), (C n2)), c)
+
 lama :: PTS
-lama = PTS sorts axioms relations name description where
-  sorts (C 1) = True
-  sorts (C _) = False
-
-  axioms (C 0) = Just star
-  axioms (C _) = Nothing
-
-  relations (C 1) (C 1) = Just star
-  relations (C _) (C _) = Nothing
+lama = PTS sortsSet axiomsMap relationsMap name description where
+  sortsSet     = mkSorts
+                 [ 1
+                 ]
+  axiomsMap    = Left $ Map.fromList
+                 [ mkAxiom 0 star
+                 ]
+  relationsMap = Left $ Map.fromList
+                 [ mkRel 1 1 star
+                 ]
 
   name = [ "stlc"
          , "simply-typed-lambda-calculus"
@@ -44,20 +93,21 @@ f :: PTS
 f = lam2
 
 lam2 :: PTS
-lam2 = PTS sorts axioms relations name description where
-  sorts (C 1) = True
-  sorts (C 2) = True
-  sorts (C _) = False
+lam2 = PTS sortsSet axiomsMap relationsMap name description where
+  sortsSet     = mkSorts
+                 [ 1
+                 , 2
+                 ]
 
-  axioms (C 0) = Just star
-  axioms (C 1) = Just box
-  axioms (C _) = Nothing
+  axiomsMap    = Left $ Map.fromList
+                 [ mkAxiom 0 star
+                 , mkAxiom 1 box
+                 ]
 
-  relations (C 1) (C 1) = Just star
-  relations (C 1) (C 2) = Nothing
-  relations (C 2) (C 1) = Just star
-  relations (C 2) (C 2) = Nothing
-  relations (C _) (C _) = Nothing
+  relationsMap = Left $ Map.fromList
+                 [ mkRel 1 1 star
+                 , mkRel 2 1 star
+                 ]
 
   name = [ "f"
          , "system-f"
@@ -71,21 +121,24 @@ lam2 = PTS sorts axioms relations name description where
   description = "lambda-calculus with simple and polymorphic types"
 
 
+
+
 lamp :: PTS
-lamp = PTS sorts axioms relations name description where
-  sorts (C 1) = True
-  sorts (C 2) = True
-  sorts (C _) = False
+lamp = PTS sortsSet axiomsMap relationsMap name description where
+  sortsSet     = mkSorts
+                 [ 1
+                 , 2
+                 ]
 
-  axioms (C 0) = Just star
-  axioms (C 1) = Just box
-  axioms (C _) = Nothing
+  axiomsMap    = Left $ Map.fromList
+                 [ mkAxiom 0 star
+                 , mkAxiom 1 box
+                 ]
 
-  relations (C 1) (C 1) = Just star
-  relations (C 1) (C 2) = Just box
-  relations (C 2) (C 1) = Nothing
-  relations (C 2) (C 2) = Nothing
-  relations (C _) (C _) = Nothing
+  relationsMap = Left $ Map.fromList
+                 [ mkRel 1 1 star
+                 , mkRel 1 2 box
+                 ]
 
   name = [ "dtlc"
          , "dependently-typed-lambda-calculus"
@@ -99,20 +152,21 @@ lamp = PTS sorts axioms relations name description where
 
 -- "v" is weaker than "vv", ;)
 lamv :: PTS
-lamv = PTS sorts axioms relations name description where
-  sorts (C 1) = True
-  sorts (C 2) = True
-  sorts (C _) = False
+lamv = PTS sortsSet axiomsMap relationsMap name description where
+  sortsSet     = mkSorts
+                 [ 1
+                 , 2
+                 ]
 
-  axioms (C 0) = Just star
-  axioms (C 1) = Just box
-  axioms (C _) = Nothing
+  axiomsMap    = Left $ Map.fromList
+                 [ mkAxiom 0 star
+                 , mkAxiom 1 box
+                 ]
 
-  relations (C 1) (C 1) = Just star
-  relations (C 1) (C 2) = Nothing
-  relations (C 2) (C 1) = Nothing
-  relations (C 2) (C 2) = Just box
-  relations (C _) (C _) = Nothing
+  relationsMap = Left $ Map.fromList
+                 [ mkRel 1 1 star
+                 , mkRel 2 2 box
+                 ]
 
   name = [ "hotlc"
          , "higher-order-typed-lambda-calculus"
@@ -123,20 +177,22 @@ lamv = PTS sorts axioms relations name description where
 
 
 lap2 :: PTS
-lap2 = PTS sorts axioms relations name description where
-  sorts (C 1) = True
-  sorts (C 2) = True
-  sorts (C _) = False
+lap2 = PTS sortsSet axiomsMap relationsMap name description where
+  sortsSet     = mkSorts
+                 [ 1
+                 , 2
+                 ]
 
-  axioms (C 0) = Just star
-  axioms (C 1) = Just box
-  axioms (C _) = Nothing
+  axiomsMap    = Left $ Map.fromList
+                 [ mkAxiom 0 star
+                 , mkAxiom 1 box
+                 ]
 
-  relations (C 1) (C 1) = Just star
-  relations (C 1) (C 2) = Just box
-  relations (C 2) (C 1) = Just star
-  relations (C 2) (C 2) = Nothing
-  relations (C _) (C _) = Nothing
+  relationsMap = Left $ Map.fromList
+                 [ mkRel 1 1 star
+                 , mkRel 1 2 box
+                 , mkRel 2 1 star
+                 ]
 
   name = [ "lap2"
          , "lambda-pi-2" ]
@@ -149,20 +205,22 @@ fomega = lamw
 
 -- "vv" is stronger than "v", ;)
 lamw :: PTS
-lamw = PTS sorts axioms relations name description where
-  sorts (C 1) = True
-  sorts (C 2) = True
-  sorts (C _) = False
+lamw = PTS sortsSet axiomsMap relationsMap name description where
+  sortsSet     = mkSorts
+                 [ 1
+                 , 2
+                 ]
 
-  axioms (C 0) = Just star
-  axioms (C 1) = Just box
-  axioms (C _) = Nothing
+  axiomsMap    = Left $ Map.fromList
+                 [ mkAxiom 0 star
+                 , mkAxiom 1 box
+                 ]
 
-  relations (C 1) (C 1) = Just star
-  relations (C 1) (C 2) = Nothing
-  relations (C 2) (C 1) = Just star
-  relations (C 2) (C 2) = Just box
-  relations (C _) (C _) = Nothing
+  relationsMap = Left $ Map.fromList
+                 [ mkRel 1 1 star
+                 , mkRel 2 1 star
+                 , mkRel 2 2 box
+                 ]
 
   name = [ "fw"
          , "fomega"
@@ -175,20 +233,22 @@ lamw = PTS sorts axioms relations name description where
 
 
 lapv :: PTS
-lapv = PTS sorts axioms relations name description where
-  sorts (C 1) = True
-  sorts (C 2) = True
-  sorts (C _) = False
+lapv = PTS sortsSet axiomsMap relationsMap name description where
+  sortsSet     = mkSorts
+                 [ 1
+                 , 2
+                 ]
 
-  axioms (C 0) = Just star
-  axioms (C 1) = Just box
-  axioms (C _) = Nothing
+  axiomsMap    = Left $ Map.fromList
+                 [ mkAxiom 0 star
+                 , mkAxiom 1 box
+                 ]
 
-  relations (C 1) (C 1) = Just star
-  relations (C 1) (C 2) = Just box
-  relations (C 2) (C 1) = Nothing
-  relations (C 2) (C 2) = Just box
-  relations (C _) (C _) = Nothing
+  relationsMap = Left $ Map.fromList
+                 [ mkRel 1 1 star
+                 , mkRel 1 2 box
+                 , mkRel 2 2 box
+                 ]
 
   name = [ "lapv"
          , "lambda-pi-weak-omega"]
@@ -200,20 +260,23 @@ coc :: PTS
 coc = lamc
 
 lamc :: PTS
-lamc = PTS sorts axioms relations name description where
-  sorts (C 1) = True
-  sorts (C 2) = True
-  sorts (C _) = False
+lamc = PTS sortsSet axiomsMap relationsMap name description where
+  sortsSet     = mkSorts
+                 [ 1
+                 , 2
+                 ]
 
-  axioms (C 0) = Just star
-  axioms (C 1) = Just box
-  axioms (C _) = Nothing
+  axiomsMap    = Left $ Map.fromList
+                 [ mkAxiom 0 star
+                 , mkAxiom 1 box
+                 ]
 
-  relations (C 1) (C 1) = Just star
-  relations (C 1) (C 2) = Just box
-  relations (C 2) (C 1) = Just star
-  relations (C 2) (C 2) = Just box
-  relations (C _) (C _) = Nothing
+  relationsMap = Left $ Map.fromList
+                 [ mkRel 1 1 star
+                 , mkRel 1 2 box
+                 , mkRel 2 1 star
+                 , mkRel 2 2 box
+                 ]
 
   name = [ "coc"
          , "calculus-of-construction"
@@ -229,16 +292,19 @@ lambdastar :: PTS
 lambdastar = lams
 
 lams :: PTS
-lams = PTS sorts axioms relations name description where
-  sorts (C 1) = True
-  sorts (C _) = False
+lams = PTS sortsSet axiomsMap relationsMap name description where
+  sortsSet     = mkSorts
+                 [ 1
+                 ]
 
-  axioms (C 0) = Just star
-  axioms (C 1) = Just star
-  axioms (C _) = Nothing
+  axiomsMap    = Left $ Map.fromList
+                 [ mkAxiom 0 star
+                 , mkAxiom 1 star
+                 ]
 
-  relations (C 1) (C 1) = Just star
-  relations (C _) (C _) = Nothing
+  relationsMap = Left $ Map.fromList
+                 [ mkRel 1 1 star
+                 ]
 
   name = [ "lam*"
          , "lambdastar"
@@ -253,21 +319,23 @@ fomegastar :: PTS
 fomegastar = laws
 
 laws :: PTS
-laws = PTS sorts axioms relations name description where
-  sorts (C 1) = True
-  sorts (C 2) = True
-  sorts (C _) = False
+laws = PTS sortsSet axiomsMap relationsMap name description where
+  sortsSet     = mkSorts
+                 [ 1
+                 , 2
+                 ]
 
-  axioms (C 0) = Just star
-  axioms (C 1) = Just box
-  axioms (C 2) = Just box
-  axioms (C _) = Nothing
+  axiomsMap    = Left $ Map.fromList
+                 [ mkAxiom 0 star
+                 , mkAxiom 1 box
+                 , mkAxiom 2 box
+                 ]
 
-  relations (C 1) (C 1) = Just star
-  relations (C 1) (C 2) = Nothing
-  relations (C 2) (C 1) = Just star
-  relations (C 2) (C 2) = Just box
-  relations (C _) (C _) = Nothing
+  relationsMap = Left $ Map.fromList
+                 [ mkRel 1 1 star
+                 , mkRel 2 1 star
+                 , mkRel 2 2 box
+                 ]
 
   name = [ "fw*"
          , "fomega*"
@@ -284,7 +352,7 @@ fomegaomega :: PTS
 fomegaomega = lawu
 
 lawu :: PTS
-lawu = PTS sorts axioms relations name description where
+lawu = PTS (Right sorts) (Right axioms) (Right relations) name description where
   sorts (C 0) = False
   sorts (C n) = True
 
@@ -303,26 +371,29 @@ lawu = PTS sorts axioms relations name description where
   description = "fomega with an infinite hierarchy of universes"
 
 u :: PTS
-u = PTS sorts axioms relations name description where
-  sorts (C 1) = True
-  sorts (C 2) = True
-  sorts (C 3) = True
-  sorts (C _) = False
+u = PTS sortsSet axiomsMap relationsMap name description where
+  sortsSet     = mkSorts
+                 [ 1
+                 , 2
+                 , 3
+                 ]
 
-  axioms (C 0) = Just star
-  axioms (C 1) = Just box
-  axioms (C 2) = Just triangle
-  axioms (C _) = Nothing
+  axiomsMap    = Left $ Map.fromList
+                 [ mkAxiom 0 star
+                 , mkAxiom 1 box
+                 , mkAxiom 2 triangle
+                 ]
 
-  relations (C 1) (C 1) = Just star
+  relationsMap = Left $ Map.fromList
+                 [ mkRel 1 1 star
 
-  relations (C 2) (C 1) = Just star
-  relations (C 2) (C 2) = Just box
+                 , mkRel 2 1 star
+                 , mkRel 2 2 box
 
-  relations (C 3) (C 1) = Just star
-  relations (C 3) (C 2) = Just box
+                 , mkRel 3 1 star
+                 , mkRel 3 2 box
 
-  relations (C _) (C _) = Nothing
+                 ]
 
   name = [ "systemu"
          , "system-u"
@@ -332,33 +403,36 @@ u = PTS sorts axioms relations name description where
 
 
 uu :: PTS
-uu = PTS sorts axioms relations name description where
-  sorts (C 1) = True
-  sorts (C 2) = True
-  sorts (C 3) = True
-  sorts (C 4) = True
-  sorts (C _) = False
+uu = PTS sortsSet axiomsMap relationsMap name description where
+  sortsSet     = mkSorts
+                 [ 1
+                 , 2
+                 , 3
+                 , 4
+                 ]
 
-  axioms (C 0) = Just star
-  axioms (C 1) = Just box
-  axioms (C 2) = Just triangle
-  axioms (C 3) = Just circle
-  axioms (C _) = Nothing
+  axiomsMap    = Left $ Map.fromList
+                 [ mkAxiom 0 star
+                 , mkAxiom 1 box
+                 , mkAxiom 2 triangle
+                 , mkAxiom 3 circle
+                 ]
 
-  relations (C 1) (C 1) = Just star
+  relationsMap = Left $ Map.fromList
+                 [ mkRel 1 1 star
 
-  relations (C 2) (C 1) = Just star
-  relations (C 2) (C 2) = Just box
+                 , mkRel 2 1 star
+                 , mkRel 2 2 box
 
-  relations (C 3) (C 1) = Just star
-  relations (C 3) (C 2) = Just box
-  relations (C 3) (C 3) = Just triangle
+                 , mkRel 3 1 star
+                 , mkRel 3 2 box
+                 , mkRel 3 3 triangle
 
-  relations (C 4) (C 1) = Just star
-  relations (C 4) (C 2) = Just box
-  relations (C 4) (C 3) = Just triangle
+                 , mkRel 4 1 star
+                 , mkRel 4 2 box
+                 , mkRel 4 3 triangle
 
-  relations (C _) (C _) = Nothing
+                 ]
 
   name = [ "systemuu"
          , "system-uu"
