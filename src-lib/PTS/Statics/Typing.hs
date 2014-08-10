@@ -2,8 +2,6 @@
 {-# LANGUAGE CPP #-}
 module PTS.Statics.Typing where
 
-import Prelude (fst, snd, String, take)
-
 import Control.Monad
 import Control.Monad.Environment
 import Control.Monad.Errors.Class
@@ -11,16 +9,8 @@ import Control.Monad.Log
 import Control.Monad.Reader
 import Control.Monad.Trans
 
-import Data.Bool (Bool (False, True), (&&))
-import Data.Char ()
-import Data.Eq (Eq ((==)))
-import Data.Function (($))
-import Data.Int (Int)
-import Data.List (map, null, replicate, (++))
-import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Data.Tuple (fst, snd)
 
 import PTS.Dynamics
 import PTS.Error
@@ -103,7 +93,8 @@ debugPush n t q result = do
 
 -- error messages and generic error checking
 
-normalizeToSort t' t context info = do
+checkProperType t context info = do
+  let t' = typeOf t
   pts <- asks optInstance
   env <- getEnvironment
 
@@ -119,7 +110,26 @@ msgNotProperType context info t t'
     sep [text "Term:", nest 2 (pretty 0 t)] $$
     sep [text "Type:", nest 2 (pretty 0 t')])
 
-normalizeToSame s' t' s t context info1 info2 = do
+checkLamBodyHasSort body s1 context = do
+  pts <- asks optInstance
+  s2 <- case sortOf body of
+    Just s | sorts pts s -> return s
+    Just s -> fail "Internal Error."
+    Nothing -> do
+      rangeT <- liftEval . reify . typeOf $ body
+      prettyFail $ msgBodyNoSort (text "in lambda abstraction") body rangeT
+
+  s3 <- prettyRelations pts s1 s2
+  return (s2, s3)
+
+-- adapted from msgNotProperType.
+msgBodyNoSort context body t
+  = text "Type Error" <+> context <+> text ": Expected function body to have a sort." $$ nest 2 (
+    sep [text "Explanation:", nest 2 (text "The function body does not have a sort, that is, its type has no type. Therefore this term cannot be used as a function body.")] $$
+    sep [text "Body:", nest 2 (pretty 0 body)] $$
+    sep [text "Type:", nest 2 (pretty 0 t)])
+
+checkIsEquiv s' t' s t context info1 info2 = do
   same <- liftEval (equiv s' t') 
   if same
     then return ()
@@ -137,33 +147,15 @@ msgNotSame context info1 info2 s t s' t'
         sep [text "Type of" <+> info1 <> text ":", nest 2 (text s'')] $$
         sep [text "Type of" <+> info2 <> text ":", nest 2 (text t'')])
 
-normalizeToInt :: (MonadLog m, Functor m, MonadEnvironment Name (Binding Eval) m, MonadReader Options m, MonadErrors Errors m) => TypedTerm Eval -> TypedTerm Eval -> Doc -> Doc -> m (TypedTerm Eval)
-normalizeToInt t' t context info = do
-  env <- getEnvironment
-  expected <- typecheckPull (mkConst int)
-  if equivTerm env t' expected
-    then return expected
-    else let t'' = nbe env t'
-          in prettyFail $ msgNotInt context info t t'' int
-
-msgNotInt context info t t' int
-  = let expected :: Term
-        expected = mkConst int in
-    text "Type Error" <+> context <> text ": Types do not match." $$ nest 2 (
-    sep [text "Explanation:", nest 2 (text "The type of the" <+> info <+> text "should be beta-equivalent to" <+> pretty 0 expected <> text ".")] $$
-    sep [info <> text ":", nest 2 (pretty 0 t)] $$
-    sep [text "Type of" <+> info <> text ":", nest 2 (pretty 0 t')] $$
-    sep [text "Expected Type:" <+> nest 2 (pretty 0 expected)])
-
 liftEval :: MonadEnvironment Name (Binding Eval) m => Eval a -> m a
 liftEval action = do
   env <- getEnvironment
   return (runEval env action)
 
-normalizeToPi ::
+checkIsPi ::
   (MonadReader Options m, MonadErrors Errors m, MonadEnvironment Name (Binding Eval) m) =>
   Value Eval -> TypedTerm Eval -> Doc -> Doc -> m (Value Eval)
-normalizeToPi v t context info = do
+checkIsPi v t context info = do
   case v of
     result@(PiType _ _ _ _) ->
       return result
@@ -237,13 +229,13 @@ typecheckPull t = case structure t of
   Pi name annotation body s -> debug "typecheckPull Fun" t $ do
     -- check annotation
     annotation <- typecheckPull annotation
-    s1 <- normalizeToSort (typeOf annotation) annotation (text "in product type") (text "as domain")
+    s1 <- checkProperType annotation (text "in product type") (text "as domain")
     domain <- liftEval (eval annotation)
 
     -- check range
     safebind name domain (Just s1) body $ \name body -> do
       body <- typecheckPull body
-      s2 <- normalizeToSort (typeOf body) body (text "in product type") (text "as codomain")
+      s2 <- checkProperType body (text "in product type") (text "as codomain")
 
       -- check language support
       pts <- asks optInstance
@@ -257,7 +249,7 @@ typecheckPull t = case structure t of
   App operator operand -> debug "typecheckPull App" t $ do
     -- check operator
     operator <- typecheckPull operator
-    PiType name domain range kind <- normalizeToPi (typeOf operator) operator (text "in application") (text "operator")
+    PiType name domain range kind <- checkIsPi (typeOf operator) operator (text "in application") (text "operator")
 
     -- check operand
     operand <- typecheckPush operand domain
@@ -272,7 +264,7 @@ typecheckPull t = case structure t of
   Lam name annotation body -> debug "typecheckPull Abs" t $ do
     -- check annotation
     annotation  <- typecheckPull annotation
-    s1 <- normalizeToSort (typeOf annotation) annotation
+    s1 <- checkProperType annotation
             (text "in lambda abstraction")
             (text "as type of" <+> pretty 0 name)
     domain <- liftEval (eval annotation)
@@ -283,11 +275,7 @@ typecheckPull t = case structure t of
       let range = typeOf body
 
       -- check language support
-      pts <- asks optInstance
-      s2 <- case sortOf body of
-        Just s | sorts pts s -> return s
-        Nothing -> fail "Internal Error."
-      s3 <- prettyRelations pts s1 s2
+      (s2, s3) <- checkLamBodyHasSort body s1 (text "in lambda abstraction")
      
       -- construct result
       range <- liftEval (close name domain (Just s1) range)
@@ -333,7 +321,7 @@ typecheckPull t = case structure t of
     -- faster, but the asymmetry seems weird.
     thenBranch <- typecheckPull thenBranch
     elseBranch <- typecheckPull elseBranch
-    normalizeToSame (typeOf thenBranch) (typeOf elseBranch) thenBranch elseBranch
+    checkIsEquiv (typeOf thenBranch) (typeOf elseBranch) thenBranch elseBranch
       (text "in if0") (text "then branch") (text "else branch")
 
     -- construct result
@@ -378,13 +366,13 @@ typecheckPush t q = case structure t of
   Pi name annotation body _ -> debugPush "typecheckPush Fun" t q $ do
     -- check annotation
     annotation <- typecheckPull annotation
-    s1 <- normalizeToSort (typeOf annotation) annotation (text "in product type") (text "as domain")
+    s1 <- checkProperType annotation (text "in product type") (text "as domain")
     domain <- liftEval (eval annotation)
 
     -- check body
     safebind name domain (Just s1) body $ \name body -> do
       body <- typecheckPull body
-      s2 <- normalizeToSort (typeOf body) body (text "in product type") (text "as codomain")
+      s2 <- checkProperType body (text "in product type") (text "as codomain")
 
       -- check language support
       pts <- asks optInstance
@@ -398,7 +386,7 @@ typecheckPush t q = case structure t of
   App operator operand -> debugPush "typecheckPush App" t q $ do
     -- check operator
     operator <- typecheckPull operator
-    PiType name domain range sort <- normalizeToPi (typeOf operator) operator (text "in application") (text "operator")
+    PiType name domain range sort <- checkIsPi (typeOf operator) operator (text "in application") (text "operator")
 
     -- check operand
     operand <- typecheckPush operand domain
@@ -429,7 +417,7 @@ typecheckPush t q = case structure t of
 
     -- check annotation
     annotation <- typecheckPull annotation
-    s1 <- normalizeToSort (typeOf annotation) annotation (text "in lambda abstraction") (text "as domain")
+    s1 <- checkProperType annotation (text "in lambda abstraction") (text "as domain")
     annotatedDomain <- liftEval (eval annotation)
     bidiExpected annotatedDomain domain t
       "In a lambda abstraction, the declared argument type does not match the expected domain."
