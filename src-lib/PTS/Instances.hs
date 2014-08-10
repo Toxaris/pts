@@ -50,11 +50,11 @@ isSubPTS :: PTS -> PTS -> Maybe Bool
 isSubPTS (PTS (Left sortsSet) (Left axiomsMap) (Left relationsMap) _ _) pts2 =
   Just (subSorts && subAxioms && subRelations)
     where
-      mapEntryMatch :: (Eq v) => (k -> Maybe v) -> (k, v) -> Bool
-      mapEntryMatch f (k, v) = f k == Just v
+      matchMapEntry :: (Eq v) => (k -> Maybe v) -> (k, v) -> Bool
+      matchMapEntry f (k, v) = f k == Just v
       subSorts = all (sorts pts2) $ Set.toList sortsSet
-      subAxioms  = all (mapEntryMatch $ axioms pts2) $ Map.toList axiomsMap
-      subRelations = all (mapEntryMatch . uncurry $ relations pts2) $ Map.toList relationsMap
+      subAxioms  = all (matchMapEntry $ axioms pts2) $ Map.toList axiomsMap
+      subRelations = all (matchMapEntry . uncurry $ relations pts2) $ Map.toList relationsMap
 -- Can't check subtyping if pts1 is partly specified by a function.
 isSubPTS _ _ = Nothing
 
