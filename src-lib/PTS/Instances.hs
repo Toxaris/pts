@@ -30,7 +30,7 @@ relations :: PTS -> C -> C -> Maybe C
 relations (PTS {relationsMap = Left rels}) c1 c2 = (c1, c2) `Map.lookup` rels
 relations (PTS {relationsMap = Right f}) c1 c2 = f c1 c2
 
--- | Checks whether the first PTS is syntactically contained in the second one.
+-- | Approximates whether the first PTS is syntactically contained in the second one.
 -- Warning: we do not formally know yet whether this has any semantic meaning.
 -- We believe (and Paolo sketched a simple proof) this is a conservative
 -- approximation of "semantic PTS containment", PTS1 <= PTS2, that is,
