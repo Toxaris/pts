@@ -125,7 +125,7 @@ checkLamBodyHasSort body s1 context = do
 -- adapted from msgNotProperType.
 msgBodyNoSort context body t
   = text "Type Error" <+> context <+> text ": Expected function body to have a sort." $$ nest 2 (
-    sep [text "Explanation:", nest 2 (text "The function body does not have a sort, that is, its type has no type. Therefore the this term cannot be used as a function body.")] $$
+    sep [text "Explanation:", nest 2 (text "The function body does not have a sort, that is, its type has no type. Therefore this term cannot be used as a function body.")] $$
     sep [text "Body:", nest 2 (pretty 0 body)] $$
     sep [text "Type:", nest 2 (pretty 0 t)])
 
