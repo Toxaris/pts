@@ -3,6 +3,9 @@ module PTS.Instances where
 
 import PTS.Syntax
 
+import Prelude hiding (all)
+import Data.Foldable (all)
+
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
@@ -52,7 +55,7 @@ isSubPTS (PTS (Left sortsSet) (Left axiomsMap) (Left relationsMap) _ _) pts2 =
     where
       matchMapEntry :: (Eq v) => (k -> Maybe v) -> (k, v) -> Bool
       matchMapEntry f (k, v) = f k == Just v
-      subSorts = all (sorts pts2) $ Set.toList sortsSet
+      subSorts = all (sorts pts2) $ sortsSet
       subAxioms  = all (matchMapEntry $ axioms pts2) $ Map.toList axiomsMap
       subRelations = all (matchMapEntry . uncurry $ relations pts2) $ Map.toList relationsMap
 -- Can't check subtyping if pts1 is partly specified by a function.
