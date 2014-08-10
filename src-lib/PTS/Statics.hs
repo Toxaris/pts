@@ -2,7 +2,7 @@ module PTS.Statics
   ( typecheckPull
   , typecheckPush
   , typecheckPushUntyped
-  , normalizeToSort
+  , checkProperType
   ) where
 
 import PTS.Statics.Typing
