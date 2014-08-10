@@ -2,10 +2,8 @@
 {-# LANGUAGE DeriveDataTypeable, Rank2Types  #-}
 module PTS.Instances where
 
+import Control.Arrow ((***))
 import PTS.Syntax
-
-import Prelude hiding (all)
-import Data.Foldable (Foldable, all)
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -60,9 +58,9 @@ isSubPTS (PTS (Left sortsSet) (Left axiomsMap) (Left relationsMap) _ _) pts2 =
 
       isSubRel rel1Graph rel2 = all (\(k, v) -> rel2 k == v) rel1Graph
 
-      pts1SortsGraph     = Set.map (, True) sortsSet
-      pts1AxiomsGraph    = Map.toList $ fmap Just axiomsMap
-      pts1RelationsGraph = Map.toList $ fmap Just relationsMap
+      pts1SortsGraph     = map (, True)      $ Set.toList sortsSet
+      pts1AxiomsGraph    = map (id *** Just) $ Map.toList axiomsMap
+      pts1RelationsGraph = map (id *** Just) $ Map.toList relationsMap
 
 -- Can't check subtyping if pts1 is partly specified by a function.
 isSubPTS _ _ = Nothing
