@@ -1,10 +1,11 @@
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE DeriveDataTypeable, Rank2Types  #-}
 module PTS.Instances where
 
 import PTS.Syntax
 
 import Prelude hiding (all)
-import Data.Foldable (all)
+import Data.Foldable (Foldable, all)
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -53,11 +54,16 @@ isSubPTS :: PTS -> PTS -> Maybe Bool
 isSubPTS (PTS (Left sortsSet) (Left axiomsMap) (Left relationsMap) _ _) pts2 =
   Just (subSorts && subAxioms && subRelations)
     where
-      matchMapEntry :: (Eq v) => (k -> Maybe v) -> (k, v) -> Bool
-      matchMapEntry f (k, v) = f k == Just v
-      subSorts = all (sorts pts2) $ sortsSet
-      subAxioms  = all (matchMapEntry $ axioms pts2) $ Map.toList axiomsMap
-      subRelations = all (matchMapEntry . uncurry $ relations pts2) $ Map.toList relationsMap
+      subSorts     = isSubRel pts1SortsGraph $ sorts pts2
+      subAxioms    = isSubRel pts1AxiomsGraph $ axioms pts2
+      subRelations = isSubRel pts1RelationsGraph $ \(s1, s2) -> relations pts2 s1 s2
+
+      isSubRel rel1Graph rel2 = all (\(k, v) -> rel2 k == v) rel1Graph
+
+      pts1SortsGraph     = Set.map (, True) sortsSet
+      pts1AxiomsGraph    = Map.toList $ fmap Just axiomsMap
+      pts1RelationsGraph = Map.toList $ fmap Just relationsMap
+
 -- Can't check subtyping if pts1 is partly specified by a function.
 isSubPTS _ _ = Nothing
 
