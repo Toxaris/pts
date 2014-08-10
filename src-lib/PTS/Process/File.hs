@@ -181,7 +181,7 @@ processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ 
         return (typeOf t, v)
       check (Just q') Nothing = do
         q' <- typecheckPull q'
-        checkTypeOfIsSort q' (text "in assertion") (text "as annotated type")
+        checkProperType q' (text "in assertion") (text "as annotated type")
         q' <- liftEval (eval q')
         t <- typecheckPush t q'
         v <- liftEval (eval t)
@@ -204,7 +204,7 @@ processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ 
         return (typeOf t, v)
       check (Just q') (Just t') = do
         q' <- typecheckPull q'
-        checkTypeOfIsSort q' (text "in assertion") (text "as annotated type")
+        checkProperType q' (text "in assertion") (text "as annotated type")
         q' <- liftEval (eval q')
         t' <- typecheckPush t' q'
         t <- typecheckPush t q'

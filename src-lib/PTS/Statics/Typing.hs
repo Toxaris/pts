@@ -93,7 +93,7 @@ debugPush n t q result = do
 
 -- error messages and generic error checking
 
-checkTypeOfIsSort t context info = do
+checkProperType t context info = do
   let t' = typeOf t
   pts <- asks optInstance
   env <- getEnvironment
@@ -229,13 +229,13 @@ typecheckPull t = case structure t of
   Pi name annotation body s -> debug "typecheckPull Fun" t $ do
     -- check annotation
     annotation <- typecheckPull annotation
-    s1 <- checkTypeOfIsSort annotation (text "in product type") (text "as domain")
+    s1 <- checkProperType annotation (text "in product type") (text "as domain")
     domain <- liftEval (eval annotation)
 
     -- check range
     safebind name domain (Just s1) body $ \name body -> do
       body <- typecheckPull body
-      s2 <- checkTypeOfIsSort body (text "in product type") (text "as codomain")
+      s2 <- checkProperType body (text "in product type") (text "as codomain")
 
       -- check language support
       pts <- asks optInstance
@@ -264,7 +264,7 @@ typecheckPull t = case structure t of
   Lam name annotation body -> debug "typecheckPull Abs" t $ do
     -- check annotation
     annotation  <- typecheckPull annotation
-    s1 <- checkTypeOfIsSort annotation
+    s1 <- checkProperType annotation
             (text "in lambda abstraction")
             (text "as type of" <+> pretty 0 name)
     domain <- liftEval (eval annotation)
@@ -366,13 +366,13 @@ typecheckPush t q = case structure t of
   Pi name annotation body _ -> debugPush "typecheckPush Fun" t q $ do
     -- check annotation
     annotation <- typecheckPull annotation
-    s1 <- checkTypeOfIsSort annotation (text "in product type") (text "as domain")
+    s1 <- checkProperType annotation (text "in product type") (text "as domain")
     domain <- liftEval (eval annotation)
 
     -- check body
     safebind name domain (Just s1) body $ \name body -> do
       body <- typecheckPull body
-      s2 <- checkTypeOfIsSort body (text "in product type") (text "as codomain")
+      s2 <- checkProperType body (text "in product type") (text "as codomain")
 
       -- check language support
       pts <- asks optInstance
@@ -417,7 +417,7 @@ typecheckPush t q = case structure t of
 
     -- check annotation
     annotation <- typecheckPull annotation
-    s1 <- checkTypeOfIsSort annotation (text "in lambda abstraction") (text "as domain")
+    s1 <- checkProperType annotation (text "in lambda abstraction") (text "as domain")
     annotatedDomain <- liftEval (eval annotation)
     bidiExpected annotatedDomain domain t
       "In a lambda abstraction, the declared argument type does not match the expected domain."
