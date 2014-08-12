@@ -196,6 +196,7 @@ infer = lexem (do char '_'
                   nextInfer)
         
 
+ident :: ParsecT String (SourcePos, t, t1) Identity Name
 ident = lexem (do name <- namepart
                   when (Prelude.all (== '*') name) $
                     unexpected ("constant")
