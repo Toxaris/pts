@@ -143,7 +143,12 @@ telescopeOrArgGroup = asum
   , many argGroupOrNames
   ]
 
-file = File <$> optionMaybe (keyword "language" *> ident <* semi) <*> optionMaybe (keyword "module" *> modname <* semi) <*> stmts
+showName :: Name -> String
+showName = show
+langName =
+  showName <$>
+  ident
+file = File <$> (optionMaybe (keyword "language" *> langName <* semi)) <*> optionMaybe (keyword "module" *> modname <* semi) <*> stmts
 
 names = many1 identOrMeta
 
