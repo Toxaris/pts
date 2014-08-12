@@ -1,3 +1,4 @@
+> language f;
 The PTS interpreter supports basic arithmetics.
 
 > module Arithmetics;
