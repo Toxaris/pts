@@ -16,7 +16,7 @@ data PTS = PTS
   { sortsSet :: Either (Set C) (C -> Bool)
   , axiomsMap :: Either (Map C C) (C -> Maybe C)
   , relationsMap :: Either (Map (C, C) C) (C -> C -> Maybe C)
-  , name :: [String]
+  , name :: [PTSName]
   , description :: String
   }
 

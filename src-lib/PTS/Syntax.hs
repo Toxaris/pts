@@ -4,6 +4,7 @@ module PTS.Syntax
     Name
   , Names
   , freshvarl
+  , PTSName
   , ModuleName (..)
   , parts
     -- ** Constants
