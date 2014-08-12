@@ -191,6 +191,7 @@ infer = lexem (do char '_'
                   nextInfer)
         
 
+ident :: Parser Name
 ident = lexem (do name <- namepart
                   when (Prelude.all (== '*') name) $
                     unexpected ("constant")
