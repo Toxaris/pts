@@ -2,6 +2,8 @@
 module PTS.Instances where
 
 import Control.Arrow ((***))
+import Data.Char (toLower)
+import Data.List (find)
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -450,3 +452,8 @@ uu = PTS sortsSet axiomsMap relationsMap name description where
 
 instances :: [PTS]
 instances = [lama, lam2, lamp, lamv, lap2, lamw, lapv, lamc, lams, laws, lawu, u, uu]
+
+lookupPTS arg = find nameIn instances
+  where
+    str = map toLower arg
+    nameIn = elem str . name
