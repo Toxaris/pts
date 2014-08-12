@@ -8,11 +8,12 @@ import Control.Monad (when, unless)
 import Control.Monad.Assertions (MonadAssertions (assert))
 import Control.Monad.Environment (runEnvironmentT)
 import Control.Monad.Errors
-import Control.Monad.Reader (MonadReader (local), runReaderT, asks)
+import Control.Monad.Reader (MonadReader (local), runReaderT, asks, ask)
 import Control.Monad.State (MonadState, get, put, evalStateT)
 import Control.Monad.Trans (MonadIO (liftIO))
 import Control.Monad.Log (MonadLog, runConsoleLogT)
 
+import Data.Maybe (fromMaybe)
 import Data.Monoid (mempty)
 import qualified Data.Map as Map
 
@@ -81,11 +82,34 @@ processFileInt' file = do
   outputLine $ "process file " ++ file
   text <- liftIO (readFile file)
   text <- deliterate text
-  File maybeInstance maybeName stmts <- parseFile file text
+  File fileLangName maybeName stmts <- parseFile file text
+  let fileLang = do
+        instName <- fileLangName
+        lookupInstance instName
 
-  processStmts (lines text, stmts)
+  currLang <- asks optInstance
+  newLang <- currLang `maybeXor` fileLang
+
+  let setLanguage = setInstance (Just newLang)
+  local setLanguage $
+  {-
+  let setLanguage :: CmdlineOptions -> Options = setInstance newLang
+  --withReader setLanguage $
+  -}
+    processStmts (lines text, stmts)
   state <- get
   return (maybeName, state)
+
+  where
+    -- XXX Hack, since fomegastar is the default.
+    maybeXor (Just l1) (Just l2) | l1 == fomegastar = return l2
+    maybeXor (Just l1) (Just l2) =
+      if l1 /= l2
+       then prettyFail $ text "Different language specified for module."
+       else return l1
+    maybeXor (Just l) Nothing = return l
+    maybeXor Nothing (Just l) = return l
+    maybeXor Nothing Nothing  = prettyFail $ text "No language specified"
 
 liftEval :: MonadState ProcessingState m => Eval a -> m a
 liftEval action = do
