@@ -35,7 +35,7 @@ data Options = Options
 
 -- monadic option combinators
 whenOption :: (MonadReader Options m) => (Options -> Bool) -> m () -> m ()
-whenOption  f act = ask >>= \opt            -> when (f opt) act
+whenOption f act = ask >>= \opt -> when (f opt) act
 
 prettyFail :: MonadReader Options m => Doc -> m a
 prettyFail doc = asks (flip render doc . optColumns) >>= fail
