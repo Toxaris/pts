@@ -78,7 +78,6 @@ data Flag
   = Error String
   | Help
   | Global (Options -> Options)
-  | Local (Options -> Options)
   | FilePath FilePath
   | ShowInsts Bool
   | LocateEmacsMode
@@ -100,7 +99,7 @@ options =
 handleHelp         = Help
 
 handleColumns  arg = case reads arg of
-                       [(n, "")]     -> Local  (setColumns    n         )
+                       [(n, "")]     -> Global (setColumns    n         )
                        _             -> Error  ("Error: columns option expects integer instead of " ++ arg)
 
 handlePTS      arg = case lookupInstance arg of
@@ -112,16 +111,16 @@ handlePTS      arg = case lookupInstance arg of
                                       text "To learn more about the instances, run: pts --enumerate-instances"
 
 handleLiterate arg = case fmap (map toLower) arg of
-                       Nothing       -> Local  (setLiterate   True      )
-                       Just "yes"    -> Local  (setLiterate   True      )
-                       Just "no"     -> Local  (setLiterate   False     )
+                       Nothing       -> Global (setLiterate   True      )
+                       Just "yes"    -> Global (setLiterate   True      )
+                       Just "no"     -> Global (setLiterate   False     )
                        Just other    -> Error  ("Error: literate option expects 'yes' or 'no' instead of " ++ other)
 
 handleDebug arg    = case map toLower arg of
-                       "toplevel"    -> Local  (setDebugTerms True       )
-                       "quoting"     -> Local  (setDebugQuote True       )
+                       "toplevel"    -> Global (setDebugTerms True       )
+                       "quoting"     -> Global (setDebugQuote True       )
 #ifdef DEBUG_TYPING
-                       "typing"      -> Local  (setDebugType  True       )
+                       "typing"      -> Global (setDebugType  True       )
                        _             -> Error  ("Error: debug option expects 'toplevel', 'typing' or 'quoting' instead of " ++ arg)
 #else
                        "typing"      -> Error  ("Error: this version of PTS was compiled without support for --debug=typing")
@@ -130,8 +129,8 @@ handleDebug arg    = case map toLower arg of
 
 handleQuiet        = Global (setQuiet True)
 
-handlePath Nothing = Local (setPath [])
-handlePath (Just p) = Local (extendPath p)
+handlePath Nothing = Global (setPath [])
+handlePath (Just p) = Global (extendPath p)
 
 handleShowInsts Nothing = ShowInsts False
 handleShowInsts (Just "machine-readable") = ShowInsts True
@@ -157,7 +156,6 @@ processFlagsGlobal opt (Global f   : flags) = processFlagsGlobal (f opt) flags
 processFlagsGlobal opt (_          : flags) = processFlagsGlobal opt flags
 
 processFlagsLocal  opt []                   = return []
-processFlagsLocal  opt (Local f    : flags) = processFlagsLocal (f opt) flags
 processFlagsLocal  opt (FilePath p : flags) = fmap ((opt, p) :) (processFlagsLocal opt flags)
 processFlagsLocal  opt (_          : flags) = processFlagsLocal opt flags
 
