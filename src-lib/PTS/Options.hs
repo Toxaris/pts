@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, FlexibleContexts, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections, ExistentialQuantification, FlexibleContexts, RankNTypes, ScopedTypeVariables #-}
 {-# LANGUAGE CPP #-}
 module PTS.Options where
 
@@ -138,8 +138,6 @@ handleShowInsts (Just other) = Error ("Error: enumerate-instances options expect
 
 handleLocateEmacsMode = LocateEmacsMode
 
--- order requirements
-argOrder = ReturnInOrder FilePath
 
 -- flag processing
 
@@ -154,10 +152,6 @@ processFlagsErrors     (_          : flags) = processFlagsErrors flags
 processFlagsGlobal opt []                   = return opt
 processFlagsGlobal opt (Global f   : flags) = processFlagsGlobal (f opt) flags
 processFlagsGlobal opt (_          : flags) = processFlagsGlobal opt flags
-
-processFlagsLocal  opt []                   = return []
-processFlagsLocal  opt (FilePath p : flags) = fmap ((opt, p) :) (processFlagsLocal opt flags)
-processFlagsLocal  opt (_          : flags) = processFlagsLocal opt flags
 
 processFlagsShowInsts []              = return ()
 processFlagsShowInsts (ShowInsts False : _) = liftIO printInstances
@@ -212,12 +206,12 @@ render n = renderStyle (Style PageMode n 1)
 parseCommandLine :: (Functor m, MonadIO m) => ([(Options, FilePath)] -> m a) -> m a
 parseCommandLine handler = do
   cmdline <- liftIO getArgs
-  let (flags, [], errors) = getOpt argOrder options cmdline
+  let (flags, fileNames, errors) = getOpt Permute options cmdline
   mapM_ (fail . ("Syntax Error in command line: " ++)) errors
   processFlagsHelp flags
   processFlagsErrors flags
   processFlagsLocateEmacsMode flags
   processFlagsShowInsts flags
   global <- processFlagsGlobal defaultOptions flags
-  jobs <- processFlagsLocal global flags
+  let jobs = map (global,) fileNames
   handler jobs
