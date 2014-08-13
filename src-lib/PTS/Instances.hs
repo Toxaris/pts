@@ -453,7 +453,7 @@ uu = PTS sortsSet axiomsMap relationsMap name description where
 instances :: [PTS]
 instances = [lama, lam2, lamp, lamv, lap2, lamw, lapv, lamc, lams, laws, lawu, u, uu]
 
-lookupPTS arg = find nameIn instances
+lookupInstance arg = find nameIn instances
   where
     str = map toLower arg
     nameIn = elem str . name

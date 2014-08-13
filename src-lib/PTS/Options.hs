@@ -103,7 +103,7 @@ handleColumns  arg = case reads arg of
                        [(n, "")]     -> Local  (setColumns    n         )
                        _             -> Error  ("Error: columns option expects integer instead of " ++ arg)
 
-handlePTS      arg = case lookupPTS arg of
+handlePTS      arg = case lookupInstance arg of
                        Just inst -> Global (setInstance inst)
                        Nothing   -> Error $ show $ text "Error: Unknown pure type system instance" <+> text arg $$
                                       text "" $$

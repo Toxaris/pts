@@ -85,7 +85,7 @@ processFileInt' file = do
   File maybeInstance maybeName stmts <- parseFile file text
   let maybeLang = do
         instName <- maybeInstance
-        lookupPTS instName
+        lookupInstance instName
 
   let setLanguage = maybe id setInstance maybeLang
   local setLanguage $ processStmts (lines text, stmts)
