@@ -7,7 +7,7 @@ module PTS.Syntax.Names
   , freshvarlMap
   , envToNamesMap
   , ModuleName (ModuleName)
-  , PTSName
+  , LanguageName
   , parts
   ) where
 
@@ -17,7 +17,7 @@ import Data.Set (Set, member)
 import qualified Data.Map as Map
 import Data.Typeable (Typeable)
 
-type PTSName = String
+type LanguageName = String
 
 data ModuleName
   =  ModuleName [String]
