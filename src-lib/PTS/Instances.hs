@@ -22,6 +22,9 @@ data PTS = PTS
   , description :: String
   }
 
+instance Eq PTS where
+  (PTS _ _ _ name1 desc1) == (PTS _ _ _ name2 desc2) = name1 == name2 && desc1 == desc2
+
 sorts :: PTS -> C -> Bool
 sorts (PTS {sortsSet = Left sorts}) c = c `Set.member` sorts
 sorts (PTS {sortsSet = Right f}) c = f c
