@@ -77,7 +77,7 @@ extendPath p options
 data Flag
   = Error String
   | Help
-  | Global (Options -> Options)
+  | Flag (Options -> Options)
   | FilePath FilePath
   | ShowInsts Bool
   | LocateEmacsMode
@@ -99,11 +99,11 @@ options =
 handleHelp         = Help
 
 handleColumns  arg = case reads arg of
-                       [(n, "")]     -> Global (setColumns    n         )
+                       [(n, "")]     -> Flag   (setColumns    n         )
                        _             -> Error  ("Error: columns option expects integer instead of " ++ arg)
 
 handlePTS      arg = case lookupInstance arg of
-                       Just inst -> Global (setInstance inst)
+                       Just inst -> Flag (setInstance inst)
                        Nothing   -> Error $ show $ text "Error: Unknown pure type system instance" <+> text arg $$
                                       text "" $$
                                       supported $$
@@ -111,26 +111,26 @@ handlePTS      arg = case lookupInstance arg of
                                       text "To learn more about the instances, run: pts --enumerate-instances"
 
 handleLiterate arg = case fmap (map toLower) arg of
-                       Nothing       -> Global (setLiterate   True      )
-                       Just "yes"    -> Global (setLiterate   True      )
-                       Just "no"     -> Global (setLiterate   False     )
+                       Nothing       -> Flag   (setLiterate   True      )
+                       Just "yes"    -> Flag   (setLiterate   True      )
+                       Just "no"     -> Flag   (setLiterate   False     )
                        Just other    -> Error  ("Error: literate option expects 'yes' or 'no' instead of " ++ other)
 
 handleDebug arg    = case map toLower arg of
-                       "toplevel"    -> Global (setDebugTerms True       )
-                       "quoting"     -> Global (setDebugQuote True       )
+                       "toplevel"    -> Flag   (setDebugTerms True       )
+                       "quoting"     -> Flag   (setDebugQuote True       )
 #ifdef DEBUG_TYPING
-                       "typing"      -> Global (setDebugType  True       )
+                       "typing"      -> Flag   (setDebugType  True       )
                        _             -> Error  ("Error: debug option expects 'toplevel', 'typing' or 'quoting' instead of " ++ arg)
 #else
                        "typing"      -> Error  ("Error: this version of PTS was compiled without support for --debug=typing")
                        _             -> Error  ("Error: debug option expects 'toplevel' or 'quoting' instead of " ++ arg)
 #endif
 
-handleQuiet        = Global (setQuiet True)
+handleQuiet        = Flag (setQuiet True)
 
-handlePath Nothing = Global (setPath [])
-handlePath (Just p) = Global (extendPath p)
+handlePath Nothing  = Flag (setPath [])
+handlePath (Just p) = Flag (extendPath p)
 
 handleShowInsts Nothing = ShowInsts False
 handleShowInsts (Just "machine-readable") = ShowInsts True
@@ -149,9 +149,9 @@ processFlagsErrors     []                   = return ()
 processFlagsErrors     (Error msg  : flags) = fail msg
 processFlagsErrors     (_          : flags) = processFlagsErrors flags
 
-processFlagsGlobal opt []                   = return opt
-processFlagsGlobal opt (Global f   : flags) = processFlagsGlobal (f opt) flags
-processFlagsGlobal opt (_          : flags) = processFlagsGlobal opt flags
+processFlags opt []                   = return opt
+processFlags opt (Flag f     : flags) = processFlags (f opt) flags
+processFlags opt (_          : flags) = processFlags opt flags
 
 processFlagsShowInsts []              = return ()
 processFlagsShowInsts (ShowInsts False : _) = liftIO printInstances
@@ -212,5 +212,5 @@ parseCommandLine handler = do
   processFlagsErrors flags
   processFlagsLocateEmacsMode flags
   processFlagsShowInsts flags
-  global <- processFlagsGlobal defaultOptions flags
-  handler global fileNames
+  flags <- processFlags defaultOptions flags
+  handler flags fileNames
