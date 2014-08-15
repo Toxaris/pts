@@ -8,11 +8,12 @@ import Control.Monad (when, unless)
 import Control.Monad.Assertions (MonadAssertions (assert))
 import Control.Monad.Environment (runEnvironmentT)
 import Control.Monad.Errors
-import Control.Monad.Reader (MonadReader (local), runReaderT, asks)
+import Control.Monad.Reader (MonadReader (local), runReaderT, asks, ask)
 import Control.Monad.State (MonadState, get, put, evalStateT)
 import Control.Monad.Trans (MonadIO (liftIO))
 import Control.Monad.Log (MonadLog, runConsoleLogT)
 
+import Data.Maybe (fromMaybe)
 import Data.Monoid (mempty)
 import qualified Data.Map as Map
 
@@ -81,8 +82,18 @@ processFileInt' file = do
   outputLine $ "process file " ++ file
   text <- liftIO (readFile file)
   text <- deliterate text
-  File maybeName stmts <- parseFile file text
-  processStmts (lines text, stmts)
+  File maybeInstance maybeName stmts <- parseFile file text
+  let maybeLang = do
+        instName <- maybeInstance
+        lookupInstance instName
+  opts <- ask
+  newOpts <- case maybeLang of
+    Just newLang ->
+      if optInstance opts == newLang || optInstance opts == fomegastar --XXX
+       then return $ setInstance newLang opts
+       else fail "Trying to change language!"
+    Nothing -> return opts
+  local (const newOpts) $ processStmts (lines text, stmts)
   state <- get
   return (maybeName, state)
 

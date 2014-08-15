@@ -143,7 +143,10 @@ telescopeOrArgGroup = asum
   , many argGroupOrNames
   ]
 
-file = File <$> optionMaybe (keyword "module" *> modname <* semi) <*> stmts
+langName :: Parser String
+langName = show <$> ident
+
+file = File <$> (optionMaybe (keyword "language" *> langName <* semi)) <*> optionMaybe (keyword "module" *> modname <* semi) <*> stmts
 
 names = many1 identOrMeta
 
@@ -191,6 +194,7 @@ infer = lexem (do char '_'
                   nextInfer)
         
 
+ident :: Parser Name
 ident = lexem (do name <- namepart
                   when (Prelude.all (== '*') name) $
                     unexpected ("constant")

@@ -7,7 +7,7 @@ import Control.Monad.Reader (MonadReader, ask, asks)
 import Control.Monad.Trans (MonadIO, liftIO)
 
 import Data.Char (toLower)
-import Data.List (mapAccumL, intercalate, find)
+import Data.List (mapAccumL, intercalate)
 
 import System.Console.GetOpt
 import System.Environment (getArgs)
@@ -103,15 +103,13 @@ handleColumns  arg = case reads arg of
                        [(n, "")]     -> Local  (setColumns    n         )
                        _             -> Error  ("Error: columns option expects integer instead of " ++ arg)
 
-handlePTS      arg = case find nameIn instances of
+handlePTS      arg = case lookupInstance arg of
                        Just inst -> Global (setInstance inst)
                        Nothing   -> Error $ show $ text "Error: Unknown pure type system instance" <+> text arg $$
                                       text "" $$
                                       supported $$
                                       text "" $$
                                       text "To learn more about the instances, run: pts --enumerate-instances"
-                     where str = map toLower arg
-                           nameIn = elem str . name
 
 handleLiterate arg = case fmap (map toLower) arg of
                        Nothing       -> Local  (setLiterate   True      )
