@@ -1,4 +1,4 @@
-{-# LANGUAGE TupleSections, ExistentialQuantification, FlexibleContexts, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE ExistentialQuantification, FlexibleContexts, RankNTypes, ScopedTypeVariables #-}
 {-# LANGUAGE CPP #-}
 module PTS.Options where
 
@@ -203,7 +203,7 @@ locateEmacsMode = do
 render n = renderStyle (Style PageMode n 1)
 
 -- main entry point
-parseCommandLine :: (Functor m, MonadIO m) => ([(Options, FilePath)] -> m a) -> m a
+parseCommandLine :: (Functor m, MonadIO m) => (Options -> [FilePath] -> m a) -> m a
 parseCommandLine handler = do
   cmdline <- liftIO getArgs
   let (flags, fileNames, errors) = getOpt Permute options cmdline
@@ -213,5 +213,4 @@ parseCommandLine handler = do
   processFlagsLocateEmacsMode flags
   processFlagsShowInsts flags
   global <- processFlagsGlobal defaultOptions flags
-  let jobs = map (global,) fileNames
-  handler jobs
+  handler global fileNames
