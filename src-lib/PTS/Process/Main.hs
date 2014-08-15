@@ -25,7 +25,8 @@ import System.Exit (exitSuccess, exitFailure)
 import System.IO (hPutStrLn, stderr, hFlush, stdout)
 
 main = do
-  result <- parseCommandLine processJobs
+  (opts, files) <- parseCommandLine
+  result <- processJobs opts files
   processErrors result
 
 processErrors result = do

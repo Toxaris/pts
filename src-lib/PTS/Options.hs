@@ -203,8 +203,8 @@ locateEmacsMode = do
 render n = renderStyle (Style PageMode n 1)
 
 -- main entry point
-parseCommandLine :: (Functor m, MonadIO m) => (Options -> [FilePath] -> m a) -> m a
-parseCommandLine handler = do
+parseCommandLine :: (Functor m, MonadIO m) => m (Options, [FilePath])
+parseCommandLine = do
   cmdline <- liftIO getArgs
   let (flags, fileNames, errors) = getOpt Permute options cmdline
   mapM_ (fail . ("Syntax Error in command line: " ++)) errors
@@ -213,4 +213,4 @@ parseCommandLine handler = do
   processFlagsLocateEmacsMode flags
   processFlagsShowInsts flags
   flags <- processFlags defaultOptions flags
-  handler flags fileNames
+  return (flags, fileNames)
