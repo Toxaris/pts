@@ -86,9 +86,14 @@ processFileInt' file = do
   let maybeLang = do
         instName <- maybeInstance
         lookupInstance instName
-
-  let setLanguage = maybe id setInstance maybeLang
-  local setLanguage $ processStmts (lines text, stmts)
+  opts <- ask
+  newOpts <- case maybeLang of
+    Just newLang ->
+      if optInstance opts == newLang || optInstance opts == fomegastar --XXX
+       then return $ setInstance newLang opts
+       else fail "Trying to change language!"
+    Nothing -> return opts
+  local (const newOpts) $ processStmts (lines text, stmts)
   state <- get
   return (maybeName, state)
 
