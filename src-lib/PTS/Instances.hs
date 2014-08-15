@@ -2,12 +2,15 @@
 module PTS.Instances where
 
 import Control.Arrow ((***))
-import PTS.Syntax
+import Data.Char (toLower)
+import Data.List (find)
 
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
+
+import PTS.Syntax
 
 -- This type defines a specific pure type system, see Barendregt
 
@@ -15,7 +18,7 @@ data PTS = PTS
   { sortsSet :: Either (Set C) (C -> Bool)
   , axiomsMap :: Either (Map C C) (C -> Maybe C)
   , relationsMap :: Either (Map (C, C) C) (C -> C -> Maybe C)
-  , name :: [String]
+  , name :: [LanguageName]
   , description :: String
   }
 
@@ -449,3 +452,8 @@ uu = PTS sortsSet axiomsMap relationsMap name description where
 
 instances :: [PTS]
 instances = [lama, lam2, lamp, lamv, lap2, lamw, lapv, lamc, lams, laws, lawu, u, uu]
+
+lookupInstance arg = find nameIn instances
+  where
+    str = map toLower arg
+    nameIn = elem str . name
