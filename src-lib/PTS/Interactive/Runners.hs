@@ -37,6 +37,6 @@ returnsIO :: IO a
 returnsIO = undefined
 
 optionsForInstance Nothing = defaultOptions
-optionsForInstance (Just inst) = setInstance inst $ optionsForInstance Nothing
+optionsForInstance (Just inst) = setInstance (Just inst) $ optionsForInstance Nothing
 
 observeFinalState = flip runStateT initState

@@ -8,6 +8,7 @@ import Control.Monad.Trans (MonadIO, liftIO)
 
 import Data.Char (toLower)
 import Data.List (mapAccumL, intercalate)
+import Data.Maybe (fromJust)
 
 import System.Console.GetOpt
 import System.Environment (getArgs)
@@ -20,9 +21,9 @@ import PTS.Instances
 import Paths_pts (getDataFileName)
 
 -- options record
-data Options = Options
+data OptionsStruct t = Options
   { optColumns :: Int
-  , optInstance :: PTS
+  , optInstance :: t
   , optLiterate :: Bool
   , optShowFullTerms :: Bool
   , optDebugQuote :: Bool
@@ -33,8 +34,14 @@ data Options = Options
   , optPath :: [FilePath]
   }
 
+type CmdlineOptions = OptionsStruct (Maybe PTS)
+type Options = OptionsStruct (Maybe PTS) -- XXX remove Maybe
+
+-- | Gets the current object language.
+-- You're supposed to only call it when it
+-- is guaranteed that a language is configured.
 getLanguage :: MonadReader Options m => m PTS
-getLanguage = asks optInstance
+getLanguage = asks (fromJust . optInstance)
 
 -- monadic option combinators
 whenOption :: (MonadReader Options m) => (Options -> Bool) -> m () -> m ()
@@ -46,7 +53,7 @@ prettyFail doc = asks (flip render doc . optColumns) >>= fail
 -- default options
 defaultOptions = Options
   { optColumns = 80
-  , optInstance = fomegastar
+  , optInstance = Just fomegastar -- Nothing
   , optLiterate = False
   , optShowFullTerms = False
   , optDebugQuote = False
@@ -106,7 +113,7 @@ handleColumns  arg = case reads arg of
                        _             -> Error  ("Error: columns option expects integer instead of " ++ arg)
 
 handlePTS      arg = case lookupInstance arg of
-                       Just inst -> Flag (setInstance inst)
+                       Just inst -> Flag (setInstance $ Just inst)
                        Nothing   -> Error $ show $ text "Error: Unknown pure type system instance" <+> text arg $$
                                       text "" $$
                                       supported $$
