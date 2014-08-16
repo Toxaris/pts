@@ -24,6 +24,7 @@ import Paths_pts (getDataFileName)
 data OptionsStruct t = Options
   { optColumns :: Int
   , optInstance :: t
+  , optAllowSubLang :: Bool
   , optLiterate :: Bool
   , optShowFullTerms :: Bool
   , optDebugQuote :: Bool
@@ -54,6 +55,7 @@ prettyFail doc = asks (flip render doc . optColumns) >>= fail
 defaultOptions = Options
   { optColumns = 80
   , optInstance = Nothing
+  , optAllowSubLang = False
   , optLiterate = False
   , optShowFullTerms = False
   , optDebugQuote = False
@@ -70,16 +72,17 @@ optDebugType _ = False
 #endif
 
 
-setColumns    x options = options {optColumns = x}
-setInstance   x options = options {optInstance = x}
-setLiterate   x options = options {optLiterate = x}
-setDebugTerms x options = options {optShowFullTerms = x}
-setDebugQuote x options = options {optDebugQuote = x}
+setColumns      x options = options {optColumns = x}
+setInstance     x options = options {optInstance = x}
+setAllowSubLang x options = options {optAllowSubLang = x}
+setLiterate     x options = options {optLiterate = x}
+setDebugTerms   x options = options {optShowFullTerms = x}
+setDebugQuote   x options = options {optDebugQuote = x}
 #ifdef DEBUG_TYPING
-setDebugType  x options = options {optDebugType = x}
+setDebugType    x options = options {optDebugType = x}
 #endif
-setQuiet      x options = options {optQuiet = x}
-setPath       x options = options {optPath = x}
+setQuiet        x options = options {optQuiet = x}
+setPath         x options = options {optPath = x}
 
 extendPath p options
   =  options {optPath = optPath options ++ splitSearchPath p}
