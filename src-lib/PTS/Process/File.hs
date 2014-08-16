@@ -81,7 +81,8 @@ processFileInt' file = do
   outputLine $ "process file " ++ file
   text <- liftIO (readFile file)
   text <- deliterate text
-  File maybeName stmts <- parseFile file text
+  File maybeInstance maybeName stmts <- parseFile file text
+
   processStmts (lines text, stmts)
   state <- get
   return (maybeName, state)
