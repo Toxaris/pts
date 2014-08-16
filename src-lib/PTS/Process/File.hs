@@ -101,8 +101,6 @@ processFileInt' file = do
   return (maybeName, state)
 
   where
-    -- XXX Hack, since fomegastar is the default.
-    maybeXor (Just l1) (Just l2) | l1 == fomegastar = return l2
     maybeXor (Just l1) (Just l2) =
       if l1 /= l2
        then prettyFail $ text "Different language specified for module."

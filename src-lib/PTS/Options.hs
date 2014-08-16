@@ -53,7 +53,7 @@ prettyFail doc = asks (flip render doc . optColumns) >>= fail
 -- default options
 defaultOptions = Options
   { optColumns = 80
-  , optInstance = Just fomegastar -- Nothing
+  , optInstance = Nothing
   , optLiterate = False
   , optShowFullTerms = False
   , optDebugQuote = False
