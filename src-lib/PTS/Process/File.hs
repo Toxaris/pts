@@ -88,7 +88,7 @@ processFileInt' file = do
         lookupInstance instName
 
   currLang <- asks optInstance
-  newLang <- currLang `maybeXor` fileLang
+  newLang <- maybeXor currLang fileLang =<< asks optAllowSubLang
 
   let setLanguage = setInstance (Just newLang)
   local setLanguage $
@@ -101,13 +101,20 @@ processFileInt' file = do
   return (maybeName, state)
 
   where
-    maybeXor (Just l1) (Just l2) =
+    maybeXor (Just l1) (Just l2) allowSubLang | isSubPTS l2 l1 == Just True =
+      if allowSubLang
+       then return l2
+       else prettyFail . text $
+              "Sublanguage specified for module, but sublanguages for " ++
+              "modules are not enabled."
+
+    maybeXor (Just l1) (Just l2) _ =
       if l1 /= l2
        then prettyFail $ text "Different language specified for module."
        else return l1
-    maybeXor (Just l) Nothing = return l
-    maybeXor Nothing (Just l) = return l
-    maybeXor Nothing Nothing  = prettyFail $ text "No language specified"
+    maybeXor (Just l) Nothing _ = return l
+    maybeXor Nothing (Just l) _ = return l
+    maybeXor Nothing Nothing  _ = prettyFail $ text "No language specified"
 
 liftEval :: MonadState ProcessingState m => Eval a -> m a
 liftEval action = do
