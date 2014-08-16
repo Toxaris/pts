@@ -200,6 +200,7 @@ locateEmacsMode = do
   putStr path
 
 -- printing
+render :: Int -> Doc -> String
 render n = renderStyle (Style PageMode n 1)
 
 -- main entry point
