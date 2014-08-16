@@ -33,6 +33,9 @@ data Options = Options
   , optPath :: [FilePath]
   }
 
+getLanguage :: MonadReader Options m => m PTS
+getLanguage = asks optInstance
+
 -- monadic option combinators
 whenOption :: (MonadReader Options m) => (Options -> Bool) -> m () -> m ()
 whenOption f act = ask >>= \opt -> when (f opt) act

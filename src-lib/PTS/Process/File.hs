@@ -106,7 +106,7 @@ processStmts (text, stmts) = do
 processStmt (StmtPos p s) = annotatePos p $ processStmt s
 
 processStmt (Term t) = recover () $ do
-  pts <- asks (optInstance)
+  pts <- getLanguage
   output (text "")
   output (text "process expression")
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
@@ -120,7 +120,7 @@ processStmt (Term t) = recover () $ do
 
 processStmt (Bind n args Nothing body) = recover () $ do
   let t = foldTelescope mkLam args body
-  pts <- asks (optInstance)
+  pts <- getLanguage
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
@@ -135,7 +135,7 @@ processStmt (Bind n args Nothing body) = recover () $ do
 processStmt (Bind n args (Just body') body) = recover () $ do
   let t   =  foldTelescope mkLam args body
   let t'  =  foldTelescope mkPi args body'
-  pts <- asks (optInstance)
+  pts <- getLanguage
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
 
