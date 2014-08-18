@@ -55,7 +55,7 @@ prettyFail doc = asks (flip render doc . optColumns) >>= fail
 defaultOptions = Options
   { optColumns = 80
   , optInstance = Nothing
-  , optAllowSubLang = False
+  , optAllowSubLang = True
   , optLiterate = False
   , optShowFullTerms = False
   , optDebugQuote = False
