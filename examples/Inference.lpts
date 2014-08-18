@@ -1,3 +1,4 @@
+> language f;
 From B. C. Pierce and D. N. Turner, Local Type Inference, POPL 1998:
 "Bidirectional propagation of type information allows the types of parameters of
 anonymous functions to be inferred. When an anonymous function appears as an

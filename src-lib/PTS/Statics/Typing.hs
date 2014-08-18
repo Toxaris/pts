@@ -95,7 +95,7 @@ debugPush n t q result = do
 
 checkProperType t context info = do
   let t' = typeOf t
-  pts <- asks optInstance
+  pts <- getLanguage
   env <- getEnvironment
 
   case t' of
@@ -111,7 +111,7 @@ msgNotProperType context info t t'
     sep [text "Type:", nest 2 (pretty 0 t')])
 
 checkLamBodyHasSort body s1 context = do
-  pts <- asks optInstance
+  pts <- getLanguage
   s2 <- case sortOf body of
     Just s | sorts pts s -> return s
     Just s -> fail "Internal Error."
@@ -203,7 +203,7 @@ typecheckPull :: (MonadEnvironment Name (Binding Eval) m, MonadReader Options m,
 typecheckPull t = case structure t of
   -- constant
   Const c -> debug "typecheckPull Const" t $ do
-    pts <- asks optInstance
+    pts <- getLanguage
     case axioms pts c of
       Just t  ->  return (mkConst c (Constant t) (axioms pts t))
       _       ->
@@ -238,7 +238,7 @@ typecheckPull t = case structure t of
       s2 <- checkProperType body (text "in product type") (text "as codomain")
 
       -- check language support
-      pts <- asks optInstance
+      pts <- getLanguage
       s3 <- prettyRelations pts s1 s2
       let s4 = axioms pts s3
 
@@ -286,7 +286,7 @@ typecheckPull t = case structure t of
     -- construct integer type
     integerType <- typecheckPull (mkConst int)
     integerType <- liftEval (eval integerType)
-    pts <- asks optInstance
+    pts <- getLanguage
     let integerSort = axioms pts int
     
     -- construct result
@@ -297,7 +297,7 @@ typecheckPull t = case structure t of
     -- construct integer type
     integerType <- typecheckPull (mkConst int)
     integerType <- liftEval (eval integerType)
-    pts <- asks optInstance
+    pts <- getLanguage
     let integerSort = axioms pts int
 
     -- check operands
@@ -348,7 +348,7 @@ typecheckPush t q = case structure t of
   -- constant
   Const c -> debugPush "typecheckPush Const" t q $ do
     -- check language support
-    pts <- asks optInstance
+    pts <- getLanguage
     case axioms pts c of
       Just ct -> do bidiExpected (Constant ct) q t "Attempted to push the wrong type onto a constant."
                     return (mkConst c (Constant ct) (axioms pts ct))
@@ -375,7 +375,7 @@ typecheckPush t q = case structure t of
       s2 <- checkProperType body (text "in product type") (text "as codomain")
 
       -- check language support
-      pts <- asks optInstance
+      pts <- getLanguage
       s3 <- prettyRelations pts s1 s2
       let s4 = axioms pts s3
 
@@ -433,7 +433,7 @@ typecheckPush t q = case structure t of
     -- construct integer type
     integerType <- typecheckPull (mkConst int)
     integerType <- liftEval (eval integerType)
-    pts <- asks optInstance
+    pts <- getLanguage
     let integerSort = axioms pts int
     
     -- check that expected type is integer type
@@ -447,7 +447,7 @@ typecheckPush t q = case structure t of
     -- construct integer type
     integerType <- typecheckPull (mkConst int)
     integerType <- liftEval (eval integerType)
-    pts <- asks optInstance
+    pts <- getLanguage
     let integerSort = axioms pts int
 
     -- check that expected type is integer type

@@ -1,3 +1,4 @@
+> language stlc;
 > foo =
 > 1;
 > bar =

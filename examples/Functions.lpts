@@ -1,3 +1,4 @@
+> language f;
 The identity function on integers
 
 > intId = lambda x : Int . x;

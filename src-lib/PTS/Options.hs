@@ -8,6 +8,7 @@ import Control.Monad.Trans (MonadIO, liftIO)
 
 import Data.Char (toLower)
 import Data.List (mapAccumL, intercalate)
+import Data.Maybe (fromJust)
 
 import System.Console.GetOpt
 import System.Environment (getArgs)
@@ -20,9 +21,10 @@ import PTS.Instances
 import Paths_pts (getDataFileName)
 
 -- options record
-data Options = Options
+data OptionsStruct t = Options
   { optColumns :: Int
-  , optInstance :: PTS
+  , optInstance :: t
+  , optAllowSubLang :: Bool
   , optLiterate :: Bool
   , optShowFullTerms :: Bool
   , optDebugQuote :: Bool
@@ -32,6 +34,15 @@ data Options = Options
   , optQuiet :: Bool
   , optPath :: [FilePath]
   }
+
+type CmdlineOptions = OptionsStruct (Maybe PTS)
+type Options = OptionsStruct (Maybe PTS) -- XXX remove Maybe
+
+-- | Gets the current object language.
+-- You're supposed to only call it when it
+-- is guaranteed that a language is configured.
+getLanguage :: MonadReader Options m => m PTS
+getLanguage = asks (fromJust . optInstance)
 
 -- monadic option combinators
 whenOption :: (MonadReader Options m) => (Options -> Bool) -> m () -> m ()
@@ -43,7 +54,8 @@ prettyFail doc = asks (flip render doc . optColumns) >>= fail
 -- default options
 defaultOptions = Options
   { optColumns = 80
-  , optInstance = fomegastar
+  , optInstance = Nothing
+  , optAllowSubLang = True
   , optLiterate = False
   , optShowFullTerms = False
   , optDebugQuote = False
@@ -60,16 +72,17 @@ optDebugType _ = False
 #endif
 
 
-setColumns    x options = options {optColumns = x}
-setInstance   x options = options {optInstance = x}
-setLiterate   x options = options {optLiterate = x}
-setDebugTerms x options = options {optShowFullTerms = x}
-setDebugQuote x options = options {optDebugQuote = x}
+setColumns      x options = options {optColumns = x}
+setInstance     x options = options {optInstance = x}
+setAllowSubLang x options = options {optAllowSubLang = x}
+setLiterate     x options = options {optLiterate = x}
+setDebugTerms   x options = options {optShowFullTerms = x}
+setDebugQuote   x options = options {optDebugQuote = x}
 #ifdef DEBUG_TYPING
-setDebugType  x options = options {optDebugType = x}
+setDebugType    x options = options {optDebugType = x}
 #endif
-setQuiet      x options = options {optQuiet = x}
-setPath       x options = options {optPath = x}
+setQuiet        x options = options {optQuiet = x}
+setPath         x options = options {optPath = x}
 
 extendPath p options
   =  options {optPath = optPath options ++ splitSearchPath p}
@@ -86,7 +99,8 @@ data Flag
 options =
   [ Option ['c'] ["columns"]              (ReqArg handleColumns  "c"     ) "wrap output at specified column"
   , Option ['p'] ["pts", "instance"]      (ReqArg handlePTS      "i"     ) "implement specified pure type systems instance"
-  , Option ['l'] ["literate"]             (OptArg handleLiterate "b"     ) "treat input as literate source files"
+  , Option ['s'] ["sub-langs"]            (OptArg handleSubLang  "yes/no") "allow modules to use sublanguages"
+  , Option ['l'] ["literate"]             (OptArg handleLiterate "yes/no") "treat input as literate source files"
   , Option ['d'] ["debug"]                (ReqArg handleDebug    "option") "activate specified debug options"
   , Option ['q'] ["quiet"]                (NoArg  handleQuiet            ) "don't print so much"
   , Option ['i'] []                       (OptArg handlePath     "paths" ) "add paths to search path, or reset search path"
@@ -103,18 +117,26 @@ handleColumns  arg = case reads arg of
                        _             -> Error  ("Error: columns option expects integer instead of " ++ arg)
 
 handlePTS      arg = case lookupInstance arg of
-                       Just inst -> Flag (setInstance inst)
+                       Just inst -> Flag (setInstance $ Just inst)
                        Nothing   -> Error $ show $ text "Error: Unknown pure type system instance" <+> text arg $$
                                       text "" $$
                                       supported $$
                                       text "" $$
                                       text "To learn more about the instances, run: pts --enumerate-instances"
 
-handleLiterate arg = case fmap (map toLower) arg of
-                       Nothing       -> Flag   (setLiterate   True      )
-                       Just "yes"    -> Flag   (setLiterate   True      )
-                       Just "no"     -> Flag   (setLiterate   False     )
-                       Just other    -> Error  ("Error: literate option expects 'yes' or 'no' instead of " ++ other)
+getFlag arg optName = case fmap (map toLower) arg of
+                       Nothing       -> return True
+                       Just "yes"    -> return True
+                       Just "no"     -> return False
+                       Just other    -> fail ("Error: " ++ optName ++ " option expects 'yes' or 'no' instead of " ++ other)
+
+handleLiterate arg = case getFlag arg "literate" of
+                       Right b       -> Flag   (setLiterate b            )
+                       Left err      -> Error  err
+
+handleSubLang arg = case getFlag arg "sub-lang" of
+                       Right b       -> Flag   (setAllowSubLang b        )
+                       Left err      -> Error  err
 
 handleDebug arg    = case map toLower arg of
                        "toplevel"    -> Flag   (setDebugTerms True       )
@@ -200,6 +222,7 @@ locateEmacsMode = do
   putStr path
 
 -- printing
+render :: Int -> Doc -> String
 render n = renderStyle (Style PageMode n 1)
 
 -- main entry point

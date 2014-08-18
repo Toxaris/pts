@@ -1,5 +1,7 @@
 This file explores Boehm-Berarducci encoding of natural numbers.
 
+> language f;
+> module Church;
 > Number
 >   = Pi alpha : * . (alpha -> alpha) -> alpha -> alpha;
 
