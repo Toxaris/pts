@@ -60,7 +60,7 @@ Alternatively:
     wrapTypecheckPull Nothing [pts|*|] [] & mapped . mapped %~ showPretty
 
 Instead of `Nothing`, you can pass `Just ptsInst` where `ptsInst` is the name of
-a PTS instance (of type `PTS`).
+a PTS instance (of type `PTS`). `Nothing` defaults to the fomegastar PTS instance.
 
 Since the prettyprinter hides types, consider using `showPretty . typeOf` if you
 want to see a type.
