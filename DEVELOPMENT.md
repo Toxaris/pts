@@ -25,11 +25,11 @@ You can use `[pts| ..your term... |]`. Note you can't add spaces in
 freer-format because it's handled, in the end, by the PTS parser.
 
 Example:
-```
-> [pts| * |]
-> [pts|lambda x : * . x|]
-lambda x : * . x
-```
+
+    > [pts| * |]
+    MkTerm (Const (C 1))
+    > [pts|lambda x : * . x|]
+    MkTerm (Lam x (MkTerm (Const (C 1))) (MkTerm (Var x)))
 
 You can also use `parseSimple`, if the program is not statically known.
 
@@ -40,10 +40,11 @@ Use `nbeClosed`, or `nbe` with a list of bindings.
 # Viewing/decomposing terms
 
 You can use the standard `Show` instance (created with `deriving Show`), or
-`prettyShow` to invoke the pretty-printer.
+`showPretty` to invoke the pretty-printer.
 
-We expect that `parse . prettyShow = id`, while `prettyShow . parse` will
-canonicalize the text.
+We expect that `parseSimple . showPretty = id` (modulo extra return values and
+position nodes), while `showPretty <$> parseSimple termSyntax` will canonicalize
+the text.
 
 # Typechecking terms
 
