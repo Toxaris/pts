@@ -89,6 +89,12 @@ some exports. To see internals, use instead:
 Either way, the code will autodetect whether to use literate parsing based on
 the extension.
 
+Unfortunately, neither case will be able to load relative imports.
+
+Here's an example of how to look inside the return value (using lenses and `Control.Arrow`):
+
+    mapM_ (\case { (a, (b, c)) -> do { print a; print b; print c; putStrLn ""; } } ) $ getBindings r & mapped . _2 %~ (showPretty . reifyClosed . bindingValue &&& showPretty . reifyClosed . bindingType)
+
 # Typechecking in the context of other modules
 
 A pretty crude approach is this:
