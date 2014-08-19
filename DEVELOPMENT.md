@@ -62,8 +62,8 @@ Alternatively:
 Instead of `Nothing`, you can pass `Just ptsInst` where `ptsInst` is the name of
 a PTS instance (of type `PTS`). `Nothing` defaults to the fomegastar PTS instance.
 
-Since the prettyprinter hides types, consider using `showPretty . typeOf` if you
-want to see a type.
+Since the prettyprinter hides types, consider using `showPretty . runEval [] .
+reify . typeOf` if you want to see a type.
 
 To typecheck a term against a given expected type, you can use
 `wrapTypecheckPush` or the more convenient variant `wrapTypecheckPushUntyped`.
