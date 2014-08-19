@@ -52,6 +52,12 @@ parseStSimple input = parseStmt "REPL" input
 nbeClosed :: TypedTerm Eval -> Term
 nbeClosed = nbe []
 
+reifyEnv :: Bindings Eval -> Value Eval -> Term
+reifyEnv env = runEval env . reify
+
+reifyClosed :: Value Eval -> Term
+reifyClosed = reifyEnv []
+
 processFileSimple inst f = runErrorsAndOpts inst (processFile f)
 processFileSimpleInt inst f = runErrorsAndOpts inst (processFileInt f)
 processStmtSimple inst stmt = runErrorsAndOptsGetState inst (processStmt stmt)
