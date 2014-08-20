@@ -25,11 +25,11 @@ You can use `[pts| ..your term... |]`. Note you can't add spaces in
 freer-format because it's handled, in the end, by the PTS parser.
 
 Example:
-```
-> [pts| * |]
-> [pts|lambda x : * . x|]
-lambda x : * . x
-```
+
+    > [pts| * |]
+    MkTerm (Const (C 1))
+    > [pts|lambda x : * . x|]
+    MkTerm (Lam x (MkTerm (Const (C 1))) (MkTerm (Var x)))
 
 You can also use `parseSimple`, if the program is not statically known.
 
@@ -40,10 +40,11 @@ Use `nbeClosed`, or `nbe` with a list of bindings.
 # Viewing/decomposing terms
 
 You can use the standard `Show` instance (created with `deriving Show`), or
-`prettyShow` to invoke the pretty-printer.
+`showPretty` to invoke the pretty-printer.
 
-We expect that `parse . prettyShow = id`, while `prettyShow . parse` will
-canonicalize the text.
+We expect that `parseSimple . showPretty = id` (modulo extra return values and
+position nodes), while `showPretty <$> parseSimple termSyntax` will canonicalize
+the text.
 
 # Typechecking terms
 
@@ -60,10 +61,10 @@ Alternatively:
     wrapTypecheckPull Nothing [pts|*|] [] & mapped . mapped %~ showPretty
 
 Instead of `Nothing`, you can pass `Just ptsInst` where `ptsInst` is the name of
-a PTS instance (of type `PTS`).
+a PTS instance (of type `PTS`). `Nothing` defaults to the fomegastar PTS instance.
 
-Since the prettyprinter hides types, consider using `showPretty . typeOf` if you
-want to see a type.
+Since the prettyprinter hides types, consider using `showPretty . reifyClosed .
+typeOf` if you want to see a type.
 
 To typecheck a term against a given expected type, you can use
 `wrapTypecheckPush` or the more convenient variant `wrapTypecheckPushUntyped`.
@@ -87,6 +88,12 @@ some exports. To see internals, use instead:
 
 Either way, the code will autodetect whether to use literate parsing based on
 the extension.
+
+Unfortunately, neither case will be able to load relative imports.
+
+Here's an example of how to look inside the return value (using lenses and `Control.Arrow`):
+
+    mapM_ (\case { (a, (b, c)) -> do { print a; print b; print c; putStrLn ""; } } ) $ getBindings r & mapped . _2 %~ (showPretty . reifyClosed . bindingValue &&& showPretty . reifyClosed . bindingType)
 
 # Typechecking in the context of other modules
 

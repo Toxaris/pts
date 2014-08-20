@@ -5,6 +5,7 @@ module PTS.Interactive.Runners where
 
 import PTS.Process.Main
 import PTS.Options
+import PTS.Instances (fomegastar)
 
 import Control.Monad.State
 import Control.Monad.Errors
@@ -36,7 +37,7 @@ runAssertAndOptMonads inst = checkAssertions . runOptMonads (optionsForInstance 
 returnsIO :: IO a
 returnsIO = undefined
 
-optionsForInstance Nothing = defaultOptions
-optionsForInstance (Just inst) = setInstance (Just inst) $ optionsForInstance Nothing
+optionsForInstance Nothing = optionsForInstance $ Just fomegastar
+optionsForInstance (Just inst) = setInstance (Just inst) $ defaultOptions
 
 observeFinalState = flip runStateT initState

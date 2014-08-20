@@ -32,7 +32,7 @@ import PTS.QuasiQuote
 
 import PTS.Error
 
-import PTS.Process.File
+import PTS.Process.File hiding (getBindings)
 import PTS.Interactive.Runners
 
 import qualified PTS.Instances as Instances
@@ -52,13 +52,20 @@ parseStSimple input = parseStmt "REPL" input
 nbeClosed :: TypedTerm Eval -> Term
 nbeClosed = nbe []
 
+reifyEnv :: Bindings Eval -> Value Eval -> Term
+reifyEnv env = runEval env . reify
+
+reifyClosed :: Value Eval -> Term
+reifyClosed = reifyEnv []
+
 processFileSimple inst f = runErrorsAndOpts inst (processFile f)
 processFileSimpleInt inst f = runErrorsAndOpts inst (processFileInt f)
 processStmtSimple inst stmt = runErrorsAndOptsGetState inst (processStmt stmt)
 
 -- With lens, this is r ^. _Right . _2 . _3
-getBindings :: Either Errors (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval)) -> Bindings Eval
-getBindings (Right (_, (_, _, bindings))) = bindings
+-- (Maybe ModuleName, (Map ModuleName (Module Eval), [ModuleName], Bindings Eval))
+getBindings :: Either Errors (Maybe (Module Eval)) -> Bindings Eval
+getBindings (Right (Just (Module _ _ bindings))) = bindings
 getBindings _ = []
 
 wrapTypecheckPull ::
