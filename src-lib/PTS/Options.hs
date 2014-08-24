@@ -114,7 +114,7 @@ handleHelp         = Help
 
 handleColumns  arg = case reads arg of
                        [(n, "")]     -> Flag   (setColumns    n         )
-                       _             -> Error  ("Error: columns option expects integer instead of " ++ arg)
+                       _             -> Error  ("Error: --columns option expects integer instead of " ++ arg)
 
 handlePTS      arg = case lookupInstance arg of
                        Just inst -> Flag (setInstance $ Just inst)
@@ -128,7 +128,7 @@ getFlag arg optName = case fmap (map toLower) arg of
                        Nothing       -> return True
                        Just "yes"    -> return True
                        Just "no"     -> return False
-                       Just other    -> fail ("Error: " ++ optName ++ " option expects 'yes' or 'no' instead of " ++ other)
+                       Just other    -> fail ("Error: --" ++ optName ++ " option expects 'yes' or 'no' instead of " ++ other)
 
 handleLiterate arg = case getFlag arg "literate" of
                        Right b       -> Flag   (setLiterate b            )
@@ -143,10 +143,10 @@ handleDebug arg    = case map toLower arg of
                        "quoting"     -> Flag   (setDebugQuote True       )
 #ifdef DEBUG_TYPING
                        "typing"      -> Flag   (setDebugType  True       )
-                       _             -> Error  ("Error: debug option expects 'toplevel', 'typing' or 'quoting' instead of " ++ arg)
+                       _             -> Error  ("Error: --debug option expects 'toplevel', 'typing' or 'quoting' instead of " ++ arg)
 #else
                        "typing"      -> Error  ("Error: this version of PTS was compiled without support for --debug=typing")
-                       _             -> Error  ("Error: debug option expects 'toplevel' or 'quoting' instead of " ++ arg)
+                       _             -> Error  ("Error: --debug option expects 'toplevel' or 'quoting' instead of " ++ arg)
 #endif
 
 handleQuiet        = Flag (setQuiet True)
@@ -156,7 +156,7 @@ handlePath (Just p) = Flag (extendPath p)
 
 handleShowInsts Nothing = ShowInsts False
 handleShowInsts (Just "machine-readable") = ShowInsts True
-handleShowInsts (Just other) = Error ("Error: enumerate-instances option expects 'machine-readable' or nothing instead of " ++ other)
+handleShowInsts (Just other) = Error ("Error: --enumerate-instances option expects 'machine-readable' or nothing instead of " ++ other)
 
 handleLocateEmacsMode = LocateEmacsMode
 
