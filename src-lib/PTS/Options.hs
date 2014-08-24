@@ -134,7 +134,7 @@ handleLiterate arg = case getFlag arg "literate" of
                        Right b       -> Flag   (setLiterate b            )
                        Left err      -> Error  err
 
-handleSubLang arg = case getFlag arg "sub-lang" of
+handleSubLang arg = case getFlag arg "sub-langs" of
                        Right b       -> Flag   (setAllowSubLang b        )
                        Left err      -> Error  err
 
