@@ -156,7 +156,7 @@ handlePath (Just p) = Flag (extendPath p)
 
 handleShowInsts Nothing = ShowInsts False
 handleShowInsts (Just "machine-readable") = ShowInsts True
-handleShowInsts (Just other) = Error ("Error: enumerate-instances options expects 'machine-readable' or nothing instead of " ++ other)
+handleShowInsts (Just other) = Error ("Error: enumerate-instances option expects 'machine-readable' or nothing instead of " ++ other)
 
 handleLocateEmacsMode = LocateEmacsMode
 
