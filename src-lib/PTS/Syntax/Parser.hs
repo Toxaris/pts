@@ -168,7 +168,7 @@ pragma = lexem $ do
     -- LEXER --
      ---------
 
-keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div", "module", "import", "export", "assert", "language"]
+keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div", "module", "import", "export", "assert", "language", "_("]
 
 identChar x = not (isSpace x) && x `notElem` ".:=;/()[]$"
 
@@ -229,7 +229,8 @@ const = lexem (do name <- many1 (satisfy identChar)
                       else pzero)
           <?> "constant"
 
-keyword s  = lexem (string s <* notFollowedBy (satisfy identChar))
+keyword s | s `elem` keywords = lexem (string s <* notFollowedBy (satisfy identChar))
+keyword s  = error $ "Keyword '" ++ s ++ "' not in keywords"
 
 comment = string "/*" <* manyTill anyChar (try (string "*/"))
 
