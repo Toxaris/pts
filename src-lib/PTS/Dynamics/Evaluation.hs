@@ -15,7 +15,7 @@ import PTS.Syntax
 import PTS.Syntax.Names
 
 newtype Eval a = Eval (EnvironmentT Name (Binding Eval) (State NamesMap) a)
-  deriving (Functor, Monad, MonadState NamesMap, MonadEnvironment Name (Binding Eval))
+  deriving (Functor, Applicative, Monad, MonadState NamesMap, MonadEnvironment Name (Binding Eval))
 
 runEval :: Bindings Eval -> Eval a -> a
 runEval env (Eval p) = evalState (runEnvironmentT p env) (envToNamesMap env)
