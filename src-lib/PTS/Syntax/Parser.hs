@@ -168,7 +168,7 @@ pragma = lexem $ do
     -- LEXER --
      ---------
 
-keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div", "module", "import", "export", "assert"]
+keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div", "module", "import", "export", "assert", "language"]
 
 identChar x = not (isSpace x) && x `notElem` ".:=;/()[]$"
 
