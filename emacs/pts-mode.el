@@ -105,10 +105,13 @@ Asks the user if project directory is not known and cannot be guessed."
 (defun pts-instance ()
   "Returns the PTS instance for the current buffer.
 Asks the user if the PTS instance is not known."
-  (unless pts-instance
-    (setq-local pts-instance
-      (completing-read "PTS instance: " pts-instance-list)))
-  pts-instance)
+  (or (save-excursion
+        (goto-char (point-min))
+        (when (search-forward-regexp "language\\s-+\\(\\w+\\(\\.\\w+\\)*\\)\\s-*;" nil t)
+          (match-string 1)))
+      pts-instance
+      (setq-local pts-instance
+        (completing-read "PTS instance: " pts-instance-list))))
 
 (defun pts-process-file ()
   "Processes the current PTS file."
