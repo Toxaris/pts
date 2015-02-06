@@ -160,7 +160,7 @@ processStmt (Bind n args typeAnnot body) = recover () $ do
 
   env <- getBindings
 
-  t <- case typeAnnot of
+  (maybeT, tType, tSort) <- case typeAnnot of
     Just body' -> do
       -- preprocess type
       let t' = foldTelescope mkPi args body'
@@ -177,18 +177,21 @@ processStmt (Bind n args typeAnnot body) = recover () $ do
 
       -- use declared type to typecheck push
       qq <- liftEval (eval qq)
-      t <- recover (mkVar n qq (Just s)) $ runEnvironmentT (typecheckPush t qq) env
-      return t
+      t <- recover Nothing $ runEnvironmentT (Just <$> typecheckPush t qq) env
+      return (t, qq, Just s)
     Nothing -> do
       -- typecheck pull
       t <- runEnvironmentT (typecheckPull t) env
       q <- liftEval (reify (typeOf t))
       output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
-      return t
+      return (Just t, typeOf t, sortOf t)
 
   -- do binding
-  let v = evalTerm env t
-  putBindings ((n, Binding False v (typeOf t) (sortOf t)) : env)
+  let v =
+        case maybeT of
+          Just t -> evalTerm env t
+          Nothing -> ResidualVar n
+  putBindings ((n, Binding False v tType tSort) : env)
 
 processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ do
   output (text "")
