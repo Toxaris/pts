@@ -6,7 +6,7 @@ set -e
 $CABAL clean
 $CABAL check
 
-$CABAL install --only-dependencies
+$CABAL install --only-dependencies --enable-tests
 $CABAL configure --enable-tests
 $CABAL build
 
