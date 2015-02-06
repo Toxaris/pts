@@ -168,16 +168,16 @@ processStmt (Bind n args typeAnnot body) = recover () $ do
       whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t' )]))
 
       -- typecheck type
-      qq <-
+      (qq, s) <-
         flip runEnvironmentT env $
              do
                qq <- typecheckPull t'
-               checkProperType qq (text "in top-level binding of " <+> pretty 0 n) (text "")
-               return qq
+               s <- checkProperType qq (text "in top-level binding of " <+> pretty 0 n) (text "")
+               return (qq, s)
 
       -- use declared type to typecheck push
       qq <- liftEval (eval qq)
-      t <- runEnvironmentT (typecheckPush t qq) env
+      t <- recover (mkVar n qq (Just s)) $ runEnvironmentT (typecheckPush t qq) env
       return t
     Nothing -> do
       -- typecheck pull
