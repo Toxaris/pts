@@ -1,3 +1,4 @@
 :set -XQuasiQuotes
 :set -isrc-lib
 :set -isrc-test
+:set -package lens
