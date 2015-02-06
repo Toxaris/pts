@@ -26,3 +26,7 @@ instance (Monoid e, Error e, MonadErrors e m) => MonadErrors e (StateT s m) wher
 instance (Monoid w, MonadErrors e m) => MonadErrors e (WriterT w m) where
   recover x = mapWriterT (recover (x, mempty))
   annotate f = mapWriterT (annotate f)
+
+recoverWith :: (MonadErrors e m, Functor m) => m b -> m b -> m b
+recoverWith computeFallback action =
+    recover Nothing (fmap Just action) >>= maybe computeFallback return
