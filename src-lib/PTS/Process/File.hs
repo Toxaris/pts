@@ -159,6 +159,11 @@ processStmt (Bind n args typeAnnot body) = recover () $ do
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term", nest 2 (pretty 0 t)]))
 
   env <- getBindings
+  let checkTopLevel typ =
+        flip runEnvironmentT env $ do
+          typ <- typecheckPull typ
+          s <- checkProperType typ (text "in top-level binding of " <+> pretty 0 n) (text "")
+          return (typ, s)
 
   (maybeT, tType, tSort) <- case typeAnnot of
     Just body' -> do
@@ -168,35 +173,27 @@ processStmt (Bind n args typeAnnot body) = recover () $ do
       whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t' )]))
 
       -- typecheck type
-      (qq, s) <-
-        flip runEnvironmentT env $
-             do
-               qq <- typecheckPull t'
-               s <- checkProperType qq (text "in top-level binding of " <+> pretty 0 n) (text "")
-               return (qq, s)
+      (qq, s) <- checkTopLevel t'
 
       -- use declared type to typecheck push
       qq <- liftEval (eval qq)
       t <- recover Nothing $ runEnvironmentT (Just <$> typecheckPush t qq) env
-      return (t, qq, Just s)
+      return (t, qq, s)
     Nothing -> do
       -- typecheck pull
       t <- runEnvironmentT (typecheckPull t) env
       q <- liftEval (reify (typeOf t))
-      flip runEnvironmentT env $
-           do
-             tt <- typecheckPull q
-             checkProperType tt (text "in top-level binding of " <+> pretty 0 n) (text "")
+      (_, s) <- checkTopLevel q
 
       output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
-      return (Just t, typeOf t, sortOf t)
+      return (Just t, typeOf t, s)
 
   -- do binding
   let v =
         case maybeT of
           Just t -> evalTerm env t
           Nothing -> ResidualVar n
-  putBindings ((n, Binding False v tType tSort) : env)
+  putBindings ((n, Binding False v tType (Just tSort)) : env)
 
 processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ do
   output (text "")
