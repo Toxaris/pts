@@ -181,14 +181,9 @@ processStmt (Bind n args (Just body') body) = recover () $ do
 
   -- typecheck type
   qq <- runEnvironmentT (typecheckPull t'') env
-  let q' = typeOf qq
-  case q' of
-    Constant _ -> return ()
-    _ -> do
-      q' <- liftEval (reify q')
-      prettyFail $  text "Type error in top-level binding of " <+> pretty 0 n
-                 $$ text "  expected:" <+> text "constant"
-                 $$ text "     found:" <+> pretty 0 q'
+  runEnvironmentT
+    (checkProperType qq (text "in top-level binding of " <+> pretty 0 n) (text ""))
+    env
 
   -- use declared type to typecheck push
   qq <- liftEval (eval qq)
