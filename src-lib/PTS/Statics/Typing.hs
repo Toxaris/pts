@@ -77,7 +77,7 @@ debugPush n t q result = do
   result
 #else
   enter n
-  ctx <- getEnvironment
+  -- ctx <- getEnvironment
   -- log $ "Context: " ++ showCtx [(n, (bindingValue b, bindingType b)) | (n, b) <- ctx]
   log $ "Subject: " ++ showPretty t
   q <- liftEval (reify q)
@@ -96,7 +96,6 @@ debugPush n t q result = do
 checkProperType t context info = do
   let t' = typeOf t
   pts <- getLanguage
-  env <- getEnvironment
 
   case t' of
     Constant s | sorts pts s -> return s
@@ -214,8 +213,8 @@ typecheckPull t = case structure t of
                   prettyFail $ text "Unknown constant:" <+> pretty 0 c
 
   Var x -> debug "typecheckPull Var" t $ do
-    ctx <- getEnvironment
 #ifdef DEBUG_TYPING
+    -- ctx <- getEnvironment
     -- log $ "Context: " ++ showCtx [(n, (bindingValue b, bindingType b)) | (n, b) <- ctx]
 #endif
     xt <- lookupType x
