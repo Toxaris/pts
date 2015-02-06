@@ -14,3 +14,4 @@ data Stmt
   | Import ModuleName
   | StmtPos Position Stmt
   | Assertion Term (Maybe Term) (Maybe Term)
+  | Postulate Name Term

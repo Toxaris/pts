@@ -195,6 +195,17 @@ processStmt (Bind n args typeAnnot body) = recover () $ do
           Nothing -> ResidualVar n
   putBindings ((n, Binding False v tType (Just tSort)) : env)
 
+processStmt (Postulate n typ) = recover () $ do
+  -- XXX Looks like a variant of Bind, maybe it should be?
+  env <- getBindings
+  (typ, s) <- flip runEnvironmentT env $ do
+    typ <- typecheckPull typ
+    s <- checkProperType typ (text "in top-level binding of " <+> pretty 0 n) (text "")
+    typ <- liftEval (eval typ)
+    return (typ, s)
+  let v = ResidualVar n
+  putBindings ((n, Binding False v typ (Just s)) : env)
+
 processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ do
   output (text "")
   output (text "process assertion")
