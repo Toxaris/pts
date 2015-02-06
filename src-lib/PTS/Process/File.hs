@@ -180,10 +180,12 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   env <- getBindings
 
   -- typecheck type
-  qq <- runEnvironmentT (typecheckPull t'') env
-  runEnvironmentT
-    (checkProperType qq (text "in top-level binding of " <+> pretty 0 n) (text ""))
-    env
+  qq <-
+    flip runEnvironmentT env $
+         do
+           qq <- typecheckPull t''
+           checkProperType qq (text "in top-level binding of " <+> pretty 0 n) (text "")
+           return qq
 
   -- use declared type to typecheck push
   qq <- liftEval (eval qq)
