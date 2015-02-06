@@ -165,21 +165,19 @@ processStmt (Bind n args typeAnnot body) = recover () $ do
       -- preprocess type
       let t' = foldTelescope mkPi args body'
       output (nest 2 (sep [text "specified type:", nest 2 (pretty 0 t')]))
-      let t'' = t'
-      whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t'' )]))
+      whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t' )]))
 
       -- typecheck type
       qq <-
         flip runEnvironmentT env $
              do
-               qq <- typecheckPull t''
+               qq <- typecheckPull t'
                checkProperType qq (text "in top-level binding of " <+> pretty 0 n) (text "")
                return qq
 
       -- use declared type to typecheck push
       qq <- liftEval (eval qq)
       t <- runEnvironmentT (typecheckPush t qq) env
-      let q = typeOf t
       return t
     Nothing -> do
       -- typecheck pull
