@@ -153,18 +153,24 @@ processStmt (Bind n args Nothing body) = recover () $ do
   pts <- getLanguage
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
+
+  -- preprocess body
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
-  env <- getBindings
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term:", nest 2 (pretty 0 t)]))
+
+  env <- getBindings
+
+  -- typecheck pull
   t <- runEnvironmentT (typecheckPull t) env
   q <- liftEval (reify (typeOf t))
   output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
+
+  -- do binding
   let v = evalTerm env t
   putBindings ((n, Binding False v (typeOf t) (sortOf t)) : env)
 
 processStmt (Bind n args (Just body') body) = recover () $ do
-  let t   =  foldTelescope mkLam args body
-  let t'  =  foldTelescope mkPi args body'
+  let t = foldTelescope mkLam args body
   pts <- getLanguage
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
@@ -173,11 +179,13 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full term", nest 2 (pretty 0 t)]))
 
+  env <- getBindings
+
   -- preprocess type
+  let t' = foldTelescope mkPi args body'
   output (nest 2 (sep [text "specified type:", nest 2 (pretty 0 t')]))
   let t'' = t'
   whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t'' )]))
-  env <- getBindings
 
   -- typecheck type
   qq <-
@@ -192,6 +200,7 @@ processStmt (Bind n args (Just body') body) = recover () $ do
   t <- runEnvironmentT (typecheckPush t qq) env
   let q = typeOf t
 
+  -- do binding
   let v = evalTerm env t
   putBindings ((n, Binding False v (typeOf t) (sortOf t)) : env)
 
