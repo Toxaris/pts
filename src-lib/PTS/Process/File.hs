@@ -183,6 +183,11 @@ processStmt (Bind n args typeAnnot body) = recover () $ do
       -- typecheck pull
       t <- runEnvironmentT (typecheckPull t) env
       q <- liftEval (reify (typeOf t))
+      flip runEnvironmentT env $
+           do
+             tt <- typecheckPull q
+             checkProperType tt (text "in top-level binding of " <+> pretty 0 n) (text "")
+
       output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
       return (Just t, typeOf t, sortOf t)
 
