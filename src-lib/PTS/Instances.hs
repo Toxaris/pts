@@ -1,4 +1,15 @@
 {-# LANGUAGE DeriveDataTypeable, Rank2Types, TupleSections  #-}
+
+{- | Instances of the Pure Type System framework. Please import this module
+through a qualified import (except for specific identifiers). For instance:
+
+  import qualified PTS.Instances as PTSInst
+  import PTS.Instances (PTS)
+
+since instance names are sometimes rather short, and would pollute the global
+namespace and be hard to understand otherwise. Examples include identifiers such
+as f, u, uu.-}
+
 module PTS.Instances where
 
 import Control.Arrow ((***))
