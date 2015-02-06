@@ -105,7 +105,7 @@ checkProperType t context info = do
 
 msgNotProperType context info t t'
   = text "Type Error" <+> context <+> text ": Expected proper type" <+> info <> text "." $$ nest 2 (
-    sep [text "Explanation:", nest 2 (text "The type is not a sort, so the term is not a proper type and therefore not valid at this position.")] $$
+    sep [text "Explanation:", nest 2 (text "The following type is not a sort, so the following term is not a proper type and therefore not valid at this position.")] $$
     sep [text "Term:", nest 2 (pretty 0 t)] $$
     sep [text "Type:", nest 2 (pretty 0 t')])
 
