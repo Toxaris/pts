@@ -3,9 +3,13 @@ The PTS interpreter supports basic arithmetics.
 
 > module Arithmetics;
 
-There is a built-in type `Int`. In bigger languages than stlc, we can even write:
+There is a built-in type `Int`. In bigger languages than STLC, we can even write:
 
 < assert Int : *;
+
+and even in STLC we can write
+
+> IntSynonym = Int;
 
 Values of type `Int` can be written as numeric literals.
 
