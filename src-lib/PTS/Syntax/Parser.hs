@@ -112,6 +112,8 @@ stmt = withPos StmtPos $ asum
   [ Export <$> (keyword "export" *> ident <* semi)
   , Import <$> (keyword "import" *> modname <* semi)
   , Assertion <$> (keyword "assert" *> expr) <*> optionMaybe (colon1 *> expr) <*> optionMaybe (assign *> expr) <* semi
+  -- we don't support argument telescopes for postulates -- yet!
+  , Bind <$> (keyword "postulate" *> ident) <*> pure [] <*> (colon1 *> (Just <$> expr)) <*> pure Nothing <* semi
   , try (Term <$> expr <* semi)
   , Bind <$> ident <*> telescope <*> optionMaybe (colon1 *> expr) <* assign <*> (Just <$> expr) <* semi]
 
@@ -168,7 +170,7 @@ pragma = lexem $ do
     -- LEXER --
      ---------
 
-keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div", "module", "import", "export", "assert", "language", "_("]
+keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div", "module", "import", "export", "assert", "language", "postulate", "_("]
 
 identChar x = not (isSpace x) && x `notElem` ".:=;/()[]$"
 
