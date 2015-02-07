@@ -8,3 +8,4 @@ cache:
   directories:
   - ~/.cabal
   - ~/.ghc
+script: ./allTests.sh
