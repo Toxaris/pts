@@ -5,14 +5,12 @@ import Prelude hiding (print)
 
 import Distribution.Simple
 import Distribution.Simple.LocalBuildInfo
+import Distribution.Simple.Configure
 import Distribution.Text
 import System.Environment
 
 readLocalBuildInfo :: IO LocalBuildInfo
-readLocalBuildInfo = do
-  text <- readFile "dist/setup-config"
-  let body = dropWhile (/= '\n') text
-  return (read body)
+readLocalBuildInfo = getPersistBuildConfig "dist"
 
 print :: Text a => a -> IO ()
 print x = putStrLn (display x)
