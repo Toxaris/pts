@@ -166,7 +166,7 @@ instance Pretty Stmt where
   pretty p (Bind n args t' t) =
     pretty 0 n <+> prettyArgs args <+>
            maybe empty (\t' -> text ":" <+> pretty 0 t') t' <+>
-           text "=" <+> pretty 0 t
+           maybe empty (\t -> text "=" <+> pretty 0 t) t
   pretty p (Term t) = pretty 0 t
   pretty p (Assertion t q' t') = text "assert" <+> prettyAssertion t q' t'
   pretty p (Import n) = text "import" <+> pretty 0 n

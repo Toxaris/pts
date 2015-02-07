@@ -113,7 +113,7 @@ stmt = withPos StmtPos $ asum
   , Import <$> (keyword "import" *> modname <* semi)
   , Assertion <$> (keyword "assert" *> expr) <*> optionMaybe (colon1 *> expr) <*> optionMaybe (assign *> expr) <* semi
   , try (Term <$> expr <* semi)
-  , Bind <$> ident <*> telescope <*> optionMaybe (colon1 *> expr) <* assign <*> expr <* semi]
+  , Bind <$> ident <*> telescope <*> optionMaybe (colon1 *> expr) <* assign <*> (Just <$> expr) <* semi]
 
 stmts = many (optional pragma *> stmt)
 
