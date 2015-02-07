@@ -3,9 +3,9 @@
 
 import Prelude hiding (print)
 
-import Distribution.Simple
-import Distribution.Simple.LocalBuildInfo
-import Distribution.Simple.Configure
+import Distribution.Simple (packageId, pkgName, pkgVersion)
+import Distribution.Simple.LocalBuildInfo (LocalBuildInfo, localPkgDescr)
+import Distribution.Simple.Configure (getPersistBuildConfig)
 import Distribution.Text
 import System.Environment
 
