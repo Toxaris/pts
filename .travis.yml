@@ -10,4 +10,4 @@ cache:
   - ~/.ghc
 script:
   - ./mostTests.sh
-  - cabal install dist/*.tar.gz --enable-tests
+  - cabal install dist/*.tar.gz --enable-tests -fdevel-tools
