@@ -1,6 +1,7 @@
 module PTS.File.Tests
   ( testFile
   , testFileWithOptions
+  , testDir
   ) where
 
 import Control.Monad.Assertions (collectAssertions)
@@ -13,7 +14,8 @@ import PTS.Process.File (processFile)
 import PTS.Process.Main (runOptMonads, withEmptyState)
 import PTS.Options (Options, defaultOptions, optPath, optLiterate, optQuiet)
 
-import System.Directory (findFile)
+import System.Directory (findFile, getDirectoryContents)
+import System.FilePath (takeExtension)
 
 import Test.Framework (Test, testGroup, buildTest)
 import Test.Framework.Providers.HUnit (testCase)
@@ -38,3 +40,18 @@ testFile literate path
       { optQuiet = True
       , optLiterate = literate
       , optPath = path})
+
+testDir :: FilePath -> IO [Test]
+testDir path = do
+  files <- getDirectoryContents path
+  return $
+           [ testFile literate [path] validFile |
+             file <- files,
+             (validFile, literate) <-
+               case takeExtension file of
+                 ".lpts" ->
+                   [(file, True)]
+                 ".pts" ->
+                   [(file, False)]
+                 _ -> []
+           ]
