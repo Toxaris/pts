@@ -113,7 +113,7 @@ stmt = withPos StmtPos $ asum
   , Import <$> (keyword "import" *> modname <* semi)
   , Assertion <$> (keyword "assert" *> expr) <*> optionMaybe (colon1 *> expr) <*> optionMaybe (assign *> expr) <* semi
   -- we don't support argument telescopes for postulates -- yet!
-  , Bind <$> (keyword "postulate" *> ident) <*> pure [] <*> (colon1 *> (Just <$> expr)) <*> pure Nothing <* semi
+  , Bind <$> (keyword "postulate" *> ident) <*> telescope <*> (colon1 *> (Just <$> expr)) <*> pure Nothing <* semi
   , try (Term <$> expr <* semi)
   , Bind <$> ident <*> telescope <*> optionMaybe (colon1 *> expr) <* assign <*> (Just <$> expr) <* semi]
 
