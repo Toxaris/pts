@@ -9,5 +9,4 @@ cache:
   - ~/.cabal
   - ~/.ghc
 script:
-  - ./mostTests.sh
-  - cabal install dist/*.tar.gz --enable-tests
+  - ./allTests.sh
