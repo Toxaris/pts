@@ -14,6 +14,7 @@ Extra-source-files:  examples/Arithmetics.lpts
                      examples/Functions.lpts
                      examples/Inference.lpts
                      examples/Syntax.lpts
+                     examples/Pair1WithPostulates.lpts
 Data-files:          emacs/pts-mode.el
 Cabal-version:       >= 1.8
 

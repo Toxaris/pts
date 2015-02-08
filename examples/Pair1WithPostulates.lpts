@@ -1,0 +1,44 @@
+> language fomega;
+> module Data.Pair1;
+
+Pairs on the expression level. Requires at least System F. Since Pair is an
+in-language type constructor, not a macro, we actually require Fomega.
+
+> Pair1 (A B : *) : * = Pi R : * . (A -> B -> R) -> R;
+
+To test postulates, here we postulate cons1:
+
+> postulate cons1 (A B : *) : A -> B -> Pair1 A B;
+
+even though it's easy to define it:
+
+> cons1impl (A B : *) : A -> B -> Pair1 A B = lambda a b R k . k a b;
+
+Notice how postulates admit telescopes -- we don't have to desugar them by hand:
+
+> postulate cons1 : Pi (A B : *). A -> B -> Pair1 A B;
+> assert cons1 : Pi  (A B : *) . A -> B -> Pair1 A B;
+
+> fst1 (A B : *) : Pair1 A B -> A = lambda p . p A (lambda a b . a);
+> snd1 (A B : *) : Pair1 A B -> B = lambda p . p B (lambda a b . b);
+>
+> pair1 (A B C D : *) : (A -> B) -> (C -> D) -> (Pair1 A C -> Pair1 B D) =
+>   lambda f g p . cons1 B D (f (fst1 A C p)) (g (snd1 A C p));
+>
+> both1 (A B C : *) : (A -> B) -> (A -> C) -> (A -> Pair1 B C) =
+>   lambda f g a . cons1 B C (f a) (g a);
+>
+> curry1 (A B C : *) : (Pair1 A B -> C) -> (A -> B -> C) =
+>   lambda f a b . f (cons1 A B a b);
+>
+> uncurry1 (A B C : *) : (A -> B -> C) -> (Pair1 A B -> C) =
+>   lambda f p . f (fst1 A B p) (snd1 A B p);
+>
+> export Pair1;
+> export cons1;
+> export fst1;
+> export snd1;
+> export pair1;
+> export both1;
+> export curry1;
+> export uncurry1;
