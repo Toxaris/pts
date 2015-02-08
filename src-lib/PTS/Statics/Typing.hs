@@ -222,7 +222,7 @@ typecheckPull t = case structure t of
       Just (xt, xs) -> do
         return (mkVar x xt xs)
       Nothing ->
-        fail $ "Unbound identifier: " ++ show x
+        fail $ "Unbound identifier: " ++ showName x
 
   -- product
   Pi name annotation body s -> debug "typecheckPull Fun" t $ do
@@ -359,7 +359,7 @@ typecheckPush t q = case structure t of
       Just (xt, xs) -> do bidiExpected xt q t "A variable from the environment has an unexpected type."
                           return (mkVar x xt xs)
       Nothing ->
-        fail $ "Unbound identifier: " ++ show x
+        fail $ "Unbound identifier: " ++ showName x
 
   -- product
   Pi name annotation body _ -> debugPush "typecheckPush Fun" t q $ do

@@ -3,6 +3,7 @@ module PTS.Syntax
     -- ** Names
     Name
   , Names
+  , showName
   , freshvarl
   , LanguageName
   , ModuleName (..)

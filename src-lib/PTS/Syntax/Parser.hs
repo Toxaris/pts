@@ -144,7 +144,7 @@ telescopeOrArgGroup = asum
   ]
 
 langName :: Parser String
-langName = show <$> ident
+langName = showName <$> ident
 
 file = File <$> optionMaybe (keyword "language" *> langName <* semi) <*> optionMaybe (keyword "module" *> modname <* semi) <*> stmts
 

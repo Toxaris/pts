@@ -9,6 +9,7 @@ module PTS.Syntax.Names
   , ModuleName (ModuleName)
   , LanguageName
   , parts
+  , showName
   ) where
 
 import Data.Char (isAlphaNum, isDigit, isLetter, isLower)
@@ -38,6 +39,9 @@ instance Show Name where
   showsPrec _ (PlainName c text) = showString (c : text)
   showsPrec _ (IndexName i c text) = showString (c : text) . shows i
   showsPrec _ (MetaName text) = showChar '$' . showString text
+
+showName :: Name -> String
+showName = show
 
 instance Read Name where
   readsPrec _ (first:cs) | isLetter first = [plainName [] cs] where

@@ -10,7 +10,7 @@ import Language.Haskell.TH.Quote
 import PTS.Error (Position (..))
 import PTS.Instances
 import PTS.Syntax
-import PTS.Syntax.Names (Name (PlainName, IndexName, MetaName))
+import PTS.Syntax.Names (Name (PlainName, IndexName, MetaName), showName)
 import PTS.Syntax.Term (Term (MkTerm))
 
 pts  :: QuasiQuoter
@@ -109,6 +109,6 @@ class Unquote e where
 instance Unquote Term where
   unquote (MkTerm (App f a)) = app (unquote f) [unquote a]
   unquote (MkTerm (Var v))
-    | isUpper (head (show v))  =  con (TH.mkName (show v)) []
-    | otherwise                =  var (TH.mkName (show v))
+    | isUpper (head (showName v)) =  con (TH.mkName (showName v)) []
+    | otherwise                   =  var (TH.mkName (showName v))
   unquote (MkTerm (Pos p e)) = unquote e

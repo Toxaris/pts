@@ -54,7 +54,7 @@ pIf0  = 2
 
 -- pretty printing
 instance Pretty Name where
-  pretty _ name = text (show name)
+  pretty _ name = text (showName name)
 
 instance Pretty C where
   pretty _ (C 0) = text "Int"
@@ -188,4 +188,4 @@ showPretty :: Pretty p => p -> String
 showPretty = singleLine
 
 showCtx :: Pretty a => [(Name, a)] -> String
-showCtx = concat . intersperse ", " . map (\(n, t) -> show n ++ " : " ++ showPretty t)
+showCtx = concat . intersperse ", " . map (\(n, t) -> showName n ++ " : " ++ showPretty t)

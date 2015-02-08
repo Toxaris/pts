@@ -98,9 +98,9 @@ findLamChain x = ([], x)
 
 showLamChain :: LamChain -> (String, String)
 showLamChain = (concat *** concat) . unzip . intersperse (" ", " ") . map showElement where
-  showElement (name, DEqual _) = (show name, show name)
-  showElement (name, d) = ("(" ++ show name ++ " : " ++ q1 ++ ")",
-                           "(" ++ show name ++ " : " ++ q2 ++ ")") where
+  showElement (name, DEqual _) = (showName name, showName name)
+  showElement (name, d) = ("(" ++ showName name ++ " : " ++ q1 ++ ")",
+                           "(" ++ showName name ++ " : " ++ q2 ++ ")") where
     (q1, q2) = showDiff 0 d
 
 showDiff :: Int -> Diff -> (String, String)
@@ -141,24 +141,24 @@ showDiff p (DLam n q b) = prio 0 p
   (b1, b2) = showDiff 0 body
 
 showDiff p (DPi n q b True True) = prio 0 p
-                         ("Pi " ++ show n ++ " : " ++ q1 ++ " . " ++ b1,
-                          "Pi " ++ show n ++ " : " ++ q2 ++ " . " ++ b2) where
+                         ("Pi " ++ showName n ++ " : " ++ q1 ++ " . " ++ b1,
+                          "Pi " ++ showName n ++ " : " ++ q2 ++ " . " ++ b2) where
   (q1, q2) = showDiff 0 q
   (b1, b2) = showDiff 0 b
 
 showDiff p (DPi n q b True False) = prio 1 p
-                         ("Pi " ++ show n  ++ " : " ++ q1 ++ " .  " ++ b1,
+                         ("Pi " ++ showName n  ++ " : " ++ q1 ++ " .  " ++ b1,
                           "   " ++      n2 ++ "   " ++ q2 ++ " -> " ++ b2) where
   (q1, q2) = showDiff 2 q
   (b1, b2) = showDiff 1 b
-  n2 = replicate (length (show n)) ' '
+  n2 = replicate (length (showName n)) ' '
 
 showDiff p (DPi n q b False True) = prio 1 p
                          ("   " ++      n1 ++ "   " ++ q1 ++ " -> " ++ b1,
-                          "Pi " ++ show n  ++ " : " ++ q2 ++ " .  " ++ b2) where
+                          "Pi " ++ showName n  ++ " : " ++ q2 ++ " .  " ++ b2) where
   (q1, q2) = showDiff 2 q
   (b1, b2) = showDiff 1 b
-  n1 = replicate (length (show n)) ' '
+  n1 = replicate (length (showName n)) ' '
 
 showDiff p (DPi n q b False False) = prio 1 p
                          (q1 ++ " -> " ++ b1,
