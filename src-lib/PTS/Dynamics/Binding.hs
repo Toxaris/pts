@@ -23,7 +23,7 @@ data Binding m
     , bindingType :: Value m
     , bindingSort :: Maybe C
     }
-  deriving Show
+--  deriving Show
 
 lookupValue :: MonadEnvironment Name (Binding n) m => Name -> m (Maybe (Value n))
 lookupValue x = do

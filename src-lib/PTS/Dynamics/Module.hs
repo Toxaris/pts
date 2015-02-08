@@ -5,4 +5,4 @@ import PTS.Syntax (ModuleName)
 
 data Module m
   =  Module [ModuleName] ModuleName (Bindings m)
-     deriving (Show)
+--     deriving (Show)
