@@ -13,6 +13,7 @@ Extra-source-files:  examples/Arithmetics.lpts
                      examples/ChurchNumbers.lpts
                      examples/Functions.lpts
                      examples/Inference.lpts
+                     examples/Syntax.lpts
 Data-files:          emacs/pts-mode.el
 Cabal-version:       >= 1.8
 
