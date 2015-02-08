@@ -62,7 +62,7 @@ defaultOptions = Options
 #ifdef DEBUG_TYPING
   , optDebugType = False
 #endif
-  , optQuiet = False
+  , optQuiet = True
   , optPath = ["."]
   }
 
@@ -101,8 +101,9 @@ options =
   , Option ['p'] ["pts", "instance"]      (ReqArg handlePTS      "i"     ) "implement specified pure type systems instance"
   , Option ['s'] ["sub-langs"]            (OptArg handleSubLang  "yes/no") "allow modules to use sublanguages"
   , Option ['l'] ["literate"]             (OptArg handleLiterate "yes/no") "treat input as literate source files"
-  , Option ['d'] ["debug"]                (ReqArg handleDebug    "option") "activate specified debug options"
-  , Option ['q'] ["quiet"]                (NoArg  handleQuiet            ) "don't print so much"
+  , Option ['d'] ["debug"]                (ReqArg handleDebug    "option") "activate specified debug options (for debugging PTS itself)"
+  , Option ['q'] ["quiet"]                (NoArg  handleQuiet            ) "be quiet (default)"
+  , Option ['v'] ["verbose"]              (NoArg  handleVerbose          ) "print lots of info (to debug PTS programs)"
   , Option ['i'] []                       (OptArg handlePath     "paths" ) "add paths to search path, or reset search path"
   , Option ['e'] ["enumerate-instances"]  (OptArg handleShowInsts "format") "enumerate built-in pure-type-system instances"
   , Option []    ["locate-emacs-mode"]    (NoArg  handleLocateEmacsMode  ) "locate the bundled emacs-mode"
@@ -150,6 +151,7 @@ handleDebug arg    = case map toLower arg of
 #endif
 
 handleQuiet        = Flag (setQuiet True)
+handleVerbose      = Flag (setQuiet False)
 
 handlePath Nothing  = Flag (setPath [])
 handlePath (Just p) = Flag (extendPath p)
