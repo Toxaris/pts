@@ -4,3 +4,4 @@
 > bar =
 >	2;
 > baz = 3;
+> assert add bar baz = 5;
