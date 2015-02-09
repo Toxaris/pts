@@ -31,7 +31,7 @@ data Name
   = PlainName {-# UNPACK #-} !Char String
   | IndexName {-# UNPACK #-} !Int {-# UNPACK #-}!Char String
   | MetaName String
-  deriving (Eq, Ord, Data, Typeable)
+  deriving (Eq, Ord, Data, Typeable, Show)
 
 type Names = Set Name
 
