@@ -7,8 +7,8 @@ rm -rf dist
 $CABAL clean
 $CABAL check
 
-$CABAL install --only-dependencies --enable-tests
-$CABAL configure --enable-tests
+$CABAL install --only-dependencies --enable-tests -fdevel-tools -fpts-generators
+$CABAL configure --enable-tests -fdevel-tools -fpts-generators
 $CABAL build
 
 $CABAL sdist
