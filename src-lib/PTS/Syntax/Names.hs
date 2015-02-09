@@ -35,13 +35,9 @@ data Name
 
 type Names = Set Name
 
-instance Show Name where
-  showsPrec _ (PlainName c text) = showString (c : text)
-  showsPrec _ (IndexName i c text) = showString (c : text) . shows i
-  showsPrec _ (MetaName text) = showChar '$' . showString text
-
-showName :: Name -> String
-showName = show
+showName (PlainName c text) = c : text
+showName (IndexName i c text) = showString (c : text) . shows i $ ""
+showName (MetaName text) = '$' : text
 
 instance Read Name where
   readsPrec _ (first:cs) | isLetter first = [plainName [] cs] where
