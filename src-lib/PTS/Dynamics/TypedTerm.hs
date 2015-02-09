@@ -14,7 +14,7 @@ import PTS.Syntax.Term
 import PTS.Dynamics.Value
 
 newtype TypedTerm m = MkTypedTerm (AnnotatedTerm (Value m, Maybe C))
-  --deriving (Show)
+  deriving (Show)
 
 instance Structure (TypedTerm m) where
   structure (MkTypedTerm t) = fmap MkTypedTerm (structure t)

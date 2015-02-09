@@ -20,7 +20,6 @@ y = read "y"
 z :: Name
 z = read "z"
 
-{-
 substAvoidsCapture
   =  testGroup "substitution avoids capture"
      [  testProperty "random inputs" $
@@ -30,10 +29,8 @@ substAvoidsCapture
      ,  testCase "(Pi x . y) [y |-> x]" $ assertBool "Variable captured." $ test $
           Prop.substAvoidsCapture (mkPi x (mkConst star) (mkVar y)) y (mkVar x)
      ]
--}
 
 tests
   =  testGroup "PTS.Substitution"
-     [
---     [  substAvoidsCapture
+     [  substAvoidsCapture
      ]

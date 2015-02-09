@@ -39,4 +39,4 @@ data Value m
   | ResidualIfZero (Value m) (Value m) (Value m)
   | ResidualVar    Name
   | ResidualApp    (Value m) (Value m)
---  deriving Show
+  deriving Show

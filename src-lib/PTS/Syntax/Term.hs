@@ -40,10 +40,10 @@ import PTS.Syntax.Names (Name, Names, freshvarl)
 -- Syntax
 
 data Term = MkTerm (TermStructure Term)
-  deriving (Data, Typeable)
+  deriving (Data, Typeable, Show)
 
 data AnnotatedTerm a = MkAnnotatedTerm (TermStructure (AnnotatedTerm a)) a
-  deriving (Data, Typeable)
+  deriving (Data, Typeable, Show)
 
 class Structure term where
   structure :: term -> TermStructure term
@@ -94,7 +94,7 @@ data TermStructure alpha
   | Pos     Position alpha
   | Unquote alpha
   | Infer   Integer
-  deriving (Functor, Data, Typeable)
+  deriving (Functor, Data, Typeable, Show)
 
 -- adapted from the Haskell wiki
 -- http://www.haskell.org/haskellwiki/Top_level_mutable_state
