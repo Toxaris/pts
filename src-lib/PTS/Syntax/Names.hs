@@ -10,6 +10,9 @@ module PTS.Syntax.Names
   , LanguageName
   , parts
   , showName
+  , plainName
+  , metaName
+  , indexName
   ) where
 
 import Data.Char (isAlphaNum, isDigit, isLetter, isLower)
@@ -38,6 +41,10 @@ type Names = Set Name
 showName (PlainName c text) = c : text
 showName (IndexName i c text) = showString (c : text) . shows i $ ""
 showName (MetaName text) = '$' : text
+
+plainName (c: cs) = PlainName c cs
+metaName = MetaName
+indexName idx (c: cs) = IndexName idx c cs
 
 instance Read Name where
   readsPrec _ (first:cs) | isLetter first = [plainName [] cs] where
