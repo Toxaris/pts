@@ -97,7 +97,7 @@ expr = term simple rec mkPos where
 
   rec = asum
     [ app mkApp simple
-    , arr (\a b -> mkPi (freshvar b (read "unused")) a b) arrow (expr )]
+    , arr (\a b -> mkPi (freshvar b (plainName "unused")) a b) arrow (expr )]
 
 -- parse abstractions with multiple parameters, like this:
 -- lambda (x1 : e1) (x2 x3 : e2) . e
@@ -177,7 +177,7 @@ identOrMeta = ident <|> meta
 meta = lexem (do char '$'
                  first <- satisfy (\c -> isLetter c && isLower c)
                  rest <- many (satisfy (\c -> isAlphaNum c || c `elem` "'_"))
-                 return (read ('$' : first : rest)))
+                 return (metaName (first : rest)))
          <?> "meta variable name"
 
 nextInfer = do ~(pos, available, explicits) <- getState
@@ -202,7 +202,7 @@ ident = lexem (do name <- namepart
                   when (name == "Int") $
                     unexpected ("constant")
 
-                  return (read name))
+                  return $ readName name)
           <?> "variable name"
 
 namepart = do

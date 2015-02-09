@@ -4,6 +4,7 @@ module PTS.Syntax
     Name
   , Names
   , showName
+  , readName
   , freshvarl
   , LanguageName
   , ModuleName (..)
