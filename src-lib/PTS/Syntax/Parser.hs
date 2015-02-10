@@ -170,6 +170,7 @@ pragma = lexem $ do
     -- LEXER --
      ---------
 
+-- When updating, please also update emacs/pts-mode.el.
 keywords = ["Lambda", "lambda", "Pi", "if0", "then", "else", "->", "add", "mul", "sub", "div", "module", "import", "export", "assert", "language", "postulate", "_("]
 
 identChar x = not (isSpace x) && x `notElem` ".:=;/()[]$"
