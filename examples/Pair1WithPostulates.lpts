@@ -14,10 +14,11 @@ even though it's easy to define it:
 
 > cons1impl (A B : *) : A -> B -> Pair1 A B = lambda a b R k . k a b;
 
-Notice how postulates admit telescopes -- we don't have to desugar them by hand:
+Notice how postulates admit telescopes, which are desugared to Pi-types:
 
-> postulate cons1 : Pi (A B : *). A -> B -> Pair1 A B;
-> assert cons1 : Pi  (A B : *) . A -> B -> Pair1 A B;
+> assert cons1 : Pi (A B : *) . A -> B -> Pair1 A B;
+
+
 
 > fst1 (A B : *) : Pair1 A B -> A = lambda p . p A (lambda a b . a);
 > snd1 (A B : *) : Pair1 A B -> B = lambda p . p B (lambda a b . b);
