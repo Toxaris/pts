@@ -13,7 +13,7 @@ import Control.Monad.State (MonadState, get, put, evalStateT)
 import Control.Monad.Trans (MonadIO (liftIO))
 import Control.Monad.Log (MonadLog, runConsoleLogT)
 
-import Data.Traversable (traverse)
+import Data.Traversable (traverse, for)
 import Data.Maybe (fromMaybe)
 import Data.Monoid (mempty)
 import qualified Data.Map as Map
@@ -150,17 +150,16 @@ processStmt (Term t) = recover () $ do
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
 
 processStmt (Bind n args typeAnnot body) = recover () $ do
-  let t = foldTelescope mkLam args <$> body
+  let maybeT = foldTelescope mkLam args <$> body
   pts <- getLanguage
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
 
   -- preprocess body
-  for t $
-    \t ->
-      do
-        output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
-        whenOption optShowFullTerms $ output (nest 2 (sep [text "full term", nest 2 (pretty 0 t)]))
+
+  for maybeT $ \t -> do
+    output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
+    whenOption optShowFullTerms $ output (nest 2 (sep [text "full term", nest 2 (pretty 0 t)]))
 
   env <- getBindings
   let checkTopLevel typ =
@@ -181,11 +180,11 @@ processStmt (Bind n args typeAnnot body) = recover () $ do
 
       -- use declared type to typecheck push
       qq <- liftEval (eval qq)
-      t <- recover Nothing $ runEnvironmentT (traverse (flip typecheckPush qq) t) env
-      return (t, qq, s)
+      maybeT <- recover Nothing $ runEnvironmentT (traverse (flip typecheckPush qq) maybeT) env
+      return (maybeT, qq, s)
     Nothing -> do
       -- typecheck pull
-      case t of
+      case maybeT of
         Just t -> do
           t <- runEnvironmentT (typecheckPull t) env
           q <- liftEval (reify (typeOf t))
