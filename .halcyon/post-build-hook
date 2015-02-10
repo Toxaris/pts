@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+source "${HALCYON_DIR}/src.sh"
+
+# See https://gist.github.com/mietek/aff20a4df8694028fef2
+post_build_hook () {
+	expect_vars HALCYON_BASE
+
+	local tag source_dir build_dir
+	expect_args tag source_dir build_dir -- "$@"
+
+	get_tag_source_hash "$tag"
+	cabal sdist
+	tar xzf dist/*.tar.gz
+	hash_source ""
+}
+
