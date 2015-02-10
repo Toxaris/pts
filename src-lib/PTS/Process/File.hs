@@ -122,7 +122,7 @@ liftEval action = do
   env <- getBindings
   return (runEval env action)
 
-processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState ProcessingState m, MonadIO m, MonadLog m, MonadAssertions m, Applicative m) => FilePath -> m (Maybe (Module Eval))
+processFile :: (Functor m, Applicative m, MonadErrors [PTSError] m, MonadReader Options m, MonadState ProcessingState m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module Eval))
 processFile file = do
   (maybeName, rest) <- processFileInt file
   return $ filterRet <$> maybeName <*> pure rest
@@ -156,7 +156,7 @@ processStmt (Bind n args typeAnnot body) = recover () $ do
   output (text "process binding of" <+> pretty 0 n)
 
   -- preprocess body
-  flip traverse t $
+  for t $
     \t ->
       do
         output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
