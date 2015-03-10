@@ -274,9 +274,11 @@ formatError expectedName src err
   name = sourceName pos
 
   (line, column) = convert (sourceLine pos) (sourceColumn pos)
-  convert l c = if l > srcLineCount
+  convert l c = if name == expectedName then
+                  if l > srcLineCount
                   then (srcLineCount, succ srcLineLength)
                   else (l, min c (length srcLine))
+                else (l, c)
 
   maybeSrc = if name == expectedName
                then Just (lines src)
