@@ -1,5 +1,5 @@
 {-# LANGUAGE NoMonomorphismRestriction, DeriveFunctor, DeriveDataTypeable, StandaloneDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleContexts, FlexibleInstances #-}
 module PTS.Syntax.Term
   ( Term (..)
   , AnnotatedTerm

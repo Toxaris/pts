@@ -1,4 +1,4 @@
-{-# LANGUAGE NoMonomorphismRestriction, FlexibleInstances, TypeSynonymInstances, DeriveDataTypeable #-}
+{-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts, FlexibleInstances, TypeSynonymInstances, DeriveDataTypeable #-}
 module PTS.Error
   ( Errors
   , PTSError (..)
