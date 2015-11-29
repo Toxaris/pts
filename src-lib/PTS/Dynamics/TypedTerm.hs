@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, GADTs, UndecidableInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, GADTs, UndecidableInstances #-}
 module PTS.Dynamics.TypedTerm
   ( TypedTerm
   , typeOf
