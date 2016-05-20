@@ -40,6 +40,10 @@ import Text.Show (Show (show))
 
 import Debug.Trace
 
+-- "Paragraph fill" version of text
+ftext :: String -> Doc
+ftext = fsep . map text . words
+
 -- safe bind
 safebind :: MonadEnvironment Name (Binding Eval) m => Name -> Value Eval -> Maybe C -> Term -> (Name -> Term -> m a) -> m a
 safebind x t s b f = do
@@ -105,7 +109,7 @@ checkProperType t context info = do
 
 msgNotProperType context info t t'
   = text "Type Error" <+> context <+> text ": Expected proper type" <+> info <> text "." $$ nest 2 (
-    sep [text "Explanation:", nest 2 (text "The following type is not a sort, so the following term is not a proper type and therefore not valid at this position.")] $$
+    sep [text "Explanation:", nest 2 (ftext "The following type is not a sort, so the following term is not a proper type and therefore not valid at this position.")] $$
     sep [text "Term:", nest 2 (pretty 0 t)] $$
     sep [text "Type:", nest 2 (pretty 0 t')])
 
@@ -124,7 +128,7 @@ checkLamBodyHasSort body s1 context = do
 -- adapted from msgNotProperType.
 msgBodyNoSort context body t
   = text "Type Error" <+> context <+> text ": Expected function body to have a sort." $$ nest 2 (
-    sep [text "Explanation:", nest 2 (text "The function body does not have a sort, that is, its type has no type. Therefore this term cannot be used as a function body.")] $$
+    sep [text "Explanation:", nest 2 (ftext "The function body does not have a sort, that is, its type has no type. Therefore this term cannot be used as a function body.")] $$
     sep [text "Body:", nest 2 (pretty 0 body)] $$
     sep [text "Type:", nest 2 (pretty 0 t)])
 
@@ -140,7 +144,7 @@ checkIsEquiv s' t' s t context info1 info2 = do
 msgNotSame context info1 info2 s t s' t'
   = let (s'', t'') = showDiff 0 (diff (strip s') (strip t'))
      in text "Type Error" <+> context <> text ": Types do not match." $$ nest 2 (
-        sep [text "Explanation:", nest 2 (text "The types of the" <+> info1 <+> text "and the" <+> info2 <+> text "should be beta-equivalent.")] $$
+        sep [text "Explanation:", nest 2 (ftext "The types of the" <+> info1 <+> text "and the" <+> info2 <+> text "should be beta-equivalent.")] $$
         sep [info1 <> text ":", nest 2 (pretty 0 s)] $$
         sep [info2 <> text ":", nest 2 (pretty 0 t)] $$
         sep [text "Type of" <+> info1 <> text ":", nest 2 (text s'')] $$
@@ -164,7 +168,7 @@ checkIsPi v t context info = do
 
 msgNotPi context info t t'
   = text "Type Error" <+> context <> text ": Not a product type." $$ nest 2 (
-    sep [text "Explanation:", nest 2 (text "The type of the" <+> info <+> text "should be beta-equivalent to a product type.")] $$
+    sep [text "Explanation:", nest 2 (ftext "The type of the" <+> info <+> text "should be beta-equivalent to a product type.")] $$
     sep [info <> text ":", nest 2 (pretty 0 t)] $$
     sep [text "Type of" <+> info <> text ":", nest 2 (pretty 0 t')])
 
@@ -338,7 +342,7 @@ typecheckPull t = case structure t of
 
 msgPullUnderscore t =
   text "Type Error: Cannot infer how to replace an underscore." $$ nest 2 (
-    sep [text "Explanation:", nest 2 (text "Attempted to pull a type from an underscore. Most likely there is an underscore at a position where type inference is impossible.")] $$
+    sep [text "Explanation:", nest 2 (ftext "Attempted to pull a type from an underscore. Most likely there is an underscore at a position where type inference is impossible.")] $$
     sep [text "Underscore:", nest 2 (pretty 0 t)])
 
 -- Checking rule in bidirectional type checking.
@@ -492,7 +496,7 @@ typecheckPush t q = case structure t of
 
 msgPushUnderscore t expected =
   text "Type Error: Cannot infer how to replace an underscore." $$ nest 2 (
-    sep [text "Explanation:", nest 2 (text "Attempted to push a type on an underscore. Most likely there is an underscore at a position where type inference is impossible.")] $$
+    sep [text "Explanation:", nest 2 (ftext "Attempted to push a type on an underscore. Most likely there is an underscore at a position where type inference is impossible.")] $$
     sep [text "Underscore:", nest 2 (pretty 0 t)] $$
     sep [text "Expected type:", nest 2 (pretty 0 expected)])
 
