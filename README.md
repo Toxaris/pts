@@ -19,6 +19,20 @@ To proactively avoid dependency hell, consider using
 [cabal-dev](https://github.com/creswick/cabal-dev) or some other
 tool to sandbox builds.
 
+## Known uses
+
+This repository contains some example programs in the
+[examples](examples) folder.
+
+Known public developments using this pts interpreter:
+
+ * [Toxaris/lift.pts](https://github.com/Toxaris/lift.pts)
+   (Constructive lift monad in System Fω)
+
+If you use the pts interpreter and want your use to be mentioned
+here, sent a pull request for [README.md](README.md) or contact
+the authors.
+
 ## Emacs mode
 
 We bundle a very simple emacs mode, see
