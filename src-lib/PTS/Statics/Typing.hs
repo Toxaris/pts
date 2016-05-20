@@ -334,7 +334,10 @@ typecheckPull t = case structure t of
     return x
 
   Infer _ -> do
-    prettyFail $ text "Attempted to pull pull a type from an underscore. Most likely there is an underscore at a position where type inference is impossible. The offending underscore is" <+> pretty 0 t
+    prettyFail $ msgPullUnderscore t
+
+msgPullUnderscore t =
+  text "Attempted to pull pull a type from an underscore. Most likely there is an underscore at a position where type inference is impossible. The offending underscore is" <+> pretty 0 t
 
 
 -- Checking rule in bidirectional type checking.
@@ -484,7 +487,10 @@ typecheckPush t q = case structure t of
 
   Infer _ -> do
     expected <- liftEval (reify q)
-    prettyFail $ text "Attempted to push a type on an underscore. Most likely there is an underscore at a position where type inference is impossible. The offending underscore is" <+> pretty 0 t <+> text "which is supposed to have type" <+> pretty 0 expected
+    prettyFail $ msgPushUnderscore t expected
+
+msgPushUnderscore t expected =
+  text "Attempted to push a type on an underscore. Most likely there is an underscore at a position where type inference is impossible. The offending underscore is" <+> pretty 0 t  <+> text "which is supposed to have type" <+> pretty 0 expected
 
 typecheckPushUntyped term expected = do
   expected <- typecheckPull expected
