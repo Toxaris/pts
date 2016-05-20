@@ -337,8 +337,9 @@ typecheckPull t = case structure t of
     prettyFail $ msgPullUnderscore t
 
 msgPullUnderscore t =
-  text "Attempted to pull pull a type from an underscore. Most likely there is an underscore at a position where type inference is impossible. The offending underscore is" <+> pretty 0 t
-
+  text "Type Error: Cannot infer how to replace an underscore." $$ nest 2 (
+    sep [text "Explanation:", nest 2 (text "Attempted to pull a type from an underscore. Most likely there is an underscore at a position where type inference is impossible.")] $$
+    sep [text "Underscore:", nest 2 (pretty 0 t)])
 
 -- Checking rule in bidirectional type checking.
 -- First argument (t) is the term to typecheck.
@@ -490,7 +491,10 @@ typecheckPush t q = case structure t of
     prettyFail $ msgPushUnderscore t expected
 
 msgPushUnderscore t expected =
-  text "Attempted to push a type on an underscore. Most likely there is an underscore at a position where type inference is impossible. The offending underscore is" <+> pretty 0 t  <+> text "which is supposed to have type" <+> pretty 0 expected
+  text "Type Error: Cannot infer how to replace an underscore." $$ nest 2 (
+    sep [text "Explanation:", nest 2 (text "Attempted to push a type on an underscore. Most likely there is an underscore at a position where type inference is impossible.")] $$
+    sep [text "Underscore:", nest 2 (pretty 0 t)] $$
+    sep [text "Expected type:", nest 2 (pretty 0 expected)])
 
 typecheckPushUntyped term expected = do
   expected <- typecheckPull expected
