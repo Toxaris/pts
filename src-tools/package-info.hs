@@ -3,16 +3,14 @@
 
 import Prelude hiding (print)
 
-import Distribution.Simple
-import Distribution.Simple.LocalBuildInfo
+import Distribution.Simple (packageId, pkgName, pkgVersion)
+import Distribution.Simple.LocalBuildInfo (LocalBuildInfo, localPkgDescr)
+import Distribution.Simple.Configure (getPersistBuildConfig)
 import Distribution.Text
 import System.Environment
 
 readLocalBuildInfo :: IO LocalBuildInfo
-readLocalBuildInfo = do
-  text <- readFile "dist/setup-config"
-  let body = dropWhile (/= '\n') text
-  return (read body)
+readLocalBuildInfo = getPersistBuildConfig "dist"
 
 print :: Text a => a -> IO ()
 print x = putStrLn (display x)
