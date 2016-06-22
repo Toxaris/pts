@@ -163,8 +163,10 @@ prettyArgs args = sep (map f args) where
   f (ns, q) = hsep [pretty 0 n | n <- ns] <+> text ":" <+> pretty 0 q
 
 instance Pretty Stmt where
-  pretty p (Bind n args Nothing t)   = pretty 0 n <+> prettyArgs args <+> text "=" <+> pretty 0 t
-  pretty p (Bind n args (Just t') t) = pretty 0 n <+> prettyArgs args <+> text ":" <+> pretty 0 t' <+> text "=" <+> pretty 0 t
+  pretty p (Bind n args t' t) =
+    pretty 0 n <+> prettyArgs args <+>
+           maybe empty (\t' -> text ":" <+> pretty 0 t') t' <+>
+           maybe empty (\t -> text "=" <+> pretty 0 t) t
   pretty p (Term t) = pretty 0 t
   pretty p (Assertion t q' t') = text "assert" <+> prettyAssertion t q' t'
   pretty p (Import n) = text "import" <+> pretty 0 n

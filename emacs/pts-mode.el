@@ -1,5 +1,5 @@
 (defvar pts-keywords
-  '("language" "module" "import" "export" "assert"
+  '("language" "module" "import" "export" "postulate" "assert"
     "Lambda" "lambda" "Pi" "->"
     "if0" "then" "else")
   "Keywords of PTS, that is, reserved words with special

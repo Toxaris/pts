@@ -13,6 +13,7 @@ import Control.Monad.State (MonadState, get, put, evalStateT)
 import Control.Monad.Trans (MonadIO (liftIO))
 import Control.Monad.Log (MonadLog, runConsoleLogT)
 
+import Data.Traversable (traverse, for)
 import Data.Maybe (fromMaybe)
 import Data.Monoid (mempty)
 import qualified Data.Map as Map
@@ -121,7 +122,7 @@ liftEval action = do
   env <- getBindings
   return (runEval env action)
 
-processFile :: (Functor m, MonadErrors [PTSError] m, MonadReader Options m, MonadState ProcessingState m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module Eval))
+processFile :: (Functor m, Applicative m, MonadErrors [PTSError] m, MonadReader Options m, MonadState ProcessingState m, MonadIO m, MonadLog m, MonadAssertions m) => FilePath -> m (Maybe (Module Eval))
 processFile file = do
   (maybeName, rest) <- processFileInt file
   return $ filterRet <$> maybeName <*> pure rest
@@ -149,46 +150,57 @@ processStmt (Term t) = recover () $ do
   output (nest 2 (sep [text "value:", nest 2 (pretty 0 x)]))
 
 processStmt (Bind n args typeAnnot body) = recover () $ do
-  let t = foldTelescope mkLam args body
+  let maybeT = foldTelescope mkLam args <$> body
   pts <- getLanguage
   output (text "")
   output (text "process binding of" <+> pretty 0 n)
 
   -- preprocess body
-  output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
-  whenOption optShowFullTerms $ output (nest 2 (sep [text "full term", nest 2 (pretty 0 t)]))
+
+  for maybeT $ \t -> do
+    output (nest 2 (sep [text "original term:", nest 2 (pretty 0 t)]))
+    whenOption optShowFullTerms $ output (nest 2 (sep [text "full term", nest 2 (pretty 0 t)]))
 
   env <- getBindings
+  let checkTopLevel typ =
+        flip runEnvironmentT env $ do
+          typ <- typecheckPull typ
+          s <- checkProperType typ (text "in top-level binding of " <+> pretty 0 n) (text "")
+          return (typ, s)
 
-  t <- case typeAnnot of
+  (maybeT, tType, tSort) <- case typeAnnot of
     Just body' -> do
       -- preprocess type
       let t' = foldTelescope mkPi args body'
       output (nest 2 (sep [text "specified type:", nest 2 (pretty 0 t')]))
-      whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t' )]))
+      whenOption optShowFullTerms $ output (nest 2 (sep [text "full type", nest 2 (pretty 0 t')]))
 
       -- typecheck type
-      qq <-
-        flip runEnvironmentT env $
-             do
-               qq <- typecheckPull t'
-               checkProperType qq (text "in top-level binding of " <+> pretty 0 n) (text "")
-               return qq
+      (qq, s) <- checkTopLevel t'
 
       -- use declared type to typecheck push
       qq <- liftEval (eval qq)
-      t <- runEnvironmentT (typecheckPush t qq) env
-      return t
+      maybeT <- recover Nothing $ runEnvironmentT (traverse (flip typecheckPush qq) maybeT) env
+      return (maybeT, qq, s)
     Nothing -> do
       -- typecheck pull
-      t <- runEnvironmentT (typecheckPull t) env
-      q <- liftEval (reify (typeOf t))
-      output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
-      return t
+      case maybeT of
+        Just t -> do
+          t <- runEnvironmentT (typecheckPull t) env
+          q <- liftEval (reify (typeOf t))
+          (_, s) <- checkTopLevel q
+
+          output (nest 2 (sep [text "type:", nest 2 (pretty 0 q)]))
+          return (Just t, typeOf t, s)
+        Nothing ->
+          prettyFail $ text "Binding for " <+> pretty 0 n <+> text "specifies neither type nor body."
 
   -- do binding
-  let v = evalTerm env t
-  putBindings ((n, Binding False v (typeOf t) (sortOf t)) : env)
+  let v =
+        case maybeT of
+          Just t -> evalTerm env t
+          Nothing -> ResidualVar n
+  putBindings ((n, Binding False v tType (Just tSort)) : env)
 
 processStmt (Assertion t q' t') = recover () $ assert (showAssertion t q' t') $ do
   output (text "")

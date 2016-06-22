@@ -9,17 +9,14 @@ import Test.QuickCheck hiding ((.&.))
 import PTS.Syntax.Substitution.Tests
 import PTS.Syntax.Parser.Tests
 import PTS.Syntax.Pretty.Tests
-import PTS.File.Tests (testFile)
+import PTS.File.Tests (testFile, testDir)
 
-main = defaultMain Main.tests
+main = Main.tests >>= defaultMain
 
-tests =
-  [  PTS.Syntax.Parser.Tests.tests
-  ,  PTS.Syntax.Pretty.Tests.tests
-  ,  PTS.Syntax.Substitution.Tests.tests
-  ,  testFile True ["examples"] "Arithmetics.lpts"
-  ,  testFile True ["examples"] "ChurchNumbers.lpts"
-  ,  testFile True ["examples"] "Functions.lpts"
-  ,  testFile True ["examples"] "Inference.lpts"
-  ,  testFile True ["examples"] "Syntax.lpts"
-  ]
+tests = do
+  examples <- testDir "examples"
+  return $
+        [  PTS.Syntax.Parser.Tests.tests
+        ,  PTS.Syntax.Pretty.Tests.tests
+        ,  PTS.Syntax.Substitution.Tests.tests
+        ] ++ examples
