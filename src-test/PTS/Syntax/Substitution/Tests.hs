@@ -12,13 +12,13 @@ import qualified PTS.Syntax.Substitution.Properties as Prop
 import Test.Property (test)
 
 x :: Name
-x = read "x"
+x = readName "x"
 
 y :: Name
-y = read "y"
+y = readName "y"
 
 z :: Name
-z = read "z"
+z = readName "z"
 
 substAvoidsCapture
   =  testGroup "substitution avoids capture"

@@ -256,7 +256,7 @@ processStmt (Export n) = recover () $ do
   -- mark as exported
   bindings <- getBindings
   when (and [n /= n' | (n', _) <- bindings]) $ do
-    fail $ "Unbound identifier: " ++ show n
+    fail $ "Unbound identifier: " ++ showName n
   let bindings' = [(n', b {bindingExport = bindingExport b || n== n'}) | (n', b) <- bindings]
   putBindings bindings'
 

@@ -7,7 +7,7 @@ import PTS.Syntax
 
 instance Arbitrary Name where
   arbitrary = do
-    growingElements (map read ["a", "b", "c", "d", "e", "f", "g", "h"])
+    growingElements (map readName ["a", "b", "c", "d", "e", "f", "g", "h"])
 
 instance Arbitrary C where
   arbitrary = sized (\size -> do

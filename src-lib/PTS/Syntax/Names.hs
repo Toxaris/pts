@@ -9,6 +9,11 @@ module PTS.Syntax.Names
   , ModuleName (ModuleName)
   , LanguageName
   , parts
+  , showName
+  , readName
+  , plainName
+  , metaName
+  , indexName
   ) where
 
 import Data.Char (isAlphaNum, isDigit, isLetter, isLower)
@@ -30,31 +35,38 @@ data Name
   = PlainName {-# UNPACK #-} !Char String
   | IndexName {-# UNPACK #-} !Int {-# UNPACK #-}!Char String
   | MetaName String
-  deriving (Eq, Ord, Data, Typeable)
+  deriving (Eq, Ord, Data, Typeable, Show)
 
 type Names = Set Name
 
-instance Show Name where
-  showsPrec _ (PlainName c text) = showString (c : text)
-  showsPrec _ (IndexName i c text) = showString (c : text) . shows i
-  showsPrec _ (MetaName text) = showChar '$' . showString text
+showName (PlainName c text) = c : text
+showName (IndexName i c text) = showString (c : text) . shows i $ ""
+showName (MetaName text) = '$' : text
 
-instance Read Name where
-  readsPrec _ (first:cs) | isLetter first = [plainName [] cs] where
-    plainName text (c:cs) | isDigit c = indexName text [c] cs
-    plainName text (c:cs) | isAlphaNum c = plainName (c : text) cs
-    plainName text rest = (PlainName first (reverse text), rest)
+plainName (c: cs) = PlainName c cs
+metaName = MetaName
+indexName idx (c: cs) = IndexName idx c cs
 
-    indexName text index (c:cs) | isDigit c = indexName text (c : index) cs
-    indexName text index (c:cs) | isAlphaNum c = plainName (c : index ++ text) cs
-    indexName text index rest = (IndexName (read (reverse index)) first (reverse text), rest)
+readsName (first:cs) | isLetter first = [plainName [] cs] where
+  plainName text (c:cs) | isDigit c = indexName text [c] cs
+  plainName text (c:cs) | isAlphaNum c = plainName (c : text) cs
+  plainName text rest = (PlainName first (reverse text), rest)
 
+  indexName text index (c:cs) | isDigit c = indexName text (c : index) cs
+  indexName text index (c:cs) | isAlphaNum c = plainName (c : index ++ text) cs
+  indexName text index rest = (IndexName (read (reverse index)) first (reverse text), rest)
 
-  readsPrec _ ('$':c:cs) | isLower c = [metaName [c] cs] where
-    metaName text (c:cs) | isAlphaNum c = metaName (c : text) cs
-    metaName text rest = (MetaName (reverse text), rest)
+readsName ('$':c:cs) | isLower c = [metaName [c] cs] where
+  metaName text (c:cs) | isAlphaNum c = metaName (c : text) cs
+  metaName text rest = (MetaName (reverse text), rest)
 
-  readsPrec _ _ = []
+readsName _ = []
+
+-- Only invoke readName if we know that the name is going to be read
+-- successfully --- for instance because we already parsed it.
+readName cs = result
+  where
+    [(result, "")] = readsName cs
 
 nextIndex :: Name -> Name
 nextIndex (PlainName char text) = IndexName 0 char text

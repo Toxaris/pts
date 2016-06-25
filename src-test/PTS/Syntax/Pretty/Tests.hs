@@ -11,13 +11,13 @@ import PTS.Instances
 import Test.Property (test)
 
 x :: Name
-x = read "x"
+x = readName "x"
 
 y :: Name
-y = read "y"
+y = readName "y"
 
 z :: Name
-z = read "z"
+z = readName "z"
 
 testPretty :: String -> Term -> Test
 testPretty text term

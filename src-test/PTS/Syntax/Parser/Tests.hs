@@ -15,19 +15,19 @@ testParser text term = testCase text $ case parse text of
   Left error -> assertFailure $ "Unexpected parse error: " ++ show error
 
 x :: Name
-x = read "x"
+x = readName "x"
 
 y :: Name
-y = read "y"
+y = readName "y"
 
 z :: Name
-z = read "z"
+z = readName "z"
 
 e :: Name
-e = read "e"
+e = readName "e"
 
 f :: Name
-f = read "f"
+f = readName "f"
 
 
 tests
