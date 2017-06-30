@@ -4,5 +4,4 @@ packages:
 - '.'
 flags:
   pts:
-    pts-generators: false
     debug-typing: true
