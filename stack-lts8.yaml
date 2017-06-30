@@ -1,0 +1,8 @@
+resolver: lts-8.5
+
+packages:
+- '.'
+flags:
+  pts:
+    pts-generators: false
+    debug-typing: false
