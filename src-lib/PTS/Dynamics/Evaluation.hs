@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, PatternGuards #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, PatternGuards, FlexibleContexts #-}
 module PTS.Dynamics.Evaluation where
 
 import Control.Applicative hiding (Const)
