@@ -6,13 +6,13 @@ module PTS.Error
   , annotatePos
   , annotateCode
   , showErrors
-  , strMsg
+  , strToErrors
   ) where
 
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Errors.Class
-import Control.Monad.Trans.Error (ErrorList (..))
+import Control.Monad.Trans.Except
 
 import Data.Char
 import Data.Data
@@ -32,8 +32,12 @@ data Position
   = Position String Int Int Int Int
   deriving (Show, Eq, Data, Typeable)
 
-instance ErrorList PTSError where
-  listMsg msg = pure (Error empty (pure msg) empty empty)
+-- To convert. See https://stackoverflow.com/a/31223291/53974.
+-- The existing code does use fail and friends (especially, prettyFail) extensively.
+-- instance ErrorList PTSError where
+--   listMsg msg = pure (Error empty (pure msg) empty empty)
+strToErrors :: String -> Errors
+strToErrors msg = pure (Error empty (pure msg) empty empty)
 
 annotateError p' e' m' c' = annotate (map update) where
   update (Error p e m c) = Error (p <|> p') (e <|> e') (m <|> m') (c <|> c')

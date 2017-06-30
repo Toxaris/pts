@@ -1,0 +1,7 @@
+resolver: lts-6.6
+
+packages:
+- '.'
+flags:
+  pts:
+    debug-typing: true

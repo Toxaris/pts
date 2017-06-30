@@ -21,6 +21,7 @@ import PTS.Syntax
 import Text.PrettyPrint.HughesPJ hiding (int)
 import Text.Show (Show (show))
 
+import Prelude hiding (log)
 -- implementation of pure type systems as described on p.98 in Barendregt's "Lambda Calculi with Types"
 -- ftp://ftp.cs.kun.nl/pub/CompMath.Found/HBKJ.ps.Z
 -- Restrictions: The PTS must be full and functional

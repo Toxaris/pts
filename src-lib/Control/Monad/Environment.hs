@@ -13,7 +13,7 @@ import Data.Tuple (fst)
 
 import Control.Applicative (Applicative)
 import Control.Monad (Functor, Monad (return))
-import Control.Monad.Error (MonadError)
+import Control.Monad.Except (MonadError)
 import Control.Monad.Errors (MonadErrors)
 import Control.Monad.Log (MonadLog (..))
 import Control.Monad.Reader (MonadReader (ask, local), asks, ReaderT, runReaderT, mapReaderT)

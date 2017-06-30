@@ -4,7 +4,7 @@ module Control.Monad.Errors
 
 import Control.Applicative
 import Control.Arrow (first)
-import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.Errors.Class
 import Control.Monad.Writer
 import Control.Monad.Reader(ReaderT, mapReaderT)
@@ -46,13 +46,13 @@ instance Monoid e => Applicative (ErrorsT e m) where
                         (\e'    ->  fatal (mappend e e')))
            fatal
 
-instance (Error e, Monoid e) => Monad (ErrorsT e m) where
+instance Monoid e => Monad (ErrorsT e m) where
   return = returnErrorsT
 
   (>>=) = bindErrorsT
 
-  fail m = ErrorsT p where
-    p result errors fatal = fatal (strMsg m)
+  -- fail m = ErrorsT p where
+  --   p result errors fatal = fatal _ {-(strMsg m)
 
 bindErrorsT :: Monoid e => ErrorsT e m a -> (a -> ErrorsT e m b) -> ErrorsT e m b
 bindErrorsT p f = ErrorsT r where
@@ -68,7 +68,7 @@ bindErrorsT p f = ErrorsT r where
                         (\e'    ->  fatal (mappend e e')))
            fatal
 
-instance (Error e, Monoid e) => MonadError e (ErrorsT e m) where
+instance Monoid e => MonadError e (ErrorsT e m) where
   throwError e = ErrorsT p where
     p result errors fatal = fatal e
 
@@ -85,7 +85,7 @@ instance (Error e, Monoid e) => MonadError e (ErrorsT e m) where
                         errors
                         fatal)
 
-instance (Error e, Monoid e) => MonadErrors e (ErrorsT e m) where
+instance Monoid e => MonadErrors e (ErrorsT e m) where
   annotate f p = ErrorsT p' where
     p' result errors fatal
       =  unErrorsT p
@@ -100,7 +100,7 @@ instance (Error e, Monoid e) => MonadErrors e (ErrorsT e m) where
            errors
            (\e -> errors e x)
 
-runErrorsT :: (Error e, Monad m) =>  ErrorsT e m a -> m (Either e a)
+runErrorsT :: Monad m =>  ErrorsT e m a -> m (Either e a)
 runErrorsT p
   =  unErrorsT p
        (\x    ->  return (Right x))
@@ -112,12 +112,12 @@ instance MonadTrans (ErrorsT e) where
     p' result errors fatal
       =  p >>= result
 
-instance (Monoid e, Error e, MonadIO m) => MonadIO (ErrorsT e m) where
+instance (Monoid e, MonadIO m) => MonadIO (ErrorsT e m) where
   liftIO p = ErrorsT p' where
     p' result errors fatal
       =  liftIO p >>= result
 
-instance (Monoid e, Error e, MonadReader r m) => MonadReader r (ErrorsT e m) where
+instance (Monoid e, MonadReader r m) => MonadReader r (ErrorsT e m) where
   ask = lift ask
   local f p = ErrorsT p' where
     p' result errors fatal
@@ -126,6 +126,6 @@ instance (Monoid e, Error e, MonadReader r m) => MonadReader r (ErrorsT e m) whe
            (\e x  ->  local f (errors e x))
            (\e    ->  local f (fatal e))
 
-instance (Monoid e, Error e, MonadState s m) => MonadState s (ErrorsT e m) where
+instance (Monoid e, MonadState s m) => MonadState s (ErrorsT e m) where
   get = lift get
   put = lift . put

@@ -27,23 +27,18 @@ Flag debug-typing
   Default:             False
   Manual:              True
 
-Flag pts-generators
-  Description:         Compile PTS code generators
-  Default:             False
-  Manual:              True
-
 Library
   Hs-source-dirs:      src-lib
   Build-depends:       base < 5,
                        containers >= 0.4 && < 0.6,
                        pretty >= 1.0 && < 1.2,
                        mtl >= 2.0 && < 2.3,
-                       transformers >= 0.2 && < 0.5,
+                       transformers >= 0.2 && < 0.6,
                        parsec == 3.1.*,
                        template-haskell,
                        syb,
                        filepath,
-                       directory >= 1.2.0.1 && < 1.3
+                       directory >= 1.2.0.1 && < 1.4
   Exposed-modules:     PTS.Interactive
                        PTS.Interactive.Runners
                        PTS.Dynamics
@@ -97,25 +92,31 @@ Executable pts
 
   -- Build-tools:
 
-Executable pts-nbe
-  Hs-source-dirs:      src-exec
-  Main-is:             pts-nbe.hs
-  Build-depends:       base < 5,
-                       pts
-  if flag(pts-generators)
-    Buildable: True
-  else
-    Buildable: False
-
-Executable pts-quote
-  Hs-source-dirs:      src-exec
-  Main-is:             pts-quote.hs
-  Build-depends:       base < 5,
-                       pts
-  if flag(pts-generators)
-    Buildable: True
-  else
-    Buildable: False
+-- Bitrotten since ages
+-- Flag pts-generators
+--   Description:         Compile PTS code generators
+--   Default:             False
+--   Manual:              True
+--
+-- Executable pts-nbe
+--   Hs-source-dirs:      src-exec
+--   Main-is:             pts-nbe.hs
+--   Build-depends:       base < 5,
+--                        pts
+--   if flag(pts-generators)
+--     Buildable: True
+--   else
+--     Buildable: False
+--
+-- Executable pts-quote
+--   Hs-source-dirs:      src-exec
+--   Main-is:             pts-quote.hs
+--   Build-depends:       base < 5,
+--                        pts
+--   if flag(pts-generators)
+--     Buildable: True
+--   else
+--     Buildable: False
 
 Test-suite tests
   Type: exitcode-stdio-1.0
@@ -130,7 +131,7 @@ Test-suite tests
                        Test.Property
   Build-depends:       base >= 4.0 && < 5,
                        mtl >= 2.0 && < 2.3,
-                       transformers >= 0.2 && < 0.5,
+                       transformers >= 0.2 && < 0.6,
                        containers >= 0.4 && < 0.6,
                        pretty >= 1.0 && < 1.2,
                        test-framework,
@@ -140,5 +141,5 @@ Test-suite tests
                        HUnit,
                        parsec == 3.1.*,
                        pts,
-                       directory >= 1.2.0.1 && < 1.3
+                       directory >= 1.2.0.1 && < 1.4
   -- Ghc-options: -Wall -fno-warn-orphans
