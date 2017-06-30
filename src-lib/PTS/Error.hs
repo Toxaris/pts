@@ -6,13 +6,12 @@ module PTS.Error
   , annotatePos
   , annotateCode
   , showErrors
-  , strMsg
   ) where
 
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Errors.Class
-import Control.Monad.Trans.Error (ErrorList (..))
+import Control.Monad.Trans.Except
 
 import Data.Char
 import Data.Data
@@ -31,9 +30,6 @@ type Errors = [PTSError]
 data Position
   = Position String Int Int Int Int
   deriving (Show, Eq, Data, Typeable)
-
-instance ErrorList PTSError where
-  listMsg msg = pure (Error empty (pure msg) empty empty)
 
 annotateError p' e' m' c' = annotate (map update) where
   update (Error p e m c) = Error (p <|> p') (e <|> e') (m <|> m') (c <|> c')

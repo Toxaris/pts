@@ -15,7 +15,7 @@ module Control.Monad.Assertions
 
 import Control.Applicative (Applicative)
 
-import Control.Monad.Error (MonadError, catchError)
+import Control.Monad.Except (MonadError, catchError)
 import Control.Monad.Errors (MonadErrors (recover, annotate))
 import Control.Monad.Log (MonadLog, ConsoleLogT (ConsoleLogT))
 import Control.Monad.Reader (MonadReader, ReaderT, mapReaderT)
